@@ -2,8 +2,8 @@ name: Troy War Room — Price Monitor
 
 on:
   schedule:
-    # Every 15 min, Mon–Fri, 9:30 AM – 4:15 PM ET (13:30–20:15 UTC, covers EDT + EST)
-    - cron: '*/15 13-20 * * 1-5'
+    # Every 5 min, Mon–Fri, 9:30 AM – 4:15 PM ET (13:30–20:15 UTC, covers EDT + EST)
+    - cron: '*/5 13-20 * * 1-5'
   workflow_dispatch:   # lets you trigger manually from GitHub anytime
 
 jobs:
