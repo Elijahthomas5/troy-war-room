@@ -634,6 +634,7 @@
   // current = live bid/ask mid — updated daily by troy-monitor.py
   // Troy's option buy rule: option drops 30–40% BELOW alert → entry signal
   const OPT_PRICES = {
+    // Troy's confirmed picks — alert = his entry price from 5/14/26 class
     NVDA: { contract: "Mar '27 $180C", alert: 36.67,  current: 75.45  },
     DRAM: { contract: "Jun '27 $33C",  alert: 12.61,  current: 27.20  },
     CDNS: { contract: "Jun '26 $310C", alert: 23.01,  current: 46.85  },
@@ -641,6 +642,19 @@
     LLY:  { contract: "Mar '27 $860C", alert: 130.98, current: 233.95 },
     ARM:  { contract: "Dec '26 $270C", alert: null,   current: null   },
     HOOD: { contract: "Sep '26 $90C",  alert: null,   current: null   },
+    // ATM LEAPS trackers — no alert price yet (update when Troy announces entry)
+    TSM:  { contract: "Jan '27 $460C", alert: null,   current: null   },
+    AMKR: { contract: "Jan '27 $90C",  alert: null,   current: null   },
+    MRVL: { contract: "Jan '27 $325C", alert: null,   current: null   },
+    DELL: { contract: "Jan '27 $430C", alert: null,   current: null   },
+    ORCL: { contract: "Jan '27 $190C", alert: null,   current: null   },
+    VRT:  { contract: "Jan '27 $335C", alert: null,   current: null   },
+    NOW:  { contract: "Jan '27 $100C", alert: null,   current: null   },
+    UBER: { contract: "Jan '27 $75C",  alert: null,   current: null   },
+    COHR: { contract: "Jan '27 $395C", alert: null,   current: null   },
+    LITE: { contract: "Jan '27 $845C", alert: null,   current: null   },
+    GLW:  { contract: "Jan '27 $195C", alert: null,   current: null   },
+    IREN: { contract: "Jan '27 $60C",  alert: null,   current: null   },
   };
   const OPT_PRICES_AS_OF = 'May 14, 2026 (class data — auto-updated by troy-monitor.py)';
 

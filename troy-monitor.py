@@ -66,6 +66,7 @@ OPT_BUY_LOW  = 0.29   # -29% from alert = entering option buy zone
 OPT_BUY_HIGH = 0.40   # -40% from alert = bottom of option buy zone
 
 OPT_CONTRACTS = {
+    # ── Troy's confirmed picks (alert = his entry price from 5/14/26 EYL class) ──
     "NVDA": {"contract": "Mar '27 $180C", "expiry": "2027-03-19", "strike": 180.0, "opt_type": "calls", "alert": 36.67},
     "DRAM": {"contract": "Jun '27 $33C",  "expiry": "2027-06-18", "strike": 33.0,  "opt_type": "calls", "alert": 12.61},
     "CDNS": {"contract": "Jun '26 $310C", "expiry": "2026-06-20", "strike": 310.0, "opt_type": "calls", "alert": 23.01},
@@ -73,6 +74,19 @@ OPT_CONTRACTS = {
     "LLY":  {"contract": "Mar '27 $860C", "expiry": "2027-03-19", "strike": 860.0, "opt_type": "calls", "alert": 130.98},
     "ARM":  {"contract": "Dec '26 $270C", "expiry": "2026-12-18", "strike": 270.0, "opt_type": "calls", "alert": None},
     "HOOD": {"contract": "Sep '26 $90C",  "expiry": "2026-09-18", "strike": 90.0,  "opt_type": "calls", "alert": None},
+    # ── ATM LEAPS trackers (no alert yet — update when Troy announces entry) ──
+    "TSM":  {"contract": "Jan '27 $460C", "expiry": "2027-01-15", "strike": 460.0, "opt_type": "calls", "alert": None},
+    "AMKR": {"contract": "Jan '27 $90C",  "expiry": "2027-01-15", "strike": 90.0,  "opt_type": "calls", "alert": None},
+    "MRVL": {"contract": "Jan '27 $325C", "expiry": "2027-01-15", "strike": 325.0, "opt_type": "calls", "alert": None},
+    "DELL": {"contract": "Jan '27 $430C", "expiry": "2027-01-15", "strike": 430.0, "opt_type": "calls", "alert": None},
+    "ORCL": {"contract": "Jan '27 $190C", "expiry": "2027-01-15", "strike": 190.0, "opt_type": "calls", "alert": None},
+    "VRT":  {"contract": "Jan '27 $335C", "expiry": "2027-01-15", "strike": 335.0, "opt_type": "calls", "alert": None},
+    "NOW":  {"contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": None},
+    "UBER": {"contract": "Jan '27 $75C",  "expiry": "2027-01-15", "strike": 75.0,  "opt_type": "calls", "alert": None},
+    "COHR": {"contract": "Jan '27 $395C", "expiry": "2027-01-15", "strike": 395.0, "opt_type": "calls", "alert": None},
+    "LITE": {"contract": "Jan '27 $845C", "expiry": "2027-01-15", "strike": 845.0, "opt_type": "calls", "alert": None},
+    "GLW":  {"contract": "Jan '27 $195C", "expiry": "2027-01-15", "strike": 195.0, "opt_type": "calls", "alert": None},
+    "IREN": {"contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": None},
 }
 
 # ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
