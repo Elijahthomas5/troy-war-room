@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Troy War Room">
+  <meta name="theme-color" content="#0d0f14">
+  <title>Troy's Options War Room | EYL University</title>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161b24;
+      --surface2: #1e2535;
+      --border: #2a3347;
+      --green: #00d4a0;
+      --red: #ff4d6d;
+      --yellow: #f5c842;
+      --blue: #4d9fff;
+      --text: #e8eaf0;
+      --muted: #7a8499;
+      --eyl-gold: #c9a227;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* HEADER */
+    .header { background: linear-gradient(135deg, #0a0c10 0%, #1a1228 100%); border-bottom: 1px solid var(--eyl-gold); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo { width: 44px; height: 44px; background: var(--eyl-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #000; font-size: 16px; letter-spacing: -1px; }
+    .header-title h1 { font-size: 20px; font-weight: 700; color: var(--eyl-gold); }
+    .header-title p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .header-right { text-align: right; }
+    .last-updated { font-size: 11px; color: var(--muted); }
+    .refresh-btn { background: var(--eyl-gold); color: #000; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+    .refresh-btn:hover { opacity: 0.85; }
+
+    /* MARKET PULSE */
+    .pulse-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; gap: 24px; overflow-x: auto; }
+    .pulse-item { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .pulse-ticker { font-weight: 700; font-size: 13px; color: var(--muted); }
+    .pulse-price { font-weight: 700; font-size: 14px; }
+    .pulse-change { font-size: 12px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+    .tag-up { background: rgba(0,212,160,0.12); color: var(--green); }
+    .tag-down { background: rgba(255,77,109,0.12); color: var(--red); }
+
+    /* MAIN LAYOUT */
+    .main { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+    @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+
+    /* SECTIONS */
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .section-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .section-title span { font-size: 16px; }
+
+    /* WATCHLIST */
+    .watchlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .watch-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color 0.2s; }
+    .watch-card:hover { border-color: var(--eyl-gold); }
+    .watch-ticker { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+    .watch-name { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+    .watch-price { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .watch-change { font-size: 12px; font-weight: 600; }
+    .watch-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 8px; background: rgba(201,162,39,0.15); color: var(--eyl-gold); }
+    .buy-zone-bar { margin-top: 8px; }
+    .buy-zone-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .buy-zone-range { font-size: 10px; font-weight: 700; }
+    .zone-near   { color: var(--green); }
+    .zone-watch  { color: var(--yellow); }
+    .zone-buy    { color: #f97316; }
+    .zone-below  { color: var(--red); }
+    .zone-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+    .dot-near  { background: var(--green); }
+    .dot-watch { background: var(--yellow); }
+    .dot-buy   { background: #f97316; }
+    .dot-below { background: var(--red); }
+    .metric-row { display: flex; align-items: baseline; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+    .metric-tag { font-size: 8px; font-weight: 700; color: #555d75; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
+    .metric-val { font-size: 10px; font-weight: 700; }
+    .opt-up    { color: var(--green); }
+    .opt-watch { color: var(--yellow); }
+    .opt-buy   { color: #f97316; }
+    .opt-below { color: var(--red); }
+
+    /* POSITIONS TABLE */
+    .pos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .add-btn { background: var(--green); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .add-btn:hover { opacity: 0.85; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 12px 10px; border-bottom: 1px solid rgba(42,51,71,0.5); font-size: 13px; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    .status-safe { display: inline-flex; align-items: center; gap: 4px; background: rgba(0,212,160,0.1); color: var(--green); padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-warn { display: inline-flex; align-items: center; gap: 4px; background: rgba(245,200,66,0.1); color: var(--yellow); padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-stop { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,77,109,0.15); color: var(--red); padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; animation: pulse-red 1.5s ease-in-out infinite; }
+    @keyframes pulse-red { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .pnl-up { color: var(--green); font-weight: 700; }
+    .pnl-down { color: var(--red); font-weight: 700; }
+    .pnl-warn { color: var(--yellow); font-weight: 700; }
+    .del-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; }
+    .del-btn:hover { color: var(--red); }
+    .empty-state { text-align: center; padding: 32px; color: var(--muted); }
+    .empty-state p { margin-bottom: 8px; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 420px; max-width: 95vw; }
+    .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--eyl-gold); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px; outline: none; width: 100%; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--eyl-gold); }
+    .modal-footer { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+    .btn-cancel { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .btn-save { background: var(--green); border: none; color: #000; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; }
+    .stop-hint { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.2); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 11px; color: var(--muted); }
+    .stop-hint strong { color: var(--red); }
+
+    /* SIDEBAR */
+    .sidebar {}
+    .rule-card { background: var(--surface2); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .rule-card h3 { font-size: 12px; font-weight: 700; color: var(--eyl-gold); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rule-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .rule-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .rule-icon.red { background: rgba(255,77,109,0.15); }
+    .rule-icon.green { background: rgba(0,212,160,0.15); }
+    .rule-icon.yellow { background: rgba(245,200,66,0.15); }
+    .rule-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+    .rule-text strong { color: var(--yellow); }
+
+    .calc-card { background: var(--surface2); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .calc-card h3 { font-size: 12px; font-weight: 700; color: var(--eyl-gold); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .calc-input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .calc-input-row label { font-size: 11px; color: var(--muted); width: 100px; flex-shrink: 0; }
+    .calc-input-row input { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; color: var(--text); font-size: 13px; outline: none; flex: 1; }
+    .calc-result { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.25); border-radius: 8px; padding: 10px 12px; }
+    .calc-result .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .calc-result .value { font-size: 22px; font-weight: 800; color: var(--red); margin-top: 2px; }
+    .calc-result .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .brief-card { background: var(--surface2); border-radius: 10px; padding: 14px; }
+    .brief-card h3 { font-size: 12px; font-weight: 700; color: var(--eyl-gold); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+    .brief-edit-btn { font-size: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: normal; }
+    .brief-content { font-size: 12px; color: var(--text); line-height: 1.6; }
+    .brief-content p { margin-bottom: 8px; }
+    .brief-textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px; color: var(--text); font-size: 12px; line-height: 1.6; resize: vertical; min-height: 120px; outline: none; display: none; }
+    .brief-ticker { display: inline-block; background: rgba(201,162,39,0.12); color: var(--eyl-gold); padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+
+    /* ALERT BANNER */
+    .alert-banner { display: none; background: linear-gradient(90deg, rgba(255,77,109,0.15), rgba(255,77,109,0.05)); border: 1px solid rgba(255,77,109,0.4); border-radius: 10px; padding: 12px 16px; margin: 0 24px 16px; }
+    .alert-banner.visible { display: block; }
+    .alert-banner h3 { color: var(--red); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .alert-list { list-style: none; }
+    .alert-list li { font-size: 12px; color: var(--text); margin-bottom: 4px; }
+    .alert-list li::before { content: "⚠️ "; }
+
+    .loading { color: var(--muted); font-size: 12px; }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      body { font-size: 13px; }
+      .header { padding: 10px 14px; flex-wrap: wrap; gap: 8px; }
+      .header-title h1 { font-size: 16px; }
+      .header-title p { font-size: 10px; }
+      .header-right { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+      .pulse-bar { gap: 14px; padding: 8px 14px; }
+      .pulse-price { font-size: 13px; }
+      .main { grid-template-columns: 1fr; gap: 0; padding: 12px; }
+      .watchlist { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .watch-price { font-size: 18px; }
+      .sidebar { display: none; }
+      .section { padding: 14px; margin-bottom: 14px; }
+      table { font-size: 11px; }
+      th, td { padding: 7px 6px; }
+      .gain-badge { font-size: 11px; padding: 2px 7px; }
+    }
+    @media (max-width: 400px) {
+      .watchlist { grid-template-columns: repeat(2, 1fr); }
+      .watch-ticker { font-size: 14px; }
+      .watch-price { font-size: 16px; }
+    }
+
+    /* PORTFOLIO PERFORMANCE */
+    .gain-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; }
+    .gain-fire { background: rgba(0,212,160,0.18); color: var(--green); }
+    .gain-high { background: rgba(0,212,160,0.10); color: #7ee8c5; }
+    .portfolio-note { margin-top: 12px; padding: 10px 12px; background: rgba(201,162,39,0.07); border: 1px solid rgba(201,162,39,0.2); border-radius: 8px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .portfolio-note strong { color: var(--eyl-gold); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">EYL</div>
+    <div class="header-title">
+      <h1>Troy's Options War Room</h1>
+      <p>EYL University · Stock Options Master Class Tracker</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="last-updated" id="lastUpdated">Loading prices...</div>
+    <button class="refresh-btn" onclick="alert('To get fresh prices, ask Claude:\n\n\"Can you refresh my options tracker prices?\"\n\nPrices are currently as of: ' + PRICES_AS_OF)">↻ Refresh via Claude</button>
+  </div>
+</div>
+
+<!-- MARKET PULSE BAR -->
+<div class="pulse-bar" id="pulseBar">
+  <div class="pulse-item"><span class="pulse-ticker">SPY</span><span class="pulse-price" id="p-SPY">--</span><span class="pulse-change" id="c-SPY">--</span></div>
+  <div class="pulse-item"><span class="pulse-ticker">QQQ</span><span class="pulse-price" id="p-QQQ">--</span><span class="pulse-change" id="c-QQQ">--</span></div>
+  <div class="pulse-item"><span class="pulse-ticker">SMH</span><span class="pulse-price" id="p-SMH">--</span><span class="pulse-change" id="c-SMH">--</span></div>
+  <div class="pulse-item"><span class="pulse-ticker">VIX</span><span class="pulse-price" id="p-VIX">--</span><span class="pulse-change" id="c-VIX">--</span></div>
+</div>
+
+<!-- prices injected via Claude — no API key needed -->
+
+<!-- ALERT BANNER -->
+<div class="alert-banner" id="alertBanner">
+  <h3>🚨 STOP LOSS ALERT — Troy's 30% Rule Triggered</h3>
+  <ul class="alert-list" id="alertList"></ul>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="left-col">
+
+    <!-- WATCHLIST -->
+    <div class="section">
+      <div class="section-title"><span>📡</span> Troy's Watch List</div>
+      <div class="watchlist">
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#4d9fff">AMKR</div>
+          <div class="watch-name">Amkor Technology</div>
+          <div class="watch-price" id="wp-AMKR">--</div>
+          <div class="watch-change" id="wc-AMKR">--</div>
+          <div class="watch-badge">CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#a78bfa">ARM</div>
+          <div class="watch-name">ARM Holdings</div>
+          <div class="watch-price" id="wp-ARM">--</div>
+          <div class="watch-change" id="wc-ARM">--</div>
+          <div class="watch-badge">DEC '26 $270C ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#00d4a0">DRAM</div>
+          <div class="watch-name">Roundhill Memory ETF</div>
+          <div class="watch-price" id="wp-DRAM">--</div>
+          <div class="watch-change" id="wc-DRAM">--</div>
+          <div class="watch-badge">SHARES + LEAPS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#f5c842">HOOD</div>
+          <div class="watch-name">Robinhood Markets</div>
+          <div class="watch-price" id="wp-HOOD">--</div>
+          <div class="watch-change" id="wc-HOOD">--</div>
+          <div class="watch-badge">$90/$95 CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#ff7a4d">NOW</div>
+          <div class="watch-name">ServiceNow</div>
+          <div class="watch-price" id="wp-NOW">--</div>
+          <div class="watch-change" id="wc-NOW">--</div>
+          <div class="watch-badge">CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#00d4a0">NVDA</div>
+          <div class="watch-name">NVIDIA Corporation</div>
+          <div class="watch-price" id="wp-NVDA">--</div>
+          <div class="watch-change" id="wc-NVDA">--</div>
+          <div class="watch-badge">4x LEAPS CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#4d9fff">TSM</div>
+          <div class="watch-name">Taiwan Semiconductor</div>
+          <div class="watch-price" id="wp-TSM">--</div>
+          <div class="watch-change" id="wc-TSM">--</div>
+          <div class="watch-badge">CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#a78bfa">CDNS</div>
+          <div class="watch-name">Cadence Design Systems</div>
+          <div class="watch-price" id="wp-CDNS">--</div>
+          <div class="watch-change" id="wc-CDNS">--</div>
+          <div class="watch-badge">JUN '26 $310C ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#06b6d4">ANET</div>
+          <div class="watch-name">Arista Networks</div>
+          <div class="watch-price" id="wp-ANET">--</div>
+          <div class="watch-change" id="wc-ANET">--</div>
+          <div class="watch-badge">JAN '27 $110C ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#34d399">MRVL</div>
+          <div class="watch-name">Marvell Technology</div>
+          <div class="watch-price" id="wp-MRVL">--</div>
+          <div class="watch-change" id="wc-MRVL">--</div>
+          <div class="watch-badge">LEAPS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#60a5fa">DELL</div>
+          <div class="watch-name">Dell Technologies</div>
+          <div class="watch-price" id="wp-DELL">--</div>
+          <div class="watch-change" id="wc-DELL">--</div>
+          <div class="watch-badge">AI SERVER PLAY ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#f97316">ORCL</div>
+          <div class="watch-name">Oracle Corporation</div>
+          <div class="watch-price" id="wp-ORCL">--</div>
+          <div class="watch-change" id="wc-ORCL">--</div>
+          <div class="watch-badge">CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#c9a227">VRT</div>
+          <div class="watch-name">Vertiv Holdings</div>
+          <div class="watch-price" id="wp-VRT">--</div>
+          <div class="watch-change" id="wc-VRT">--</div>
+          <div class="watch-badge">CALLS ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#f472b6">LLY</div>
+          <div class="watch-name">Eli Lilly</div>
+          <div class="watch-price" id="wp-LLY">--</div>
+          <div class="watch-change" id="wc-LLY">--</div>
+          <div class="watch-badge">MAR '27 $860C ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#fb923c">UBER</div>
+          <div class="watch-name">Uber Technologies</div>
+          <div class="watch-price" id="wp-UBER">--</div>
+          <div class="watch-change" id="wc-UBER">--</div>
+          <div class="watch-badge">WATCHING 👀</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#818cf8">COHR</div>
+          <div class="watch-name">Coherent Corp.</div>
+          <div class="watch-price" id="wp-COHR">--</div>
+          <div class="watch-change" id="wc-COHR">--</div>
+          <div class="watch-badge">NVDA $2B INVEST ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#e879f9">LITE</div>
+          <div class="watch-name">Lumentum Holdings</div>
+          <div class="watch-price" id="wp-LITE">--</div>
+          <div class="watch-change" id="wc-LITE">--</div>
+          <div class="watch-badge">NVDA $2B INVEST ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#38bdf8">GLW</div>
+          <div class="watch-name">Corning Inc.</div>
+          <div class="watch-price" id="wp-GLW">--</div>
+          <div class="watch-change" id="wc-GLW">--</div>
+          <div class="watch-badge">NVDA $3.2B INVEST ✓</div>
+        </div>
+        <div class="watch-card">
+          <div class="watch-ticker" style="color:#4ade80">IREN</div>
+          <div class="watch-name">IREN Limited</div>
+          <div class="watch-price" id="wp-IREN">--</div>
+          <div class="watch-change" id="wc-IREN">--</div>
+          <div class="watch-badge">NVDA $2.1B INVEST ✓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TROY'S PORTFOLIO PERFORMANCE -->
+    <div class="section">
+      <div class="section-title">
+        <span>📈</span> Troy's Open Portfolio Performance
+        <span style="font-size:10px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;margin-left:6px">From 5/14/26 class · Returns from Troy's alert entry prices</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Contract</th>
+            <th>Total Gain</th>
+            <th>Bid</th>
+            <th>Ask</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:var(--green)">DRAM</strong></td>
+            <td>Jun 17 '27 $33 Call</td>
+            <td><span class="gain-badge gain-fire">+107.55%</span></td>
+            <td style="color:var(--muted)">$26.20</td>
+            <td style="color:var(--muted)">$28.20</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--green)">NVDA</strong></td>
+            <td>Mar 19 '27 $180 Call</td>
+            <td><span class="gain-badge gain-fire">+104.44%</span></td>
+            <td style="color:var(--muted)">$74.85</td>
+            <td style="color:var(--muted)">$76.05</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--green)">NVDA</strong></td>
+            <td>Dec 17 '27 $200 Call</td>
+            <td><span class="gain-badge gain-fire">+99.57%</span></td>
+            <td style="color:var(--muted)">$78.10</td>
+            <td style="color:var(--muted)">$78.70</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#a78bfa">CDNS</strong></td>
+            <td>Jun 18 '26 $310 Call</td>
+            <td><span class="gain-badge gain-fire">+95.90%</span></td>
+            <td style="color:var(--muted)">$45.10</td>
+            <td style="color:var(--muted)">$48.60</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--green)">NVDA</strong></td>
+            <td>Jan 15 '27 $185 Call</td>
+            <td><span class="gain-badge gain-high">+85.79%</span></td>
+            <td style="color:var(--muted)">$67.85</td>
+            <td style="color:var(--muted)">$68.40</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--green)">NVDA</strong></td>
+            <td>Dec 15 '28 $180 Call</td>
+            <td><span class="gain-badge gain-high">+78.02%</span></td>
+            <td style="color:var(--muted)">$103.55</td>
+            <td style="color:var(--muted)">$104.75</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#06b6d4">ANET</strong></td>
+            <td>Jan 15 '27 $110 Call</td>
+            <td><span class="gain-badge gain-high">+76.40%</span></td>
+            <td style="color:var(--muted)">$48.80</td>
+            <td style="color:var(--muted)">$50.00</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#f472b6">LLY</strong></td>
+            <td>Mar 19 '27 $860 Call</td>
+            <td><span class="gain-badge gain-high">+75.24%</span></td>
+            <td style="color:var(--muted)">$229.05</td>
+            <td style="color:var(--muted)">$238.85</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="portfolio-note">
+        These are Troy's <strong>actual open positions</strong> as shown in the 5/14/26 EYL University class. Gains calculated from his alert entry prices — what you'd have if you bought when Troy called it. <strong style="color:#fb923c">UBER</strong> also in portfolio — Troy said "testing my patience" as of 5/14/26.
+      </div>
+    </div>
+
+    <!-- POSITIONS -->
+    <div class="section">
+      <div class="pos-header">
+        <div class="section-title" style="margin-bottom:0"><span>📊</span> My Option Positions</div>
+        <button class="add-btn" onclick="openModal()">+ Add Position</button>
+      </div>
+      <div id="positionsContainer" style="margin-top:16px">
+        <div class="empty-state" id="emptyState">
+          <p>No positions yet.</p>
+          <p style="font-size:12px">Click <strong>+ Add Position</strong> to start tracking your options from Troy's class.</p>
+        </div>
+        <table id="posTable" style="display:none">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Type</th>
+              <th>Strike / Exp</th>
+              <th>Entry $</th>
+              <th>Current $</th>
+              <th>P&L %</th>
+              <th>Stop Price</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="posTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- TROY'S RULES -->
+    <div class="section">
+      <div class="section-title"><span>📋</span> Troy's Rules</div>
+      <div class="rule-item">
+        <div class="rule-icon red">🛑</div>
+        <div class="rule-text"><strong style="color:var(--red)">30% Stop Loss</strong><br>Exit if option drops 30% from your entry price. No debate.</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon yellow">⚠️</div>
+        <div class="rule-text"><strong>Watch Zone: -15% to -29%</strong><br>Option is pulling back. Monitor closely, have your exit plan ready.</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon green">✅</div>
+        <div class="rule-text"><strong>Safe Zone: 0% to -14%</strong><br>Normal volatility. Stay disciplined. Don't check every minute.</div>
+      </div>
+    </div>
+
+    <!-- STOP LOSS CALCULATOR -->
+    <div class="section">
+      <div class="section-title"><span>🧮</span> Stop Loss Calculator</div>
+      <div class="calc-input-row">
+        <label>Entry Price ($)</label>
+        <input type="number" id="calcEntry" placeholder="e.g. 2.50" oninput="calcStop()" step="0.01" min="0">
+      </div>
+      <div class="calc-result" id="calcResult" style="display:none">
+        <div class="label">30% Stop Loss Price</div>
+        <div class="value" id="calcStopVal">--</div>
+        <div class="sub" id="calcStopSub"></div>
+      </div>
+    </div>
+
+    <!-- WEEKLY BRIEF -->
+    <div class="section">
+      <div class="section-title"><span>📰</span> Market Brief
+        <button class="brief-edit-btn" onclick="toggleBrief()">Edit</button>
+      </div>
+      <div class="brief-content" id="briefContent">
+        <p>AI Chip LEAPS: <span class="brief-ticker">NVDA</span> <span class="brief-ticker">DRAM</span> <span class="brief-ticker">ANET</span> <span class="brief-ticker">CDNS</span> <span class="brief-ticker">MRVL</span> <span class="brief-ticker">TSM</span></p>
+        <p>AI Infrastructure: <span class="brief-ticker">DELL</span> <span class="brief-ticker">ORCL</span> <span class="brief-ticker">VRT</span> <span class="brief-ticker">NOW</span></p>
+        <p>Other Plays: <span class="brief-ticker">AMKR</span> <span class="brief-ticker">ARM</span> <span class="brief-ticker">HOOD</span> <span class="brief-ticker">LLY</span> <span class="brief-ticker">UBER</span></p>
+        <p>📌 Next live class: <strong>June 25, 2026</strong></p>
+        <p>📌 Mid-year review: <strong>June 30 @ 6PM EST</strong> — top 5 picks.</p>
+        <p>📌 NVDA portfolio up 4 separate LEAPS positions all 75%+. DRAM memory cycle thesis on track (+107%).</p>
+      </div>
+      <textarea class="brief-textarea" id="briefTextarea" placeholder="Add your notes here..."></textarea>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD POSITION MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>➕ Add Option Position</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ticker</label>
+        <input type="text" id="fTicker" placeholder="e.g. AMKR" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="fType">
+          <option value="CALL">Call</option>
+          <option value="PUT">Put</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Strike Price ($)</label>
+        <input type="number" id="fStrike" placeholder="e.g. 95.00" step="0.5">
+      </div>
+      <div class="form-group">
+        <label>Expiration Date</label>
+        <input type="date" id="fExp">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Entry Option Price ($)</label>
+        <input type="number" id="fEntry" placeholder="e.g. 2.50" step="0.01" oninput="updateStopPreview()">
+      </div>
+      <div class="form-group">
+        <label>Current Option Price ($)</label>
+        <input type="number" id="fCurrent" placeholder="e.g. 2.10" step="0.01">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>Notes (optional)</label>
+      <input type="text" id="fNotes" placeholder="e.g. From Troy's 5/14 class">
+    </div>
+    <div class="stop-hint" id="stopHint" style="display:none">
+      <strong>30% Stop Loss:</strong> <span id="stopHintVal">--</span> — Exit if option falls to this price or below.
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="savePosition()">Save Position</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────────────
+  let positions = JSON.parse(localStorage.getItem('eyl_positions') || '[]');
+
+  function savePositions() {
+    localStorage.setItem('eyl_positions', JSON.stringify(positions));
+  }
+
+  // ── PRE-LOADED PRICES (fetched by Claude via Yahoo Finance) ───
+  // Last refreshed: Jun 18, 2026 ~1:12 PM EDT
+  // To update: open a Cowork session and say "Can you refresh my options tracker prices?"
+  const PRICES = {
+    // Market Pulse
+    SPY:  { price: 746.41,  change: +1.00  },
+    QQQ:  { price: 738.79,  change: +2.25  },
+    SMH:  { price: 658.00,  change: +5.45  },
+    VIX:  { price: 16.65,   change: -9.70  },
+    // Core Watchlist
+    AMKR: { price: 89.82,   change: +3.92  },
+    ARM:  { price: 429.73,  change: +2.59  },
+    DRAM: { price: 76.93,   change: +9.98  },
+    HOOD: { price: 107.15,  change: +1.85  },
+    NOW:  { price: 95.21,   change: -0.28  },
+    // AI / Semiconductor Plays
+    NVDA: { price: 210.24,  change: +2.73  },
+    TSM:  { price: 457.11,  change: +5.78  },
+    CDNS: { price: 392.32,  change: +0.70  },
+    ANET: { price: 168.25,  change: +2.01  },
+    MRVL: { price: 323.77,  change: +11.82 },
+    DELL: { price: 427.56,  change: +1.97  },
+    ORCL: { price: 186.73,  change: +1.74  },
+    VRT:  { price: 334.09,  change: +5.20  },
+    // Other Picks
+    LLY:  { price: 1101.35, change: -0.96  },
+    UBER: { price: 72.15,   change: +1.74  },
+    // Photonics — NVIDIA "Light in, Copper out" plays
+    COHR: { price: 392.83,  change: +3.69  },
+    LITE: { price: 843.25,  change: -3.07  },
+    GLW:  { price: 191.85,  change: +9.38  },
+    IREN: { price: 60.02,   change: +3.29  },
+  };
+  const PRICES_AS_OF = 'Jun 18, 2026 ~1:30 PM EDT';
+
+  // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────
+  // alert  = Troy's entry/alert price from 5/14/26 EYL class
+  // current = live bid/ask mid — updated daily by troy-monitor.py
+  // Troy's option buy rule: option drops 30–40% BELOW alert → entry signal
+  const OPT_PRICES = {
+    NVDA: { contract: "Mar '27 $180C", alert: 36.67,  current: 75.45  },
+    DRAM: { contract: "Jun '27 $33C",  alert: 12.61,  current: 27.20  },
+    CDNS: { contract: "Jun '26 $310C", alert: 23.01,  current: 46.85  },
+    ANET: { contract: "Jan '27 $110C", alert: 27.67,  current: 49.40  },
+    LLY:  { contract: "Mar '27 $860C", alert: 130.98, current: 233.95 },
+    ARM:  { contract: "Dec '26 $270C", alert: null,   current: null   },
+    HOOD: { contract: "Sep '26 $90C",  alert: null,   current: null   },
+  };
+  const OPT_PRICES_AS_OF = 'May 14, 2026 (class data — auto-updated by troy-monitor.py)';
+
+  // ── 52-WEEK HIGHS (updated by troy-monitor.py) ───────────────
+  // Used to calculate buy zones: Troy buys when stock is 20–30% off its high
+  const HIGHS_52W = {
+    NVDA: 236.54,
+    TSM:  459.17,
+    CDNS: 416.69,
+    ANET: 179.80,
+    ARM:  452.61,
+    AMKR:  96.68,
+    DRAM:  77.55,
+    HOOD: 153.86,
+    NOW:  211.48,
+    MRVL: 328.53,
+    DELL: 469.47,
+    ORCL: 345.72,
+    VRT:  379.93,
+    LLY:  1182.73,
+    UBER: 101.99,
+    COHR: 440.00,
+    LITE: 1085.68,
+    GLW:  211.79,
+    IREN:  76.87,
+  };
+
+  function getOptionInfo(ticker) {
+    const opt = OPT_PRICES[ticker];
+    if (!opt) return { noContract: true };
+    if (opt.current === null) return { noContract: false, contract: opt.contract, current: null, alert: opt.alert, pctVsAlert: null, cls: '', label: null };
+    const { contract, alert, current } = opt;
+    if (alert === null) {
+      return { contract, current, alert: null, pctVsAlert: null,
+               cls: 'opt-watch', label: `${contract} · $${current?.toFixed(2) ?? '--'}` };
+    }
+    const pctVsAlert = (current - alert) / alert * 100;
+    let cls, label;
+    if (pctVsAlert >= 0) {
+      cls = 'opt-up';
+      label = `+${pctVsAlert.toFixed(1)}% above $${alert} entry`;
+    } else if (pctVsAlert > -29) {
+      cls = 'opt-watch';
+      label = `${pctVsAlert.toFixed(1)}% below $${alert} entry`;
+    } else if (pctVsAlert >= -40) {
+      cls = 'opt-buy';
+      label = `${pctVsAlert.toFixed(1)}% below entry — BUY ZONE`;
+    } else {
+      cls = 'opt-below';
+      label = `${pctVsAlert.toFixed(1)}% below $${alert} entry`;
+    }
+    return { contract, current, alert, pctVsAlert, cls, label };
+  }
+
+  function getBuyZoneInfo(ticker, currentPrice) {
+    const high = HIGHS_52W[ticker];
+    if (!high) return null;
+    const pctOff = (high - currentPrice) / high * 100;
+    const buyHi  = (high * 0.80).toFixed(2);
+    const buyLo  = (high * 0.70).toFixed(2);
+    let zone, cls, dotCls, label;
+    if (pctOff < 10) {
+      zone = 'near'; cls = 'zone-near'; dotCls = 'dot-near';
+      label = `📈 ${pctOff.toFixed(1)}% below high`;
+    } else if (pctOff < 20) {
+      zone = 'watch'; cls = 'zone-watch'; dotCls = 'dot-watch';
+      label = `👀 ${pctOff.toFixed(1)}% below — approaching`;
+    } else if (pctOff <= 30) {
+      zone = 'buy'; cls = 'zone-buy'; dotCls = 'dot-buy';
+      label = `🟠 ${pctOff.toFixed(1)}% below — BUY ZONE`;
+    } else {
+      zone = 'below'; cls = 'zone-below'; dotCls = 'dot-below';
+      label = `❌ ${pctOff.toFixed(1)}% below — past zone`;
+    }
+    return { zone, cls, dotCls, label, buyHi, buyLo, high, pctOff };
+  }
+
+  function refreshPrices() {
+    for (const [t, { price, change }] of Object.entries(PRICES)) {
+      const pEl  = document.getElementById(`p-${t}`);
+      const cEl  = document.getElementById(`c-${t}`);
+      const wpEl = document.getElementById(`wp-${t}`);
+      const wcEl = document.getElementById(`wc-${t}`);
+      const bzEl = document.getElementById(`bz-${t}`);
+      if (pEl) {
+        pEl.textContent = (t === 'VIX' ? '' : '$') + price.toFixed(2);
+      }
+      if (cEl) {
+        cEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+        cEl.className = `pulse-change ${change >= 0 ? 'tag-up' : 'tag-down'}`;
+      }
+      if (wpEl) wpEl.textContent = `$${price.toFixed(2)}`;
+      if (wcEl) {
+        wcEl.textContent = `${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%`;
+        wcEl.className = `watch-change ${change >= 0 ? 'up' : 'down'}`;
+      }
+      // Buy zone + option dual-metric display
+      if (bzEl) {
+        const bz  = getBuyZoneInfo(t, price);
+        const opt = getOptionInfo(t);
+        let html = '';
+
+        // ── Row 1: Stock equity metric ──
+        if (bz) {
+          html += `<div class="metric-row">
+            <span class="metric-tag">Stock</span>
+            <span class="metric-val ${bz.cls}">
+              <span class="zone-dot ${bz.dotCls}"></span>${bz.label}
+            </span>
+          </div>`;
+          if (bz.zone === 'buy') {
+            html += `<div style="font-size:9px;color:var(--muted);margin-left:2px;margin-top:1px">zone: $${bz.buyHi}–$${bz.buyLo}</div>`;
+          }
+        }
+
+        // ── Row 2: Option metric (always shown) ──
+        if (opt && !opt.noContract && opt.label) {
+          html += `<div class="metric-row">
+            <span class="metric-tag">Option</span>
+            <span class="metric-val ${opt.cls}">${opt.label}</span>
+          </div>`;
+          if (opt.pctVsAlert !== null) {
+            html += `<div style="font-size:9px;color:var(--muted);margin-left:2px;margin-top:1px">${opt.contract} · now $${opt.current?.toFixed(2)}</div>`;
+          }
+        } else if (opt && !opt.noContract && opt.contract) {
+          // contract known but no price data yet
+          html += `<div class="metric-row">
+            <span class="metric-tag">Option</span>
+            <span class="metric-val" style="color:var(--muted)">${opt.contract} · price pending</span>
+          </div>`;
+        } else {
+          // no contract tracked for this ticker
+          html += `<div class="metric-row">
+            <span class="metric-tag">Option</span>
+            <span style="font-size:9px;color:#3a4259">— no contract tracked</span>
+          </div>`;
+        }
+
+        bzEl.innerHTML = html;
+
+        // Card border: orange solid if BOTH zones triggered, orange faint if just stock, yellow if approaching
+        const card = bzEl.closest('.watch-card');
+        if (card) {
+          const stockBuy = bz?.zone === 'buy';
+          const optBuy   = opt != null && opt.pctVsAlert != null && opt.pctVsAlert <= -29;
+          if (stockBuy && optBuy) card.style.borderColor = '#f97316';
+          else if (stockBuy)      card.style.borderColor = 'rgba(249,115,22,0.45)';
+          else if (bz?.zone === 'watch') card.style.borderColor = 'rgba(245,200,66,0.45)';
+          else                    card.style.borderColor = '';
+        }
+      }
+    }
+    document.getElementById('lastUpdated').textContent = `✓ Prices as of ${PRICES_AS_OF}`;
+  }
+
+  // ── POSITIONS ─────────────────────────────────────────────────
+  function renderPositions() {
+    const tbody = document.getElementById('posTableBody');
+    const empty = document.getElementById('emptyState');
+    const table = document.getElementById('posTable');
+    const alerts = [];
+
+    tbody.innerHTML = '';
+
+    if (positions.length === 0) {
+      empty.style.display = 'block';
+      table.style.display = 'none';
+      document.getElementById('alertBanner').classList.remove('visible');
+      return;
+    }
+
+    empty.style.display = 'none';
+    table.style.display = 'table';
+
+    positions.forEach((pos, i) => {
+      const entry = parseFloat(pos.entry);
+      const current = parseFloat(pos.current);
+      const stopPrice = (entry * 0.70).toFixed(2);
+      let pnlPct = null, pnlClass = '', statusHTML = '';
+
+      if (!isNaN(entry) && !isNaN(current) && entry > 0) {
+        pnlPct = ((current - entry) / entry * 100).toFixed(1);
+        const pnlNum = parseFloat(pnlPct);
+
+        if (pnlNum <= -30) {
+          pnlClass = 'pnl-down';
+          statusHTML = `<span class="status-stop">🚨 STOP LOSS</span>`;
+          alerts.push(`${pos.ticker} ${pos.type} $${pos.strike} — down ${Math.abs(pnlNum).toFixed(1)}% (stop at $${stopPrice})`);
+        } else if (pnlNum <= -15) {
+          pnlClass = 'pnl-warn';
+          statusHTML = `<span class="status-warn">⚠️ Watch Zone</span>`;
+        } else if (pnlNum >= 0) {
+          pnlClass = 'pnl-up';
+          statusHTML = `<span class="status-safe">✅ Safe</span>`;
+        } else {
+          pnlClass = 'pnl-up';
+          statusHTML = `<span class="status-safe">✅ Safe</span>`;
+        }
+      } else {
+        statusHTML = `<span style="color:var(--muted);font-size:11px">No price</span>`;
+      }
+
+      const expFormatted = pos.exp ? new Date(pos.exp + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '--';
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>${pos.ticker}</strong><br><span style="font-size:10px;color:var(--muted)">${pos.notes || ''}</span></td>
+        <td><span style="background:rgba(77,159,255,0.12);color:var(--blue);padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">${pos.type}</span></td>
+        <td>$${pos.strike}<br><span style="font-size:10px;color:var(--muted)">${expFormatted}</span></td>
+        <td>$${parseFloat(pos.entry).toFixed(2)}</td>
+        <td>
+          <input type="number" value="${pos.current || ''}" step="0.01" min="0"
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;color:var(--text);font-size:12px;width:70px;outline:none"
+            onchange="updateCurrent(${i}, this.value)" placeholder="--">
+        </td>
+        <td class="${pnlClass}">${pnlPct !== null ? (pnlPct >= 0 ? '+' : '') + pnlPct + '%' : '--'}</td>
+        <td style="color:var(--red)">$${stopPrice}</td>
+        <td>${statusHTML}</td>
+        <td><button class="del-btn" onclick="deletePosition(${i})">×</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    // Alerts
+    const banner = document.getElementById('alertBanner');
+    const list = document.getElementById('alertList');
+    list.innerHTML = alerts.map(a => `<li>${a}</li>`).join('');
+    banner.classList.toggle('visible', alerts.length > 0);
+  }
+
+  function updateCurrent(i, val) {
+    positions[i].current = val;
+    savePositions();
+    renderPositions();
+  }
+
+  function deletePosition(i) {
+    if (confirm(`Remove ${positions[i].ticker} position?`)) {
+      positions.splice(i, 1);
+      savePositions();
+      renderPositions();
+    }
+  }
+
+  // ── MODAL ─────────────────────────────────────────────────────
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('fTicker').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    ['fTicker','fStrike','fEntry','fCurrent','fNotes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fType').value = 'CALL';
+    document.getElementById('fExp').value = '';
+    document.getElementById('stopHint').style.display = 'none';
+  }
+
+  function updateStopPreview() {
+    const entry = parseFloat(document.getElementById('fEntry').value);
+    if (!isNaN(entry) && entry > 0) {
+      const stop = (entry * 0.70).toFixed(2);
+      document.getElementById('stopHintVal').textContent = `$${stop}`;
+      document.getElementById('stopHint').style.display = 'block';
+    } else {
+      document.getElementById('stopHint').style.display = 'none';
+    }
+  }
+
+  function savePosition() {
+    const ticker = document.getElementById('fTicker').value.toUpperCase().trim();
+    const type = document.getElementById('fType').value;
+    const strike = document.getElementById('fStrike').value;
+    const exp = document.getElementById('fExp').value;
+    const entry = document.getElementById('fEntry').value;
+    const current = document.getElementById('fCurrent').value;
+    const notes = document.getElementById('fNotes').value;
+
+    if (!ticker || !strike || !entry) {
+      alert('Please fill in Ticker, Strike, and Entry Price at minimum.');
+      return;
+    }
+
+    positions.push({ ticker, type, strike, exp, entry, current, notes });
+    savePositions();
+    renderPositions();
+    closeModal();
+  }
+
+  // ── STOP LOSS CALCULATOR ──────────────────────────────────────
+  function calcStop() {
+    const entry = parseFloat(document.getElementById('calcEntry').value);
+    const resultEl = document.getElementById('calcResult');
+    if (!isNaN(entry) && entry > 0) {
+      const stop = entry * 0.70;
+      const loss = entry * 0.30;
+      document.getElementById('calcStopVal').textContent = `$${stop.toFixed(2)}`;
+      document.getElementById('calcStopSub').textContent = `Max loss per contract: $${(loss * 100).toFixed(0)} · Entry: $${entry.toFixed(2)}`;
+      resultEl.style.display = 'block';
+    } else {
+      resultEl.style.display = 'none';
+    }
+  }
+
+  // ── MARKET BRIEF ──────────────────────────────────────────────
+  let briefEditing = false;
+  function toggleBrief() {
+    briefEditing = !briefEditing;
+    const content = document.getElementById('briefContent');
+    const textarea = document.getElementById('briefTextarea');
+    if (briefEditing) {
+      textarea.value = content.innerText;
+      content.style.display = 'none';
+      textarea.style.display = 'block';
+      textarea.focus();
+    } else {
+      const text = textarea.value;
+      localStorage.setItem('eyl_brief', text);
+      content.innerText = text;
+      content.style.display = 'block';
+      textarea.style.display = 'none';
+    }
+  }
+
+  // ── KEYBOARD SHORTCUTS ────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ── INIT ──────────────────────────────────────────────────────
+  const savedBrief = localStorage.getItem('eyl_brief');
+  if (savedBrief) document.getElementById('briefContent').innerText = savedBrief;
+
+  // Dynamically inject buy-zone-bar placeholder into every watch card
+  document.querySelectorAll('.watch-card').forEach(card => {
+    const tickerEl = card.querySelector('.watch-ticker');
+    if (!tickerEl) return;
+    const ticker = tickerEl.textContent.trim();
+    if (!card.querySelector('.buy-zone-bar')) {
+      const bz = document.createElement('div');
+      bz.className = 'buy-zone-bar';
+      bz.id = `bz-${ticker}`;
+      card.appendChild(bz);
+    }
+  });
+
+  renderPositions();
+  refreshPrices();
+</script>
+</body>
+</html>

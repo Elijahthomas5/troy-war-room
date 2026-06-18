@@ -1,0 +1,36 @@
+name: Troy War Room — Price Monitor
+
+on:
+  schedule:
+    # Every 15 min, Mon–Fri, 9:30 AM – 4:15 PM ET (13:30–20:15 UTC, covers EDT + EST)
+    - cron: '*/15 13-20 * * 1-5'
+  workflow_dispatch:   # lets you trigger manually from GitHub anytime
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to commit updated HTML back to repo
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run price monitor + send alerts
+        run: python troy-monitor.py
+
+      - name: Commit updated prices to repo
+        run: |
+          git config user.name  "Troy War Room Bot"
+          git config user.email "bot@troy-war-room.local"
+          git add troy-options-tracker.html
+          git diff --staged --quiet || git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
