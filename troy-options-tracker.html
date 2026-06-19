@@ -594,92 +594,89 @@
     localStorage.setItem('eyl_positions', JSON.stringify(positions));
   }
 
-  // ── PRE-LOADED PRICES (fetched by Claude via Yahoo Finance) ───
-  // Last refreshed: Jun 18, 2026 ~1:12 PM EDT
-  // To update: open a Cowork session and say "Can you refresh my options tracker prices?"
+  // ── PRE-LOADED PRICES (updated by troy-monitor.py) ───
+  // Last refreshed: Jun 19, 2026 ~4:08 PM EDT
+  // To update manually: ask Claude to refresh, or run troy-monitor.py
   const PRICES = {
     // Market Pulse
-    SPY:  { price: 746.41,  change: +1.00  },
-    QQQ:  { price: 738.79,  change: +2.25  },
-    SMH:  { price: 658.00,  change: +5.45  },
-    VIX:  { price: 16.65,   change: -9.70  },
+    SPY : { price: 746.74,  change: +1.04  },
+    QQQ : { price: 740.62,  change: +2.51  },
+    SMH : { price: 659.88,  change: +5.76  },
     // Core Watchlist
-    AMKR: { price: 89.82,   change: +3.92  },
-    ARM:  { price: 429.73,  change: +2.59  },
-    DRAM: { price: 76.93,   change: +9.98  },
-    HOOD: { price: 107.15,  change: +1.85  },
-    NOW:  { price: 95.21,   change: -0.28  },
-    // AI / Semiconductor Plays
-    NVDA: { price: 210.24,  change: +2.73  },
-    TSM:  { price: 457.11,  change: +5.78  },
-    CDNS: { price: 392.32,  change: +0.70  },
-    ANET: { price: 168.25,  change: +2.01  },
-    MRVL: { price: 323.77,  change: +11.82 },
-    DELL: { price: 427.56,  change: +1.97  },
-    ORCL: { price: 186.73,  change: +1.74  },
-    VRT:  { price: 334.09,  change: +5.20  },
+    AMKR: { price: 90.46,  change: +4.66  },
+    ARM : { price: 439.46,  change: +4.91  },
+    DRAM: { price: 76.71,  change: +9.66  },
+    HOOD: { price: 108.15,  change: +2.80  },
+    NOW : { price: 95.04,  change: -0.46  },
+    // AI / Semis
+    NVDA: { price: 210.69,  change: +2.95  },
+    TSM : { price: 462.12,  change: +6.94  },
+    CDNS: { price: 387.39,  change: -0.57  },
+    ANET: { price: 169.67,  change: +2.87  },
+    MRVL: { price: 310.58,  change: +7.27  },
+    DELL: { price: 409.50,  change: -2.34  },
+    ORCL: { price: 184.29,  change: +0.41  },
+    VRT : { price: 333.05,  change: +4.87  },
     // Other Picks
-    LLY:  { price: 1101.35, change: -0.96  },
-    UBER: { price: 72.15,   change: +1.74  },
-    // Photonics — NVIDIA "Light in, Copper out" plays
-    COHR: { price: 392.83,  change: +3.69  },
-    LITE: { price: 843.25,  change: -3.07  },
-    GLW:  { price: 191.85,  change: +9.38  },
-    IREN: { price: 60.02,   change: +3.29  },
+    LLY : { price: 1098.57,  change: -1.21  },
+    UBER: { price: 71.64,  change: +1.03  },
+    // Photonics
+    COHR: { price: 389.57,  change: +2.83  },
+    LITE: { price: 850.00,  change: -2.30  },
+    GLW : { price: 194.92,  change: +11.13  },
+    IREN: { price: 59.96,  change: +3.18  },
   };
-  const PRICES_AS_OF = 'Jun 18, 2026 ~1:30 PM EDT';
+  const PRICES_AS_OF = 'Jun 19, 2026 ~4:08 PM EDT';
 
   // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────
   // alert  = Troy's entry/alert price from 5/14/26 EYL class
   // current = live bid/ask mid — updated daily by troy-monitor.py
   // Troy's option buy rule: option drops 30–40% BELOW alert → entry signal
   const OPT_PRICES = {
-    // Troy's confirmed picks — alert = his entry price from 5/14/26 class
-    NVDA: { contract: "Mar '27 $180C", alert: 36.67,  current: 75.45  },
-    DRAM: { contract: "Jun '27 $33C",  alert: 12.61,  current: 27.20  },
-    CDNS: { contract: "Jun '26 $310C", alert: 23.01,  current: 46.85  },
-    ANET: { contract: "Jan '27 $110C", alert: 27.67,  current: 49.40  },
-    LLY:  { contract: "Mar '27 $860C", alert: 130.98, current: 233.95 },
-    ARM:  { contract: "Dec '26 $270C", alert: null,   current: null   },
-    HOOD: { contract: "Sep '26 $90C",  alert: null,   current: null   },
-    // ATM LEAPS trackers — no alert price yet (update when Troy announces entry)
-    TSM:  { contract: "Jan '27 $460C", alert: null,   current: null   },
-    AMKR: { contract: "Jan '27 $90C",  alert: null,   current: null   },
-    MRVL: { contract: "Jan '27 $325C", alert: null,   current: null   },
-    DELL: { contract: "Jan '27 $430C", alert: null,   current: null   },
-    ORCL: { contract: "Jan '27 $190C", alert: null,   current: null   },
-    VRT:  { contract: "Jan '27 $335C", alert: null,   current: null   },
-    NOW:  { contract: "Jan '27 $100C", alert: null,   current: null   },
-    UBER: { contract: "Jan '27 $75C",  alert: null,   current: null   },
-    COHR: { contract: "Jan '27 $395C", alert: null,   current: null   },
-    LITE: { contract: "Jan '27 $845C", alert: null,   current: null   },
-    GLW:  { contract: "Jan '27 $195C", alert: null,   current: null   },
-    IREN: { contract: "Jan '27 $60C",  alert: null,   current: null   },
+    NVDA: { contract: "Mar '27 $180C", alert: 36.67, current: 50.65  },
+    DRAM: { contract: "Jun '27 $33C", alert: 12.61, current: 48.85  },
+    CDNS: { contract: "Jun '26 $310C", alert: 23.01, current: 77.80  },
+    ANET: { contract: "Jan '27 $110C", alert: 27.67, current: 68.38  },
+    LLY : { contract: "Mar '27 $860C", alert: 130.98, current: 303.85  },
+    ARM : { contract: "Dec '26 $270C", alert: null, current: 208.95  },
+    HOOD: { contract: "Sep '26 $90C", alert: null, current: 25.62  },
+    TSM : { contract: "Jan '27 $460C", alert: null, current: 80.10  },
+    AMKR: { contract: "Jan '27 $90C", alert: null, current: 26.05  },
+    MRVL: { contract: "Jan '27 $325C", alert: null, current: 88.40  },
+    DELL: { contract: "Jan '27 $430C", alert: null, current: 88.78  },
+    ORCL: { contract: "Jan '27 $190C", alert: null, current: 31.85  },
+    VRT : { contract: "Jan '27 $335C", alert: null, current: 72.95  },
+    NOW : { contract: "Jan '27 $100C", alert: null, current: 17.00  },
+    UBER: { contract: "Jan '27 $75C", alert: null, current: 7.92  },
+    COHR: { contract: "Jan '27 $395C", alert: null, current: 114.00  },
+    LITE: { contract: "Jan '27 $845C", alert: null, current: 246.85  },
+    GLW : { contract: "Jan '27 $195C", alert: null, current: 45.45  },
+    IREN: { contract: "Jan '27 $60C", alert: null, current: 19.68  },
   };
-  const OPT_PRICES_AS_OF = 'May 14, 2026 (class data — auto-updated by troy-monitor.py)';
+  const OPT_PRICES_AS_OF = 'Jun 19, 2026 ~4:08 PM EDT';
 
   // ── 52-WEEK HIGHS (updated by troy-monitor.py) ───────────────
   // Used to calculate buy zones: Troy buys when stock is 20–30% off its high
   const HIGHS_52W = {
-    NVDA: 236.54,
-    TSM:  459.17,
+    NVDA: 236.26,
+    DRAM: 77.70,
     CDNS: 416.69,
     ANET: 179.80,
-    ARM:  452.61,
-    AMKR:  96.68,
-    DRAM:  77.55,
-    HOOD: 153.86,
-    NOW:  211.48,
-    MRVL: 328.53,
+    TSM : 465.22,
+    AMKR: 96.68,
+    MRVL: 329.88,
+    ARM : 452.70,
     DELL: 469.47,
-    ORCL: 345.72,
-    VRT:  379.93,
-    LLY:  1182.73,
+    ORCL: 343.01,
+    VRT : 379.86,
+    NOW : 211.48,
+    HOOD: 153.86,
+    LLY : 1182.73,
     UBER: 101.99,
     COHR: 440.00,
     LITE: 1085.68,
-    GLW:  211.79,
-    IREN:  76.87,
+    GLW : 211.47,
+    IREN: 76.87,
   };
 
   function getOptionInfo(ticker) {
