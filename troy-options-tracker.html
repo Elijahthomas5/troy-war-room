@@ -595,7 +595,7 @@
   }
 
   // ── PRE-LOADED PRICES (updated by troy-monitor.py) ───
-  // Last refreshed: Jun 19, 2026 ~8:02 PM EDT
+  // Last refreshed: Jun 19, 2026 ~9:19 PM EDT
   // To update manually: ask Claude to refresh, or run troy-monitor.py
   const PRICES = {
     // Market Pulse
@@ -611,7 +611,7 @@
     // AI / Semis
     NVDA: { price: 210.69,  change: +2.95  },
     TSM : { price: 462.12,  change: +6.94  },
-    CDNS: { price: 387.39,  change: -0.57  },
+    CDNS: { price: nan,  change: nan  },
     ANET: { price: 169.67,  change: +2.87  },
     MRVL: { price: 310.58,  change: +7.27  },
     DELL: { price: 409.50,  change: -2.34  },
@@ -626,7 +626,7 @@
     GLW : { price: 194.92,  change: +11.13  },
     IREN: { price: 59.96,  change: +3.18  },
   };
-  const PRICES_AS_OF = 'Jun 19, 2026 ~8:02 PM EDT';
+  const PRICES_AS_OF = 'Jun 19, 2026 ~9:19 PM EDT';
 
   // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────
   // alert  = Troy's entry/alert price from 5/14/26 EYL class
@@ -653,7 +653,7 @@
     GLW : { contract: "Jan '27 $195C", alert: null, current: 45.45  },
     IREN: { contract: "Jan '27 $60C", alert: null, current: 19.68  },
   };
-  const OPT_PRICES_AS_OF = 'Jun 19, 2026 ~8:02 PM EDT';
+  const OPT_PRICES_AS_OF = 'Jun 19, 2026 ~9:19 PM EDT';
 
   // ── 52-WEEK HIGHS (updated by troy-monitor.py) ───────────────
   // Used to calculate buy zones: Troy buys when stock is 20–30% off its high
