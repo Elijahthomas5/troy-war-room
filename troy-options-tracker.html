@@ -65,6 +65,7 @@
     .watch-price { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
     .watch-change { font-size: 12px; font-weight: 600; }
     .watch-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 8px; background: rgba(201,162,39,0.15); color: var(--eyl-gold); }
+    .class-date { display: inline-block; font-size: 8px; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-top: 4px; background: rgba(77,159,255,0.12); color: #4d9fff; letter-spacing: 0.3px; }
     .buy-zone-bar { margin-top: 8px; }
     .buy-zone-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
     .buy-zone-range { font-size: 10px; font-weight: 700; }
@@ -319,6 +320,7 @@
           <div class="watch-price" id="wp-AMKR">--</div>
           <div class="watch-change" id="wc-AMKR">--</div>
           <div class="watch-badge">CALLS ✓</div>
+          <div class="class-date">📅 May 14 class</div>
           <div class="bz-section" id="bz-AMKR"></div>
         </div>
         <div class="watch-card" data-ticker="ARM">
@@ -327,6 +329,7 @@
           <div class="watch-price" id="wp-ARM">--</div>
           <div class="watch-change" id="wc-ARM">--</div>
           <div class="watch-badge">DEC '26 $270C ✓</div>
+          <div class="class-date">📅 May 14 class</div>
           <div class="bz-section" id="bz-ARM"></div>
         </div>
         <div class="watch-card" data-ticker="DRAM">
@@ -335,6 +338,7 @@
           <div class="watch-price" id="wp-DRAM">--</div>
           <div class="watch-change" id="wc-DRAM">--</div>
           <div class="watch-badge">SHARES + LEAPS ✓</div>
+          <div class="class-date">📅 Apr 16 class</div>
           <div class="bz-section" id="bz-DRAM"></div>
         </div>
         <div class="watch-card" data-ticker="HOOD">
@@ -359,6 +363,7 @@
           <div class="watch-price" id="wp-NVDA">--</div>
           <div class="watch-change" id="wc-NVDA">--</div>
           <div class="watch-badge">4x LEAPS CALLS ✓</div>
+          <div class="class-date">📅 May 14 class</div>
           <div class="bz-section" id="bz-NVDA"></div>
         </div>
         <div class="watch-card" data-ticker="TSM">
@@ -375,6 +380,7 @@
           <div class="watch-price" id="wp-CDNS">--</div>
           <div class="watch-change" id="wc-CDNS">--</div>
           <div class="watch-badge">JUN '26 $310C ✓</div>
+          <div class="class-date">📅 May 14 class</div>
           <div class="bz-section" id="bz-CDNS"></div>
         </div>
         <div class="watch-card" data-ticker="ANET">
@@ -383,6 +389,7 @@
           <div class="watch-price" id="wp-ANET">--</div>
           <div class="watch-change" id="wc-ANET">--</div>
           <div class="watch-badge">JAN '27 $110C ✓</div>
+          <div class="class-date">📅 May 14 class</div>
           <div class="bz-section" id="bz-ANET"></div>
         </div>
         <div class="watch-card" data-ticker="MRVL">
@@ -423,6 +430,7 @@
           <div class="watch-price" id="wp-LLY">--</div>
           <div class="watch-change" id="wc-LLY">--</div>
           <div class="watch-badge">MAR '27 $860C ✓</div>
+          <div class="class-date">📅 May 14 class</div>
           <div class="bz-section" id="bz-LLY"></div>
         </div>
         <div class="watch-card" data-ticker="UBER">
@@ -464,6 +472,15 @@
           <div class="watch-change" id="wc-IREN">--</div>
           <div class="watch-badge">NVDA $2.1B INVEST ✓</div>
           <div class="bz-section" id="bz-IREN"></div>
+        </div>
+        <div class="watch-card" data-ticker="MU">
+          <div class="watch-ticker" style="color:#f59e0b">MU</div>
+          <div class="watch-name">Micron Technology</div>
+          <div class="watch-price" id="wp-MU">--</div>
+          <div class="watch-change" id="wc-MU">--</div>
+          <div class="watch-badge">⚡ EARNINGS WED 6/25</div>
+          <div class="class-date">📅 Apr 16 class</div>
+          <div class="bz-section" id="bz-MU"></div>
         </div>
       </div>
     </div>
@@ -750,6 +767,7 @@
     LITE: { contract: "Jan '27 $845C", alert: null, current: 261.55  },
     GLW : { contract: "Jan '27 $195C", alert: null, current: 51.05  },
     IREN: { contract: "Jan '27 $60C", alert: null, current: 17.12  },
+    MU  : { contract: "Jan '27 $120C", alert: null, current: null   },
   };
   const OPT_PRICES_AS_OF = 'Jun 22, 2026 ~5:41 PM EDT';
 
@@ -775,6 +793,7 @@
     LITE: 1085.68,
     GLW : 211.47,
     IREN: 76.87,
+    MU  : 157.54,
   };
 
   function getOptionInfo(ticker) {

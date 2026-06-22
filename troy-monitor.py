@@ -52,6 +52,7 @@ WATCHLIST = {
     "LITE": {"name": "Lumentum Holdings",    "play": "NVDA $2B INVEST"},
     "GLW":  {"name": "Corning Inc",          "play": "NVDA $3.2B INVEST"},
     "IREN": {"name": "IREN Limited",         "play": "AI DATA CENTER"},
+    "MU":   {"name": "Micron Technology",    "play": "MEMORY LEAPS"},
 }
 MARKET_PULSE = ["SPY", "QQQ", "SMH", "VIX"]
 
@@ -87,6 +88,7 @@ OPT_CONTRACTS = {
     "LITE": {"contract": "Jan '27 $845C", "expiry": "2027-01-15", "strike": 845.0, "opt_type": "calls", "alert": None},
     "GLW":  {"contract": "Jan '27 $195C", "expiry": "2027-01-15", "strike": 195.0, "opt_type": "calls", "alert": None},
     "IREN": {"contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": None},
+    "MU":   {"contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": None},
 }
 
 # ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
