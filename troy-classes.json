@@ -20,9 +20,9 @@
       "id": "2026-04-16",
       "date": "Apr 16, 2026",
       "label": "Apr '26 Class",
-      "notes": "DRAM first introduced. MU also mentioned as memory play. No PDF — reconstructed from community board.",
+      "notes": "Memory super-cycle deep dive — DRAM ETF as SK Hynix/Samsung proxy. Troy placed LIVE DRAM order during class: Jan '27 $33C, 20 contracts, $9.70 limit, stop trigger at $30 stock price. DRAM ran to $35.12 before filling. MU referenced as prior community board pick (up 60% since Apr 1 call). No PDF — reconstructed from transcript.",
       "stocks": [
-        { "ticker": "DRAM", "name": "Roundhill Memory ETF",  "contract": "Jun '27 $33C",  "expiry": "2027-06-18", "strike": 33.0,  "opt_type": "calls", "alert": 12.61 },
+        { "ticker": "DRAM", "name": "Roundhill Memory ETF",  "contract": "Jan '27 $33C",  "expiry": "2027-01-17", "strike": 33.0,  "opt_type": "calls", "alert": 9.70 },
         { "ticker": "MU",   "name": "Micron Technology",     "contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": null }
       ]
     }
