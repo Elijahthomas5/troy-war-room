@@ -6,25 +6,34 @@ Reads troy-classes.json → auto-builds watchlist → fetches prices → updates
 KEY FEATURES:
   • Driven by troy-classes.json — add a new class entry and this auto-updates everything
   • Auto-injects new stock cards into the HTML when a ticker appears in classes.json for the first time
-  • Checks EYL community board for new Troy posts (set EYL_EMAIL + EYL_PASSWORD as GitHub secrets)
-  • Sends iPhone push via ntfy.sh when buy zones are hit OR new class detected
+  • Checks EYL community board for new Troy posts
+  • Sends alerts via iPhone (ntfy), Mac notification, and email
 
 SETUP (one time):
   1. iPhone: download "ntfy" app → subscribe to topic: troy-eyl-eli
   2. pip3 install yfinance requests beautifulsoup4 --break-system-packages
-  3. GitHub repo → Settings → Secrets → add EYL_EMAIL and EYL_PASSWORD
+  3. Set env vars (or edit CONFIG below):
+       EMAIL_TO            your@email.com
+       EMAIL_FROM          your_gmail@gmail.com
+       EMAIL_APP_PASSWORD  Gmail App Password (not your login password)
+       EYL_EMAIL / EYL_PASSWORD  your EYL login
   4. Run manually: python3 ~/Documents/Troy\'s\ option\ class/troy-monitor.py
 
-Troy's Buy Rules:
-  - Stock drops 20–30% from 52W high  →  equity trigger
-  - Option drops 30–40% from alert price  →  enter
-  - Option drops 30% from your entry  →  STOP LOSS
+ALERT TRIGGERS:
+  ① Option hits alert price     → option current ≤ alert (+5% window)       — BUY SIGNAL
+  ② Option enters buy zone      → option 30–40% below alert                  — ENTER
+  ③ Stock hits stop-loss        → option 30% below your alert entry           — EXIT
+  ④ Take-profit signal          → option up 100%+ from alert                  — CONSIDER SELLING
+  ⑤ Stock approaching buy zone  → stock 10–20% off 52W high                  — WATCH
 """
 
 import json
 import re
 import os
 import sys
+import subprocess
+import smtplib
+from email.mime.text import MIMEText
 from datetime import datetime
 
 import yfinance as yf
@@ -34,19 +43,32 @@ import requests
 BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 HTML_PATH    = os.path.join(BASE_DIR, 'troy-options-tracker.html')
 CLASSES_PATH = os.path.join(BASE_DIR, 'troy-classes.json')
-STATE_PATH   = os.path.join(BASE_DIR, '.troy-state.json')   # tracks last-seen EYL post
+STATE_PATH   = os.path.join(BASE_DIR, '.troy-state.json')
 
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
-NTFY_TOPIC   = "troy-eyl-eli"
-NTFY_URL     = f"https://ntfy.sh/{NTFY_TOPIC}"
+NTFY_TOPIC        = "troy-eyl-eli"
+NTFY_URL          = f"https://ntfy.sh/{NTFY_TOPIC}"
+
+# Email — set as env vars or fill in directly
+EMAIL_TO          = os.environ.get("EMAIL_TO",           "elijahthomas1@gmail.com")
+EMAIL_FROM        = os.environ.get("EMAIL_FROM",         "")          # your Gmail address
+EMAIL_APP_PASS    = os.environ.get("EMAIL_APP_PASSWORD", "")          # Gmail App Password
+
+# Mac notifications — True = show macOS banner, requires osascript
+MAC_NOTIFY        = True
+
 EYL_EMAIL    = os.environ.get("EYL_EMAIL", "")
 EYL_PASSWORD = os.environ.get("EYL_PASSWORD", "")
 EYL_BOARD    = "https://eyluniversity.com/community/channels/the-investors-group"
 
-BUY_ZONE_LOW  = 0.20   # 20% below 52W high = enter equity watch zone
-BUY_ZONE_HIGH = 0.30   # 30% below 52W high = top of buy zone
-OPT_BUY_LOW   = 0.29   # -29% from alert = entering option buy zone
-OPT_BUY_HIGH  = 0.40   # -40% from alert = bottom of option buy zone
+# Alert thresholds
+BUY_ZONE_LOW       = 0.20   # stock 20% off 52W high = equity watch zone starts
+BUY_ZONE_HIGH      = 0.30   # stock 30% off 52W high = top of equity buy zone
+OPT_ALERT_WINDOW   = 0.05   # option within 5% of alert price = ① BUY SIGNAL
+OPT_BUY_ZONE_LOW   = 0.29   # option 29% below alert = ② entering buy zone
+OPT_BUY_ZONE_HIGH  = 0.40   # option 40% below alert = ② deep in buy zone
+OPT_STOP_LOSS      = 0.30   # option 30% below alert entry = ③ STOP LOSS
+OPT_TAKE_PROFIT    = 1.00   # option 100% above alert = ④ TAKE PROFIT
 
 MARKET_PULSE = ["SPY", "QQQ", "SMH", "VIX"]
 
@@ -166,6 +188,7 @@ def inject_new_stock_card(html, ticker, info, opt_info):
 
 # ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
 def send_push(title, body, priority="high", tags=("bell",)):
+    """iPhone push via ntfy.sh — install the ntfy app and subscribe to NTFY_TOPIC."""
     try:
         r = requests.post(
             NTFY_URL,
@@ -173,10 +196,51 @@ def send_push(title, body, priority="high", tags=("bell",)):
             headers={"Title": title, "Priority": priority, "Tags": ",".join(tags)},
             timeout=10,
         )
-        return r.status_code == 200
+        ok = r.status_code == 200
+        print(f"    📱 iPhone push: {'✓' if ok else '✗ ' + str(r.status_code)}")
+        return ok
     except Exception as e:
-        print(f"  ⚠  Push failed: {e}")
+        print(f"    📱 iPhone push failed: {e}")
         return False
+
+
+def send_mac_notification(title, body):
+    """macOS banner notification via osascript."""
+    if not MAC_NOTIFY:
+        return
+    try:
+        script = f'display notification "{body[:200]}" with title "{title}"'
+        subprocess.run(["osascript", "-e", script], check=True,
+                       capture_output=True, timeout=5)
+        print(f"    🖥  Mac notification: ✓")
+    except Exception as e:
+        print(f"    🖥  Mac notification failed: {e}")
+
+
+def send_email(title, body):
+    """Email alert via Gmail SMTP. Set EMAIL_FROM and EMAIL_APP_PASS to enable."""
+    if not EMAIL_FROM or not EMAIL_APP_PASS:
+        print("    📧 Email skipped (EMAIL_FROM / EMAIL_APP_PASSWORD not set)")
+        return
+    try:
+        msg = MIMEText(body, "plain")
+        msg["Subject"] = f"🚨 Troy War Room: {title}"
+        msg["From"]    = EMAIL_FROM
+        msg["To"]      = EMAIL_TO
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as smtp:
+            smtp.login(EMAIL_FROM, EMAIL_APP_PASS)
+            smtp.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
+        print(f"    📧 Email sent to {EMAIL_TO}: ✓")
+    except Exception as e:
+        print(f"    📧 Email failed: {e}")
+
+
+def notify(title, body, priority="high", tags=("bell",)):
+    """Send to ALL channels: iPhone push + Mac notification + email."""
+    print(f"\n  🚨 ALERT: {title}")
+    send_push(title, body, priority=priority, tags=tags)
+    send_mac_notification(title, body)
+    send_email(title, body)
 
 
 # ─── EYL COMMUNITY BOARD CHECK ───────────────────────────────────────────────
@@ -318,8 +382,8 @@ def check_eyl_board(watchlist, opt_contracts, classes_data):
                 if unknown:
                     push_body += f"⭐ NEW tickers: {', '.join(sorted(unknown))}\n"
                 push_body += f"\nPreview: {snippet[:200]}...\n\nCheck the board and update troy-classes.json"
-                send_push("🆕 New Troy Class Alert", push_body, priority="high",
-                          tags=("school", "chart_with_upwards_trend"))
+                notify("🆕 New Troy Class Alert", push_body, priority="high",
+                       tags=("school", "chart_with_upwards_trend"))
 
         # Save the newest post ID
         if newest_id and newest_id != last_seen_post:
@@ -399,8 +463,8 @@ def update_html(all_data, opt_data, watchlist, opt_contracts):
                 + ", ".join(injected)
                 + "\n\nUpdate troy-classes.json with Troy's alert price when he announces entry."
             )
-            send_push("Dashboard Updated — New Stocks Added", push_body,
-                      priority="default", tags=("new",))
+            notify("Dashboard Updated — New Stocks Added", push_body,
+               priority="default", tags=("new",))
 
         # ── 2. Build PRICES block ────────────────────────────────
         all_tickers = list(watchlist.keys())
@@ -550,44 +614,104 @@ def main():
     print(f"\n  → {len(buy_zone_hits)} stocks in equity buy zone")
     print(f"  → {len(both_zone_hits)} with BOTH conditions met\n")
 
-    # ── Push alerts ──────────────────────────────────────────────
+    # ── ALERT EVALUATION ─────────────────────────────────────────
+    # Run after both equity + option prices are fetched
+    print("  Checking alert triggers...\n")
+
+    alert_hits       = []   # ① option AT alert price
+    opt_buy_zone     = []   # ② option 30-40% BELOW alert
+    stop_loss_hits   = []   # ③ option 30%+ BELOW alert entry
+    take_profit_hits = []   # ④ option 100%+ ABOVE alert
+
+    for ticker, info in opt_contracts.items():
+        alert = info.get("alert")
+        if not alert:
+            continue
+        mid = opt_data.get(ticker)
+        if mid is None:
+            continue
+
+        pct = (mid - alert) / alert   # + = above alert, - = below alert
+
+        if -OPT_ALERT_WINDOW <= pct <= OPT_ALERT_WINDOW:
+            alert_hits.append((ticker, info, mid, pct))
+        elif OPT_BUY_ZONE_LOW <= -pct <= OPT_BUY_ZONE_HIGH:
+            opt_buy_zone.append((ticker, info, mid, pct))
+        elif -pct > OPT_STOP_LOSS:
+            stop_loss_hits.append((ticker, info, mid, pct))
+
+        if pct >= OPT_TAKE_PROFIT:
+            take_profit_hits.append((ticker, info, mid, pct))
+
+    # ── ① Option AT alert price ───────────────────────────────────
+    for ticker, info, mid, pct in alert_hits:
+        stk = all_data.get(ticker, {})
+        body = (
+            f"{ticker} — {info['contract']}\n\n"
+            f"Option price: ${mid} (alert: ${info['alert']}  |  {pct*100:+.1f}%)\n"
+            f"Stock price:  ${stk.get('price','?')}  |  {stk.get('pct_from_high','?')}% off 52W high\n\n"
+            f"Troy's alert price has been reached — this is the BUY target.\n"
+            f"Check community board for confirmation before entering."
+        )
+        notify(f"① BUY SIGNAL — {ticker} at alert price!", body,
+               priority="urgent", tags=("rotating_light", "chart_with_upwards_trend"))
+
+    # ── ② Option in buy zone (30-40% below alert) ────────────────
+    for ticker, info, mid, pct in opt_buy_zone:
+        stk = all_data.get(ticker, {})
+        body = (
+            f"{ticker} — {info['contract']}\n\n"
+            f"Option price: ${mid}  |  {pct*100:.1f}% below ${info['alert']} alert\n"
+            f"Stock price:  ${stk.get('price','?')}  |  {stk.get('pct_from_high','?')}% off 52W high\n\n"
+            f"Troy's rule: option 30–40% below alert = ENTER zone.\n"
+            f"Buy zone range: ${round(info['alert']*0.71,2)}–${round(info['alert']*0.60,2)}"
+        )
+        notify(f"② ENTER ZONE — {ticker} option {abs(pct*100):.0f}% below alert",
+               body, priority="high", tags=("bell", "chart_with_upwards_trend"))
+
+    # ── ③ Stop-loss trigger ───────────────────────────────────────
+    for ticker, info, mid, pct in stop_loss_hits:
+        body = (
+            f"{ticker} — {info['contract']}\n\n"
+            f"Option price: ${mid}  |  {pct*100:.1f}% below ${info['alert']} entry\n\n"
+            f"⛔ STOP LOSS: option is {abs(pct*100):.0f}% below alert entry — exceeds Troy's 30% stop rule.\n"
+            f"Consider exiting to protect capital."
+        )
+        notify(f"③ STOP LOSS — {ticker} down {abs(pct*100):.0f}% from entry",
+               body, priority="urgent", tags=("rotating_light", "no_entry"))
+
+    # ── ④ Take-profit signal ──────────────────────────────────────
+    for ticker, info, mid, pct in take_profit_hits:
+        body = (
+            f"{ticker} — {info['contract']}\n\n"
+            f"Option price: ${mid}  |  +{pct*100:.0f}% above ${info['alert']} alert\n\n"
+            f"🎯 Up {pct*100:.0f}% — consider taking partial or full profits.\n"
+            f"Troy's pattern: sell half, let the rest ride."
+        )
+        notify(f"④ TAKE PROFIT — {ticker} up {pct*100:.0f}%!",
+               body, priority="high", tags=("moneybag", "tada"))
+
+    # ── ⑤ Stock approaching buy zone (watch) ─────────────────────
+    if watch_zone_hits:
+        lines = [f"• {t} — ${d['price']} | {d['pct_from_high']}% from 52W high"
+                 for t, d, _ in watch_zone_hits]
+        body = "Getting close to Troy's buy zone (10–20% off 52W high):\n\n" + "\n".join(lines)
+        notify("⑤ Approaching Buy Zone", body,
+               priority="default", tags=("eyes",))
+
+    # ── Legacy: stock-only buy zone (no option data yet) ─────────
     if both_zone_hits:
         lines = []
         for t, d, info, opt_mid, opt_pct in both_zone_hits:
             alert = opt_contracts[t]["alert"]
             lines.append(
-                f"• {t} ({info['name']})\n"
-                f"  Stock: ${d['price']} | {d['pct_from_high']}% off high\n"
-                f"  Option ({opt_contracts[t]['contract']}): ${opt_mid} | {opt_pct:+.1f}% vs ${alert}\n"
-                f"  Buy zone: ${round(d['high52']*0.80,2)}–${round(d['high52']*0.70,2)}"
+                f"• {t} — Stock: ${d['price']} ({d['pct_from_high']}% off high)\n"
+                f"  Option ({opt_contracts[t]['contract']}): ${opt_mid} | {opt_pct:+.1f}% vs ${alert} alert"
             )
-        body = ("BOTH criteria met — Troy's ENTER signal:\n\n" + "\n\n".join(lines) +
-                "\n\nStock 20-30% off high ✓  Option 30-40% below alert ✓")
-        ok = send_push("FULL BUY SIGNAL — Troy War Room", body,
-                       priority="urgent", tags=("rotating_light","chart_with_upwards_trend"))
-        print(f"  Push (FULL SIGNAL): {'✓' if ok else '✗'}")
-
-    elif buy_zone_hits:
-        lines = []
-        for t, d, info in buy_zone_hits:
-            opt_line = ""
-            if opt_data.get(t) and opt_contracts.get(t, {}).get("alert"):
-                a   = opt_contracts[t]["alert"]
-                pct = (opt_data[t] - a) / a * 100
-                opt_line = f"\n  Option: ${opt_data[t]} | {pct:+.1f}% vs ${a} alert"
-            lines.append(f"• {t} ({info['name']})\n"
-                         f"  Stock: ${d['price']} | {d['pct_from_high']}% off high{opt_line}")
-        body = ("Stock in Troy's 20-30% window:\n\n" + "\n\n".join(lines))
-        ok = send_push("Troy Buy Zone — Stock", body, priority="high",
-                       tags=("bell","chart_with_upwards_trend"))
-        print(f"  Push (stock zone): {'✓' if ok else '✗'}")
-
-    if watch_zone_hits:
-        lines = [f"• {t} — ${d['price']} | {d['pct_from_high']}% from high"
-                 for t, d, _ in watch_zone_hits]
-        ok = send_push("Approaching Buy Zone", "Getting close (10-20% off high):\n\n" +
-                       "\n".join(lines), priority="default", tags=("eyes",))
-        print(f"  Push (watch):      {'✓' if ok else '✗'}")
+        body = ("BOTH criteria met — stock AND option in Troy's entry zones:\n\n" +
+                "\n\n".join(lines))
+        notify("FULL BUY SIGNAL — both zones hit!", body,
+               priority="urgent", tags=("rotating_light", "chart_with_upwards_trend"))
 
     # ── EYL community board check (once per day, ~market close) ──
     hour = datetime.now().hour
