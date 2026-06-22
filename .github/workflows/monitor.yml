@@ -22,15 +22,18 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt beautifulsoup4
 
       - name: Run price monitor + send alerts
+        env:
+          EYL_EMAIL:    ${{ secrets.EYL_EMAIL }}
+          EYL_PASSWORD: ${{ secrets.EYL_PASSWORD }}
         run: python troy-monitor.py
 
-      - name: Commit updated prices to repo
+      - name: Commit updated prices + any new stock cards to repo
         run: |
           git config user.name  "Troy War Room Bot"
           git config user.email "bot@troy-war-room.local"
-          git add troy-options-tracker.html
+          git add troy-options-tracker.html troy-classes.json .troy-state.json || true
           git diff --staged --quiet || git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push

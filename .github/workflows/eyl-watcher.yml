@@ -1,0 +1,45 @@
+name: Troy EYL Class Watcher
+
+on:
+  schedule:
+    # Run once daily at 11 PM ET (03:00 UTC) — after any evening classes
+    - cron: '0 3 * * *'
+  workflow_dispatch:   # run manually anytime from GitHub
+
+jobs:
+  watch-eyl:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for rebase on conflict
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests playwright beautifulsoup4
+          playwright install chromium --with-deps
+
+      - name: Run EYL watcher
+        env:
+          EYL_EMAIL:    ${{ secrets.EYL_EMAIL }}
+          EYL_PASSWORD: ${{ secrets.EYL_PASSWORD }}
+        run: python troy-eyl-watcher.py
+
+      - name: Commit any updates to classes.json
+        run: |
+          git config user.name  "Troy War Room Bot"
+          git config user.email "bot@troy-war-room.local"
+          git add troy-classes.json .troy-state.json || true
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git pull --rebase origin main
+          git commit -m "auto: EYL watcher update $(date -u '+%Y-%m-%d')"
+          git push

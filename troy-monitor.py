@@ -1,95 +1,168 @@
 #!/usr/bin/env python3
 """
-Troy's Options War Room — Daily Monitor
-Checks buy zones against 52-week highs and sends iPhone push via ntfy.sh
+Troy's Options War Room — Monitor
+Reads troy-classes.json → auto-builds watchlist → fetches prices → updates dashboard
+
+KEY FEATURES:
+  • Driven by troy-classes.json — add a new class entry and this auto-updates everything
+  • Auto-injects new stock cards into the HTML when a ticker appears in classes.json for the first time
+  • Checks EYL community board for new Troy posts (set EYL_EMAIL + EYL_PASSWORD as GitHub secrets)
+  • Sends iPhone push via ntfy.sh when buy zones are hit OR new class detected
 
 SETUP (one time):
-  1. iPhone App Store → download "ntfy" (free)
-  2. In the ntfy app, tap + and subscribe to topic: troy-eyl-eli
-  3. pip3 install yfinance requests --break-system-packages
+  1. iPhone: download "ntfy" app → subscribe to topic: troy-eyl-eli
+  2. pip3 install yfinance requests beautifulsoup4 --break-system-packages
+  3. GitHub repo → Settings → Secrets → add EYL_EMAIL and EYL_PASSWORD
   4. Run manually: python3 ~/Documents/Troy\'s\ option\ class/troy-monitor.py
-  5. For daily auto-run: see troy-monitor.plist instructions below
 
 Troy's Buy Rules:
-  - Stock drops 20–30% from recent high  →  look at options
-  - Options are 30–40% cheaper than recent price  →  ENTER
-  - Option drops 30% from your entry  →  STOP LOSS EXIT
+  - Stock drops 20–30% from 52W high  →  equity trigger
+  - Option drops 30–40% from alert price  →  enter
+  - Option drops 30% from your entry  →  STOP LOSS
 """
+
+import json
+import re
+import os
+import sys
+from datetime import datetime
 
 import yfinance as yf
 import requests
-import re
-import os
-from datetime import datetime
+
+# ─── PATHS ───────────────────────────────────────────────────────────────────
+BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
+HTML_PATH    = os.path.join(BASE_DIR, 'troy-options-tracker.html')
+CLASSES_PATH = os.path.join(BASE_DIR, 'troy-classes.json')
+STATE_PATH   = os.path.join(BASE_DIR, '.troy-state.json')   # tracks last-seen EYL post
 
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
-NTFY_TOPIC = "troy-eyl-eli"          # ← Subscribe to this in the ntfy iPhone app
-NTFY_URL   = f"https://ntfy.sh/{NTFY_TOPIC}"
-HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'troy-options-tracker.html')
+NTFY_TOPIC   = "troy-eyl-eli"
+NTFY_URL     = f"https://ntfy.sh/{NTFY_TOPIC}"
+EYL_EMAIL    = os.environ.get("EYL_EMAIL", "")
+EYL_PASSWORD = os.environ.get("EYL_PASSWORD", "")
+EYL_BOARD    = "https://eyluniversity.com/community/channels/the-investors-group"
 
-# ─── WATCHLIST ────────────────────────────────────────────────────────────────
-WATCHLIST = {
-    # AI Chips / Memory
-    "NVDA": {"name": "NVIDIA Corp",          "play": "LEAPS CALLS"},
-    "DRAM": {"name": "Roundhill Memory ETF", "play": "LEAPS"},
-    "CDNS": {"name": "Cadence Design",       "play": "CALLS"},
-    "ANET": {"name": "Arista Networks",      "play": "JAN '27 $110C"},
-    "TSM":  {"name": "Taiwan Semi",          "play": "CALLS"},
-    "AMKR": {"name": "Amkor Technology",     "play": "CALLS"},
-    "MRVL": {"name": "Marvell Technology",   "play": "LEAPS"},
-    # AI Infrastructure
-    "ARM":  {"name": "ARM Holdings",         "play": "DEC '26 $270C"},
-    "DELL": {"name": "Dell Technologies",    "play": "AI SERVER PLAY"},
-    "ORCL": {"name": "Oracle",               "play": "CALLS"},
-    "VRT":  {"name": "Vertiv Holdings",      "play": "CALLS"},
-    "NOW":  {"name": "ServiceNow",           "play": "CALLS"},
-    # Other
-    "HOOD": {"name": "Robinhood Markets",    "play": "$90/$95 CALLS"},
-    "LLY":  {"name": "Eli Lilly",            "play": "MAR '27 $860C"},
-    "UBER": {"name": "Uber Technologies",    "play": "WATCHING"},
-    # Photonics — NVIDIA supply chain
-    "COHR": {"name": "Coherent Corp",        "play": "NVDA $2B INVEST"},
-    "LITE": {"name": "Lumentum Holdings",    "play": "NVDA $2B INVEST"},
-    "GLW":  {"name": "Corning Inc",          "play": "NVDA $3.2B INVEST"},
-    "IREN": {"name": "IREN Limited",         "play": "AI DATA CENTER"},
-    "MU":   {"name": "Micron Technology",    "play": "MEMORY LEAPS"},
-}
+BUY_ZONE_LOW  = 0.20   # 20% below 52W high = enter equity watch zone
+BUY_ZONE_HIGH = 0.30   # 30% below 52W high = top of buy zone
+OPT_BUY_LOW   = 0.29   # -29% from alert = entering option buy zone
+OPT_BUY_HIGH  = 0.40   # -40% from alert = bottom of option buy zone
+
 MARKET_PULSE = ["SPY", "QQQ", "SMH", "VIX"]
 
-BUY_ZONE_LOW  = 0.20   # 20% below 52W high = enter buy zone
-BUY_ZONE_HIGH = 0.30   # 30% below 52W high = bottom of buy zone
+# Colour palette for auto-injected cards (cycles by ticker hash)
+CARD_COLORS = [
+    "#4d9fff", "#00d4a0", "#f5c842", "#a78bfa", "#f97316",
+    "#34d399", "#fb923c", "#e879f9", "#38bdf8", "#f472b6",
+]
 
-# ─── OPTION CONTRACTS ─────────────────────────────────────────────────────────
-# Troy's known contracts from 5/14/26 EYL class
-# alert = Troy's entry alert price; expiry = ISO date of expiration
-# Troy's option buy rule: option is 30–40% BELOW alert price → enter
-OPT_BUY_LOW  = 0.29   # -29% from alert = entering option buy zone
-OPT_BUY_HIGH = 0.40   # -40% from alert = bottom of option buy zone
 
-OPT_CONTRACTS = {
-    # ── Troy's confirmed picks (alert = his entry price from 5/14/26 EYL class) ──
-    "NVDA": {"contract": "Mar '27 $180C", "expiry": "2027-03-19", "strike": 180.0, "opt_type": "calls", "alert": 36.67},
-    "DRAM": {"contract": "Jun '27 $33C",  "expiry": "2027-06-18", "strike": 33.0,  "opt_type": "calls", "alert": 12.61},
-    "CDNS": {"contract": "Jun '26 $310C", "expiry": "2026-06-20", "strike": 310.0, "opt_type": "calls", "alert": 23.01},
-    "ANET": {"contract": "Jan '27 $110C", "expiry": "2027-01-15", "strike": 110.0, "opt_type": "calls", "alert": 27.67},
-    "LLY":  {"contract": "Mar '27 $860C", "expiry": "2027-03-19", "strike": 860.0, "opt_type": "calls", "alert": 130.98},
-    "ARM":  {"contract": "Dec '26 $270C", "expiry": "2026-12-18", "strike": 270.0, "opt_type": "calls", "alert": None},
-    "HOOD": {"contract": "Sep '26 $90C",  "expiry": "2026-09-18", "strike": 90.0,  "opt_type": "calls", "alert": None},
-    # ── ATM LEAPS trackers (no alert yet — update when Troy announces entry) ──
-    "TSM":  {"contract": "Jan '27 $460C", "expiry": "2027-01-15", "strike": 460.0, "opt_type": "calls", "alert": None},
-    "AMKR": {"contract": "Jan '27 $90C",  "expiry": "2027-01-15", "strike": 90.0,  "opt_type": "calls", "alert": None},
-    "MRVL": {"contract": "Jan '27 $325C", "expiry": "2027-01-15", "strike": 325.0, "opt_type": "calls", "alert": None},
-    "DELL": {"contract": "Jan '27 $430C", "expiry": "2027-01-15", "strike": 430.0, "opt_type": "calls", "alert": None},
-    "ORCL": {"contract": "Jan '27 $190C", "expiry": "2027-01-15", "strike": 190.0, "opt_type": "calls", "alert": None},
-    "VRT":  {"contract": "Jan '27 $335C", "expiry": "2027-01-15", "strike": 335.0, "opt_type": "calls", "alert": None},
-    "NOW":  {"contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": None},
-    "UBER": {"contract": "Jan '27 $75C",  "expiry": "2027-01-15", "strike": 75.0,  "opt_type": "calls", "alert": None},
-    "COHR": {"contract": "Jan '27 $395C", "expiry": "2027-01-15", "strike": 395.0, "opt_type": "calls", "alert": None},
-    "LITE": {"contract": "Jan '27 $845C", "expiry": "2027-01-15", "strike": 845.0, "opt_type": "calls", "alert": None},
-    "GLW":  {"contract": "Jan '27 $195C", "expiry": "2027-01-15", "strike": 195.0, "opt_type": "calls", "alert": None},
-    "IREN": {"contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": None},
-    "MU":   {"contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": None},
-}
+# ─── LOAD CLASSES.JSON ───────────────────────────────────────────────────────
+def load_classes():
+    """
+    Read troy-classes.json and build WATCHLIST + OPT_CONTRACTS.
+    Iterates oldest-to-newest so newer classes overwrite older data for the same ticker.
+    Returns: (watchlist_dict, opt_contracts_dict, raw_json_data)
+    """
+    if not os.path.exists(CLASSES_PATH):
+        print("⚠  troy-classes.json not found — falling back to empty config")
+        return {}, {}, {}
+
+    with open(CLASSES_PATH) as f:
+        data = json.load(f)
+
+    watchlist      = {}
+    opt_contracts  = {}
+
+    # Process class entries oldest-first (newest entry wins on conflict)
+    for cls in reversed(data.get("classes", [])):
+        label = cls.get("label", cls.get("date", "?"))
+        for stock in cls.get("stocks", []):
+            t = stock["ticker"]
+            watchlist[t] = {
+                "name":        stock["name"],
+                "play":        stock["contract"],
+                "class_date":  cls.get("date", ""),
+                "class_label": label,
+            }
+            opt_contracts[t] = {
+                "contract":    stock["contract"],
+                "expiry":      stock["expiry"],
+                "strike":      stock["strike"],
+                "opt_type":    stock.get("opt_type", "calls"),
+                "alert":       stock.get("alert"),
+                "class_date":  cls.get("date", ""),
+                "class_label": label,
+            }
+
+    # Watchlist-only (no dedicated class entry)
+    for stock in data.get("watchlist_only", {}).get("stocks", []):
+        t = stock["ticker"]
+        if t not in watchlist:
+            watchlist[t] = {
+                "name":        stock["name"],
+                "play":        stock.get("reason", stock["contract"]),
+                "class_date":  None,
+                "class_label": None,
+            }
+            opt_contracts[t] = {
+                "contract":    stock["contract"],
+                "expiry":      stock["expiry"],
+                "strike":      stock["strike"],
+                "opt_type":    stock.get("opt_type", "calls"),
+                "alert":       stock.get("alert"),
+                "class_date":  None,
+                "class_label": None,
+            }
+
+    print(f"  📋 Loaded {len(watchlist)} tickers from troy-classes.json "
+          f"({len(data.get('classes', []))} classes + watchlist)")
+    return watchlist, opt_contracts, data
+
+
+# ─── HTML: AUTO-INJECT NEW STOCK CARD ────────────────────────────────────────
+def inject_new_stock_card(html, ticker, info, opt_info):
+    """
+    If ticker has no card in the HTML yet, auto-insert one before the closing
+    </div> of watchlistGrid. Returns (html, was_injected).
+    """
+    if f'data-ticker="{ticker}"' in html:
+        return html, False
+
+    color       = CARD_COLORS[hash(ticker) % len(CARD_COLORS)]
+    name        = info.get("name", ticker)
+    contract    = opt_info.get("contract", "CALLS")
+    class_date  = info.get("class_label", "")
+    class_badge = f'\n          <div class="class-date">📅 {class_date}</div>' if class_date else ""
+
+    new_card = (
+        f'\n        <div class="watch-card" data-ticker="{ticker}">'
+        f'\n          <div class="watch-ticker" style="color:{color}">{ticker}</div>'
+        f'\n          <div class="watch-name">{name}</div>'
+        f'\n          <div class="watch-price" id="wp-{ticker}">--</div>'
+        f'\n          <div class="watch-change" id="wc-{ticker}">--</div>'
+        f'\n          <div class="watch-badge">{contract} ✓</div>'
+        f'{class_badge}'
+        f'\n          <div class="bz-section" id="bz-{ticker}"></div>'
+        f'\n        </div>'
+    )
+
+    # Insert just before the closing tags of watchlistGrid
+    marker = '      </div>\n    </div>\n\n    <!-- TROY\'S PORTFOLIO'
+    if marker in html:
+        html = html.replace(marker, new_card + '\n' + marker)
+        return html, True
+
+    # Fallback: append before first </div></div> after watchlistGrid
+    alt = 'id="watchlistGrid"'
+    if alt in html:
+        idx = html.index(alt)
+        end = html.index('</div>\n    </div>', idx)
+        html = html[:end] + new_card + '\n      ' + html[end:]
+        return html, True
+
+    return html, False
+
 
 # ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
 def send_push(title, body, priority="high", tags=("bell",)):
@@ -97,11 +170,7 @@ def send_push(title, body, priority="high", tags=("bell",)):
         r = requests.post(
             NTFY_URL,
             data=body.encode("utf-8"),
-            headers={
-                "Title":    title,
-                "Priority": priority,
-                "Tags":     ",".join(tags),
-            },
+            headers={"Title": title, "Priority": priority, "Tags": ",".join(tags)},
             timeout=10,
         )
         return r.status_code == 200
@@ -109,34 +178,186 @@ def send_push(title, body, priority="high", tags=("bell",)):
         print(f"  ⚠  Push failed: {e}")
         return False
 
+
+# ─── EYL COMMUNITY BOARD CHECK ───────────────────────────────────────────────
+def load_state():
+    if os.path.exists(STATE_PATH):
+        with open(STATE_PATH) as f:
+            return json.load(f)
+    return {}
+
+def save_state(state):
+    with open(STATE_PATH, "w") as f:
+        json.dump(state, f, indent=2)
+
+# Common stock tickers to detect in post text
+KNOWN_TICKERS = set([
+    "NVDA","DRAM","CDNS","ANET","LLY","ARM","AMKR","MU","TSM","MRVL",
+    "DELL","ORCL","VRT","NOW","HOOD","UBER","COHR","LITE","GLW","IREN",
+    "AVGO","AMD","FN","MCHP","SNDK","WDC","STX","MSFT","AAPL","META",
+    "GOOGL","AMZN","CRM","PLTR","SNOW","AI","SMCI","INTC","QCOM",
+])
+
+def check_eyl_board(watchlist, opt_contracts, classes_data):
+    """
+    Attempt to check EYL community board for new Troy M. posts.
+    Requires EYL_EMAIL + EYL_PASSWORD env vars. Sends push if new class detected.
+    Returns list of any newly detected tickers not yet in our watchlist.
+    """
+    if not EYL_EMAIL or not EYL_PASSWORD:
+        print("  ℹ  EYL credentials not set — skipping community board check")
+        print("     Add EYL_EMAIL and EYL_PASSWORD as GitHub secrets to enable")
+        return []
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        print("  ⚠  beautifulsoup4 not installed — pip install beautifulsoup4")
+        return []
+
+    print("  🔍 Checking EYL community board for new Troy posts...")
+    state  = load_state()
+    last_seen_post = state.get("last_troy_post", "")
+
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                      "AppleWebKit/537.36 Chrome/120.0",
+    })
+
+    # ── Step 1: Log in ──────────────────────────────────────────
+    try:
+        login_page = session.get("https://eyluniversity.com/login", timeout=15)
+        soup = BeautifulSoup(login_page.text, "html.parser")
+
+        # Look for CSRF token or form fields
+        csrf_input = soup.find("input", {"name": re.compile(r"csrf|token|_token", re.I)})
+        form_data  = {
+            "email":    EYL_EMAIL,
+            "password": EYL_PASSWORD,
+        }
+        if csrf_input:
+            form_data[csrf_input["name"]] = csrf_input.get("value", "")
+
+        login_r = session.post(
+            "https://eyluniversity.com/login",
+            data=form_data,
+            timeout=15,
+            allow_redirects=True,
+        )
+        if "logout" not in login_r.text.lower() and "dashboard" not in login_r.url:
+            print("  ⚠  EYL login may have failed — check credentials")
+            return []
+        print("  ✓ EYL login successful")
+
+    except Exception as e:
+        print(f"  ⚠  EYL login error: {e}")
+        return []
+
+    # ── Step 2: Fetch community board ──────────────────────────
+    try:
+        board_r = session.get(EYL_BOARD, timeout=15)
+        soup2   = BeautifulSoup(board_r.text, "html.parser")
+
+        # Look for posts — EYL uses a modern framework, posts may be in divs/articles
+        # Try common patterns
+        posts = (
+            soup2.find_all("article") or
+            soup2.find_all("div", class_=re.compile(r"post|message|content", re.I))
+        )
+
+        if not posts:
+            print("  ℹ  EYL board returned no parseable posts "
+                  "(site may require JavaScript — consider Chrome extension approach)")
+            return []
+
+        new_tickers  = []
+        newest_id    = last_seen_post
+        new_troy_post = False
+
+        for post in posts[:20]:  # Check most recent 20 posts
+            text    = post.get_text(" ", strip=True)
+            post_id = post.get("id", "") or post.get("data-id", "")
+
+            # Skip if we've already seen this post
+            if post_id and post_id == last_seen_post:
+                break
+
+            # Only care about posts by Troy M.
+            author_el = post.find(class_=re.compile(r"author|name|user", re.I))
+            author    = author_el.get_text(strip=True) if author_el else ""
+            if "troy" not in author.lower() and "troy m" not in text.lower()[:200]:
+                continue
+
+            new_troy_post = True
+            if not newest_id and post_id:
+                newest_id = post_id
+
+            # Check for class-related keywords
+            class_keywords = ["class", "masterclass", "options", "leaps", "contract",
+                               "strike", "expir", "call", "covered", "pick"]
+            is_class_post  = any(kw in text.lower() for kw in class_keywords)
+
+            # Extract tickers mentioned
+            found = set(re.findall(r'\b([A-Z]{2,5})\b', text)) & KNOWN_TICKERS
+            unknown = found - set(opt_contracts.keys())
+            new_tickers.extend(unknown)
+
+            if is_class_post or unknown:
+                snippet = text[:300].replace("\n", " ")
+                print(f"\n  🆕 New Troy post detected!")
+                print(f"     Tickers: {found}")
+                if unknown:
+                    print(f"     NEW tickers not yet tracked: {unknown}")
+                print(f"     Preview: {snippet}...")
+
+                push_body = (
+                    f"New Troy post detected on EYL community board.\n\n"
+                    f"Tickers mentioned: {', '.join(sorted(found)) or 'none parsed'}\n"
+                )
+                if unknown:
+                    push_body += f"⭐ NEW tickers: {', '.join(sorted(unknown))}\n"
+                push_body += f"\nPreview: {snippet[:200]}...\n\nCheck the board and update troy-classes.json"
+                send_push("🆕 New Troy Class Alert", push_body, priority="high",
+                          tags=("school", "chart_with_upwards_trend"))
+
+        # Save the newest post ID
+        if newest_id and newest_id != last_seen_post:
+            state["last_troy_post"] = newest_id
+            save_state(state)
+
+        if not new_troy_post:
+            print("  ✓ No new Troy posts since last check")
+
+        return list(set(new_tickers))
+
+    except Exception as e:
+        print(f"  ⚠  EYL board check error: {e}")
+        return []
+
+
 # ─── DATA FETCH ──────────────────────────────────────────────────────────────
 def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
-    """Fetch the bid/ask midpoint for a specific option contract via yfinance.
-    Returns the midpoint price, or None on failure."""
     try:
-        tk = yf.Ticker(symbol)
-        # Get available expiry dates and find the closest match
+        tk        = yf.Ticker(symbol)
         available = tk.options
         if not available:
-            print(f"    ⚠  {symbol}: no option dates available")
             return None
-        # Find nearest matching expiry
-        target = datetime.strptime(expiry, "%Y-%m-%d").date()
-        closest = min(available, key=lambda d: abs((datetime.strptime(d, "%Y-%m-%d").date() - target).days))
-        chain = tk.option_chain(closest)
+        target  = datetime.strptime(expiry, "%Y-%m-%d").date()
+        closest = min(available, key=lambda d: abs(
+            (datetime.strptime(d, "%Y-%m-%d").date() - target).days))
+        chain     = tk.option_chain(closest)
         contracts = getattr(chain, opt_type, None)
         if contracts is None or contracts.empty:
             return None
         row = contracts[contracts["strike"] == float(strike)]
         if row.empty:
-            # Try nearest strike
             row = contracts.iloc[(contracts["strike"] - float(strike)).abs().argsort()[:1]]
         bid = float(row["bid"].iloc[0])
         ask = float(row["ask"].iloc[0])
-        mid = round((bid + ask) / 2, 2)
-        return mid
+        return round((bid + ask) / 2, 2)
     except Exception as e:
-        print(f"    ⚠  {symbol} option fetch: {e}")
+        print(f"    ⚠  {symbol} option: {e}")
         return None
 
 def fetch_ticker(symbol):
@@ -149,252 +370,232 @@ def fetch_ticker(symbol):
         high52  = round(float(hist["High"].max()), 2)
         change  = round((current - prev) / prev * 100, 2)
         pct_off = round((high52 - current) / high52 * 100, 1)
-        return {
-            "price":         current,
-            "change":        change,
-            "high52":        high52,
-            "pct_from_high": pct_off,
-        }
+        return {"price": current, "change": change, "high52": high52, "pct_from_high": pct_off}
     except Exception as e:
         print(f"  ⚠  {symbol}: {e}")
         return None
 
+
 # ─── HTML UPDATE ─────────────────────────────────────────────────────────────
-def update_html(all_data, opt_data=None):
-    """Patch PRICES, PRICES_AS_OF, HIGHS_52W, and OPT_PRICES blocks in the tracker HTML."""
+def update_html(all_data, opt_data, watchlist, opt_contracts):
     try:
-        with open(HTML_PATH, "r") as f:
+        with open(HTML_PATH) as f:
             html = f.read()
 
         now_str = datetime.now().strftime("%b %d, %Y ~%-I:%M %p EDT")
 
-        # --- build PRICES block ---
-        sections = [
-            ("Market Pulse",   MARKET_PULSE),
-            ("Core Watchlist", ["AMKR", "ARM", "DRAM", "HOOD", "NOW"]),
-            ("AI / Semis",     ["NVDA", "TSM", "CDNS", "ANET", "MRVL", "DELL", "ORCL", "VRT"]),
-            ("Other Picks",    ["LLY", "UBER"]),
-            ("Photonics",      ["COHR", "LITE", "GLW", "IREN"]),
-        ]
+        # ── 1. Auto-inject any new stock cards ──────────────────
+        injected = []
+        for ticker, info in watchlist.items():
+            opt_info = opt_contracts.get(ticker, {})
+            html, was_new = inject_new_stock_card(html, ticker, info, opt_info)
+            if was_new:
+                injected.append(ticker)
+                print(f"  ✨ Auto-injected new card: {ticker} ({info['name']})")
+
+        if injected:
+            push_body = (
+                f"Auto-added {len(injected)} new stock(s) to the dashboard:\n"
+                + ", ".join(injected)
+                + "\n\nUpdate troy-classes.json with Troy's alert price when he announces entry."
+            )
+            send_push("Dashboard Updated — New Stocks Added", push_body,
+                      priority="default", tags=("new",))
+
+        # ── 2. Build PRICES block ────────────────────────────────
+        all_tickers = list(watchlist.keys())
         lines = [
             "  // ── PRE-LOADED PRICES (updated by troy-monitor.py) ───",
             f"  // Last refreshed: {now_str}",
-            "  // To update manually: ask Claude to refresh, or run troy-monitor.py",
+            "  // To update: run troy-monitor.py or trigger GitHub Action",
             "  const PRICES = {",
+            "    // Market Pulse",
         ]
-        for label, tickers in sections:
-            lines.append(f"    // {label}")
-            for t in tickers:
-                if t in all_data:
-                    d = all_data[t]
-                    sign = "+" if d["change"] >= 0 else ""
-                    lines.append(
-                        f"    {t.ljust(4)}: {{ price: {d['price']:.2f},  change: {sign}{d['change']:.2f}  }},"
-                    )
+        for t in MARKET_PULSE:
+            if t in all_data:
+                d = all_data[t]
+                sign = "+" if d["change"] >= 0 else ""
+                lines.append(f"    {t.ljust(4)}: {{ price: {d['price']:.2f},  change: {sign}{d['change']:.2f}  }},")
+        lines.append("    // Watchlist")
+        for t in all_tickers:
+            if t in all_data:
+                d = all_data[t]
+                sign = "+" if d["change"] >= 0 else ""
+                lines.append(f"    {t.ljust(4)}: {{ price: {d['price']:.2f},  change: {sign}{d['change']:.2f}  }},")
         lines.append("  };")
         lines.append(f"  const PRICES_AS_OF = '{now_str}';")
-        new_prices_block = "\n".join(lines)
+        new_prices = "\n".join(lines)
 
-        # replace old PRICES block
         html = re.sub(
             r"  // ── PRE-LOADED PRICES.*?const PRICES_AS_OF = '[^']*';",
-            new_prices_block,
-            html,
-            flags=re.DOTALL,
+            new_prices, html, flags=re.DOTALL,
         )
 
-        # --- build HIGHS_52W block ---
+        # ── 3. Build HIGHS_52W block ─────────────────────────────
         hlines = ["  const HIGHS_52W = {"]
-        for t in list(WATCHLIST.keys()):
-            if t in all_data and "high52" in all_data[t]:
+        for t in all_tickers:
+            if t in all_data:
                 hlines.append(f"    {t.ljust(4)}: {all_data[t]['high52']:.2f},")
         hlines.append("  };")
         new_highs = "\n".join(hlines)
+        html = re.sub(r"  const HIGHS_52W = \{[^}]*\};", new_highs, html, flags=re.DOTALL)
 
-        if "const HIGHS_52W" in html:
-            html = re.sub(
-                r"  const HIGHS_52W = \{[^}]*\};",
-                new_highs,
-                html,
-                flags=re.DOTALL,
-            )
-        else:
-            html = html.replace(
-                "  function refreshPrices()",
-                new_highs + "\n\n  function refreshPrices()",
-            )
+        # ── 4. Build OPT_PRICES block ────────────────────────────
+        olines = [
+            "  // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────",
+            "  // alert  = Troy's entry price  |  current = live bid/ask mid",
+            "  // Troy's option buy rule: option drops 30–40% BELOW alert → entry signal",
+            "  const OPT_PRICES = {",
+        ]
 
-        # --- build OPT_PRICES block ---
-        if opt_data:
-            olines = [
-                "  // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────",
-                f"  // alert  = Troy's entry/alert price from 5/14/26 EYL class",
-                f"  // current = live bid/ask mid — updated daily by troy-monitor.py",
-                f"  // Troy's option buy rule: option drops 30–40% BELOW alert → entry signal",
-                "  const OPT_PRICES = {",
-            ]
-            for t, info in OPT_CONTRACTS.items():
-                current = opt_data.get(t)
-                alert   = info["alert"]
-                contract = info["contract"]
-                if current is not None:
-                    cur_str = f"{current:.2f}"
-                else:
-                    # Preserve existing value — don't overwrite with null
-                    cur_str = "null"
-                alert_str = f"{alert:.2f}" if alert is not None else "null"
-                olines.append(
-                    f"    {t.ljust(4)}: {{ contract: \"{contract}\", alert: {alert_str}, current: {cur_str}  }},"
-                )
-            olines.append("  };")
-            olines.append(f"  const OPT_PRICES_AS_OF = '{now_str}';")
-            new_opt_block = "\n".join(olines)
+        # Preserve existing current prices if new fetch returned null
+        existing_opt = {}
+        m = re.search(r"const OPT_PRICES = \{(.*?)\};", html, re.DOTALL)
+        if m:
+            for line in m.group(1).split("\n"):
+                tm = re.search(r'(\w+)\s*:\s*\{.*?current:\s*([\d.]+)', line)
+                if tm:
+                    existing_opt[tm.group(1)] = float(tm.group(2))
 
-            html = re.sub(
-                r"  // ── OPTION CONTRACT REFERENCE PRICES.*?const OPT_PRICES_AS_OF = '[^']*';",
-                new_opt_block,
-                html,
-                flags=re.DOTALL,
+        for t, info in opt_contracts.items():
+            fetched = opt_data.get(t)
+            current = fetched if fetched is not None else existing_opt.get(t)
+            cur_str   = f"{current:.2f}" if current is not None else "null"
+            alert     = info.get("alert")
+            alert_str = f"{alert:.2f}" if alert is not None else "null"
+            olines.append(
+                f'    {t.ljust(4)}: {{ contract: "{info["contract"]}", alert: {alert_str}, current: {cur_str}  }},'
             )
+        olines.append("  };")
+        olines.append(f"  const OPT_PRICES_AS_OF = '{now_str}';")
+        new_opt = "\n".join(olines)
+
+        html = re.sub(
+            r"  // ── OPTION CONTRACT REFERENCE PRICES.*?const OPT_PRICES_AS_OF = '[^']*';",
+            new_opt, html, flags=re.DOTALL,
+        )
 
         with open(HTML_PATH, "w") as f:
             f.write(html)
         print(f"  ✓ HTML updated ({now_str})")
+
     except Exception as e:
         print(f"  ⚠  HTML update failed: {e}")
+        import traceback; traceback.print_exc()
+
 
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 def main():
     print(f"\n🔍 Troy's War Room Monitor — {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
 
-    all_data        = {}
+    # ── Load class config ────────────────────────────────────────
+    watchlist, opt_contracts, classes_data = load_classes()
+    if not watchlist:
+        print("⚠  No watchlist — check troy-classes.json"); sys.exit(1)
+
+    all_data = {}
     buy_zone_hits   = []
     watch_zone_hits = []
 
     # ── Fetch equity prices ──────────────────────────────────────
-    for ticker, info in WATCHLIST.items():
+    print("\n  Fetching stock prices...")
+    for ticker, info in watchlist.items():
         print(f"  {ticker:<5}", end=" ")
         d = fetch_ticker(ticker)
         if not d:
-            print("— skip")
-            continue
+            print("— skip"); continue
         all_data[ticker] = d
         pct = d["pct_from_high"]
         if   pct < 10:  zone = "📈 near high"
         elif pct < 20:  zone = "👀 watch zone"
         elif pct <= 30: zone = "🟠 BUY ZONE ←"
         else:           zone = "❌ below zone"
-        print(f"${d['price']:>9.2f}  |  {pct:>5.1f}% off 52W high  |  {zone}")
+        print(f"${d['price']:>9.2f}  |  {pct:>5.1f}% off high  |  {zone}")
 
-        pct_frac = pct / 100
-        if BUY_ZONE_LOW <= pct_frac <= BUY_ZONE_HIGH:
+        pf = pct / 100
+        if BUY_ZONE_LOW <= pf <= BUY_ZONE_HIGH:
             buy_zone_hits.append((ticker, d, info))
-        elif 0.10 <= pct_frac < BUY_ZONE_LOW:
+        elif 0.10 <= pf < BUY_ZONE_LOW:
             watch_zone_hits.append((ticker, d, info))
 
-    # Fetch market pulse tickers
     for t in MARKET_PULSE:
         d = fetch_ticker(t)
-        if d:
-            all_data[t] = d
+        if d: all_data[t] = d
 
     # ── Fetch option prices ──────────────────────────────────────
     print("\n  Fetching option prices...")
-    opt_data = {}
-    both_zone_hits = []  # tickers where BOTH stock AND option are in buy zones
-    for ticker, info in OPT_CONTRACTS.items():
+    opt_data       = {}
+    both_zone_hits = []
+    for ticker, info in opt_contracts.items():
         print(f"    {ticker:<5}", end=" ")
         mid = fetch_option_price(ticker, info["expiry"], info["strike"], info["opt_type"])
         opt_data[ticker] = mid
         if mid is None:
-            print("— skip")
-            continue
-        alert = info["alert"]
+            print("— skip"); continue
+        alert = info.get("alert")
         if alert:
-            pct_vs_alert = (mid - alert) / alert * 100
-            flag = ""
-            if -40 <= pct_vs_alert <= -29:
-                flag = "🟠 OPTION BUY ZONE ←"
-            elif pct_vs_alert < -40:
-                flag = "❌ below opt zone"
-            print(f"${mid:>7.2f}  (alert ${alert})  |  {pct_vs_alert:+.1f}% vs alert  {flag}")
-            # Check BOTH conditions
+            pct_vs = (mid - alert) / alert * 100
+            flag   = ""
+            if -40 <= pct_vs <= -29: flag = "🟠 OPTION BUY ZONE ←"
+            elif pct_vs < -40:       flag = "❌ below opt zone"
+            print(f"${mid:>7.2f}  (alert ${alert})  |  {pct_vs:+.1f}%  {flag}")
             eq = all_data.get(ticker)
             if eq:
-                pct_off_high = eq["pct_from_high"] / 100
-                stock_in_zone = BUY_ZONE_LOW <= pct_off_high <= BUY_ZONE_HIGH
-                opt_in_zone   = -40 <= pct_vs_alert <= -29
-                if stock_in_zone and opt_in_zone:
-                    both_zone_hits.append((ticker, eq, info, mid, pct_vs_alert))
+                pf = eq["pct_from_high"] / 100
+                if BUY_ZONE_LOW <= pf <= BUY_ZONE_HIGH and -40 <= pct_vs <= -29:
+                    both_zone_hits.append((ticker, eq, info, mid, pct_vs))
         else:
-            print(f"${mid:>7.2f}  (no alert price set)")
+            print(f"${mid:>7.2f}  (no alert set)")
 
     print(f"\n  → {len(buy_zone_hits)} stocks in equity buy zone")
-    print(f"  → {len(both_zone_hits)} with BOTH stock + option in zone\n")
+    print(f"  → {len(both_zone_hits)} with BOTH conditions met\n")
 
-    # ── Push: BOTH conditions triggered (highest priority) ──────
+    # ── Push alerts ──────────────────────────────────────────────
     if both_zone_hits:
         lines = []
         for t, d, info, opt_mid, opt_pct in both_zone_hits:
-            alert = OPT_CONTRACTS[t]["alert"]
-            buy_hi = round(d["high52"] * 0.80, 2)
-            buy_lo = round(d["high52"] * 0.70, 2)
+            alert = opt_contracts[t]["alert"]
             lines.append(
                 f"• {t} ({info['name']})\n"
                 f"  Stock: ${d['price']} | {d['pct_from_high']}% off high\n"
-                f"  Option ({OPT_CONTRACTS[t]['contract']}): ${opt_mid} | {opt_pct:+.1f}% vs ${alert} alert\n"
-                f"  Buy zone: ${buy_hi}–${buy_lo}"
+                f"  Option ({opt_contracts[t]['contract']}): ${opt_mid} | {opt_pct:+.1f}% vs ${alert}\n"
+                f"  Buy zone: ${round(d['high52']*0.80,2)}–${round(d['high52']*0.70,2)}"
             )
-        body = (
-            "BOTH criteria met — this is Troy's ENTER signal:\n\n"
-            + "\n\n".join(lines)
-            + "\n\nStock 20-30% off high ✓ + Option 30-40% cheaper than alert ✓"
-        )
-        ok = send_push("FULL BUY SIGNAL - Troy War Room", body, priority="urgent",
-                       tags=("rotating_light", "chart_with_upwards_trend"))
-        print(f"  Push (FULL SIGNAL): {'✓ sent' if ok else '✗ failed'}")
+        body = ("BOTH criteria met — Troy's ENTER signal:\n\n" + "\n\n".join(lines) +
+                "\n\nStock 20-30% off high ✓  Option 30-40% below alert ✓")
+        ok = send_push("FULL BUY SIGNAL — Troy War Room", body,
+                       priority="urgent", tags=("rotating_light","chart_with_upwards_trend"))
+        print(f"  Push (FULL SIGNAL): {'✓' if ok else '✗'}")
 
-    # ── Push: Stock only in buy zone (equity signal, check options manually) ──
     elif buy_zone_hits:
         lines = []
         for t, d, info in buy_zone_hits:
-            buy_hi = round(d["high52"] * 0.80, 2)
-            buy_lo = round(d["high52"] * 0.70, 2)
             opt_line = ""
-            opt_mid = opt_data.get(t)
-            if opt_mid and OPT_CONTRACTS.get(t, {}).get("alert"):
-                alert = OPT_CONTRACTS[t]["alert"]
-                pct = (opt_mid - alert) / alert * 100
-                opt_line = f"\n  Option: ${opt_mid} | {pct:+.1f}% vs ${alert} alert"
-            lines.append(
-                f"• {t} ({info['name']})\n"
-                f"  Stock: ${d['price']} | {d['pct_from_high']}% off 52W high"
-                + opt_line
-            )
-        body = (
-            "Stock in Troy's 20-30% window. Check if option is 30-40% cheaper:\n\n"
-            + "\n\n".join(lines)
-        )
-        ok = send_push("Troy Buy Zone Alert - Stock", body, priority="high",
-                       tags=("bell", "chart_with_upwards_trend"))
-        print(f"  Push (stock zone): {'✓ sent' if ok else '✗ failed'}")
+            if opt_data.get(t) and opt_contracts.get(t, {}).get("alert"):
+                a   = opt_contracts[t]["alert"]
+                pct = (opt_data[t] - a) / a * 100
+                opt_line = f"\n  Option: ${opt_data[t]} | {pct:+.1f}% vs ${a} alert"
+            lines.append(f"• {t} ({info['name']})\n"
+                         f"  Stock: ${d['price']} | {d['pct_from_high']}% off high{opt_line}")
+        body = ("Stock in Troy's 20-30% window:\n\n" + "\n\n".join(lines))
+        ok = send_push("Troy Buy Zone — Stock", body, priority="high",
+                       tags=("bell","chart_with_upwards_trend"))
+        print(f"  Push (stock zone): {'✓' if ok else '✗'}")
 
-    # ── Push: Approaching (watch zone) ──────────────────────────
     if watch_zone_hits:
-        lines = [
-            f"• {t} — ${d['price']} | {d['pct_from_high']}% from high | {info['play']}"
-            for t, d, info in watch_zone_hits
-        ]
-        body = "Getting close to Troy's 20% entry window:\n\n" + "\n".join(lines)
-        ok = send_push("Approaching Buy Zone", body, priority="default", tags=("eyes",))
-        print(f"  Push (watch):      {'✓ sent' if ok else '✗ failed'}")
+        lines = [f"• {t} — ${d['price']} | {d['pct_from_high']}% from high"
+                 for t, d, _ in watch_zone_hits]
+        ok = send_push("Approaching Buy Zone", "Getting close (10-20% off high):\n\n" +
+                       "\n".join(lines), priority="default", tags=("eyes",))
+        print(f"  Push (watch):      {'✓' if ok else '✗'}")
 
-    # ── No alerts ────────────────────────────────────────────────
-    if not buy_zone_hits and not watch_zone_hits:
-        print("  No alerts. All stocks near highs — stay patient.")
+    # ── EYL community board check (once per day, ~market close) ──
+    hour = datetime.now().hour
+    if 20 <= hour <= 21:   # ~4-5 PM ET in UTC
+        check_eyl_board(watchlist, opt_contracts, classes_data)
 
     # ── Update HTML ──────────────────────────────────────────────
-    update_html(all_data, opt_data)
+    update_html(all_data, opt_data, watchlist, opt_contracts)
     print("\n✅ Done.\n")
 
 

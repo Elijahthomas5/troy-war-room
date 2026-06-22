@@ -162,6 +162,23 @@
 
     .loading { color: var(--muted); font-size: 12px; }
 
+    /* CLASS HISTORY */
+    .class-entry { border-bottom: 1px solid rgba(42,51,71,0.6); padding: 10px 0; }
+    .class-entry:last-child { border-bottom: none; }
+    .class-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; cursor: pointer; }
+    .class-hdr-left { display: flex; align-items: center; gap: 8px; }
+    .class-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--eyl-gold); flex-shrink: 0; }
+    .class-label-text { font-size: 12px; font-weight: 700; color: var(--text); }
+    .class-date-text { font-size: 10px; color: var(--muted); }
+    .class-toggle { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+    .class-stocks { display: none; padding: 4px 0 0 16px; }
+    .class-stocks.open { display: block; }
+    .class-stock-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; }
+    .class-stock-ticker { font-size: 11px; font-weight: 700; color: var(--eyl-gold); width: 48px; }
+    .class-stock-contract { font-size: 10px; color: var(--muted); flex: 1; }
+    .class-stock-gain { font-size: 10px; font-weight: 700; }
+    .class-notes { font-size: 10px; color: var(--muted); font-style: italic; margin: 4px 0 6px 16px; }
+
     /* WAR ROOM STATUS BAR */
     .status-cmd-bar { background: #0a0c12; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .zone-counter { display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-radius: 10px; min-width: 150px; }
@@ -600,6 +617,14 @@
   <!-- SIDEBAR -->
   <div class="sidebar">
 
+    <!-- CLASS HISTORY -->
+    <div class="section">
+      <div class="section-title"><span>🎓</span> Class History</div>
+      <div id="classHistoryList">
+        <!-- populated by renderClassHistory() -->
+      </div>
+    </div>
+
     <!-- TROY'S RULES -->
     <div class="section">
       <div class="section-title"><span>📋</span> Troy's Rules</div>
@@ -844,6 +869,88 @@
       label = `❌ ${pctOff.toFixed(1)}% below — past zone`;
     }
     return { zone, cls, dotCls, label, buyHi, buyLo, high, pctOff };
+  }
+
+  // ── CLASS HISTORY ──────────────────────────────────────────────────────────
+  // Sourced from troy-classes.json — monitor.py injects this at runtime.
+  // This static copy matches what's in the JSON as of last deploy.
+  const CLASSES_DATA = [
+    {
+      id: "2026-05-14",
+      date: "May 14, 2026",
+      label: "May '26 Options Masterclass",
+      notes: "Semiconductor + AI infrastructure. PDF available.",
+      stocks: [
+        { ticker: "NVDA", contract: "Mar '27 $180C", alert: 36.67 },
+        { ticker: "DRAM", contract: "Jun '27 $33C",  alert: 12.61 },
+        { ticker: "CDNS", contract: "Jun '26 $310C", alert: 23.01 },
+        { ticker: "ANET", contract: "Jan '27 $110C", alert: 27.67 },
+        { ticker: "LLY",  contract: "Mar '27 $860C", alert: 130.98 },
+        { ticker: "ARM",  contract: "Dec '26 $270C", alert: null },
+        { ticker: "AMKR", contract: "Jan '27 $90C",  alert: null },
+      ]
+    },
+    {
+      id: "2026-04-16",
+      date: "Apr 16, 2026",
+      label: "Apr '26 Class",
+      notes: "DRAM + MU memory thesis. No PDF — reconstructed from community board.",
+      stocks: [
+        { ticker: "DRAM", contract: "Jun '27 $33C",  alert: 12.61 },
+        { ticker: "MU",   contract: "Jan '27 $120C", alert: null },
+      ]
+    },
+  ];
+
+  function renderClassHistory() {
+    const el = document.getElementById('classHistoryList');
+    if (!el) return;
+    let html = '';
+    CLASSES_DATA.forEach((cls, i) => {
+      const stockRows = cls.stocks.map(s => {
+        const opt = OPT_PRICES[s.ticker];
+        let gainHtml = '';
+        if (opt && opt.current && s.alert) {
+          const pct = ((opt.current - s.alert) / s.alert * 100).toFixed(1);
+          const cls2 = pct >= 0 ? 'opt-up' : (pct > -29 ? 'opt-watch' : 'opt-buy');
+          gainHtml = `<span class="${cls2} class-stock-gain">${pct >= 0 ? '+' : ''}${pct}%</span>`;
+        } else if (!s.alert) {
+          gainHtml = `<span style="color:var(--muted);font-size:9px">no alert</span>`;
+        }
+        return `<div class="class-stock-row">
+          <span class="class-stock-ticker">${s.ticker}</span>
+          <span class="class-stock-contract">${s.contract}</span>
+          ${gainHtml}
+        </div>`;
+      }).join('');
+
+      html += `<div class="class-entry">
+        <div class="class-hdr" onclick="toggleClass(${i})">
+          <div class="class-hdr-left">
+            <div class="class-dot"></div>
+            <div>
+              <div class="class-label-text">${cls.label}</div>
+              <div class="class-date-text">${cls.date} · ${cls.stocks.length} picks</div>
+            </div>
+          </div>
+          <div class="class-toggle" id="ct-${i}">▼</div>
+        </div>
+        ${cls.notes ? `<div class="class-notes">${cls.notes}</div>` : ''}
+        <div class="class-stocks" id="cs-${i}">${stockRows}</div>
+      </div>`;
+    });
+    if (!CLASSES_DATA.length) {
+      html = '<div style="color:var(--muted);font-size:11px">No class data yet.<br>Add entries to troy-classes.json</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  function toggleClass(i) {
+    const stocks = document.getElementById(`cs-${i}`);
+    const toggle = document.getElementById(`ct-${i}`);
+    if (!stocks) return;
+    stocks.classList.toggle('open');
+    if (toggle) toggle.textContent = stocks.classList.contains('open') ? '▲' : '▼';
   }
 
   function zoneLabel(zone) {
@@ -1182,6 +1289,7 @@
 
   renderPositions();
   refreshPrices();
+  renderClassHistory();
 </script>
 </body>
 </html>

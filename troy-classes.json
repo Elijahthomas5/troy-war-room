@@ -1,0 +1,62 @@
+{
+  "_readme": "Troy's EYL University Option Classes — source of truth for all picks. Add a new class entry whenever Troy covers new names. troy-monitor.py reads this file and auto-injects new tickers into the dashboard.",
+  "classes": [
+    {
+      "id": "2026-05-14",
+      "date": "May 14, 2026",
+      "label": "May '26 Options Masterclass",
+      "notes": "Semiconductor + AI infrastructure deep dive. PDF available.",
+      "stocks": [
+        { "ticker": "NVDA", "name": "NVIDIA Corporation",    "contract": "Mar '27 $180C", "expiry": "2027-03-19", "strike": 180.0, "opt_type": "calls", "alert": 36.67 },
+        { "ticker": "DRAM", "name": "Roundhill Memory ETF",  "contract": "Jun '27 $33C",  "expiry": "2027-06-18", "strike": 33.0,  "opt_type": "calls", "alert": 12.61 },
+        { "ticker": "CDNS", "name": "Cadence Design Systems","contract": "Jun '26 $310C", "expiry": "2026-06-20", "strike": 310.0, "opt_type": "calls", "alert": 23.01 },
+        { "ticker": "ANET", "name": "Arista Networks",       "contract": "Jan '27 $110C", "expiry": "2027-01-15", "strike": 110.0, "opt_type": "calls", "alert": 27.67 },
+        { "ticker": "LLY",  "name": "Eli Lilly",             "contract": "Mar '27 $860C", "expiry": "2027-03-19", "strike": 860.0, "opt_type": "calls", "alert": 130.98 },
+        { "ticker": "ARM",  "name": "ARM Holdings",          "contract": "Dec '26 $270C", "expiry": "2026-12-18", "strike": 270.0, "opt_type": "calls", "alert": null },
+        { "ticker": "AMKR", "name": "Amkor Technology",      "contract": "Jan '27 $90C",  "expiry": "2027-01-15", "strike": 90.0,  "opt_type": "calls", "alert": null }
+      ]
+    },
+    {
+      "id": "2026-04-16",
+      "date": "Apr 16, 2026",
+      "label": "Apr '26 Class",
+      "notes": "DRAM first introduced. MU also mentioned as memory play. No PDF — reconstructed from community board.",
+      "stocks": [
+        { "ticker": "DRAM", "name": "Roundhill Memory ETF",  "contract": "Jun '27 $33C",  "expiry": "2027-06-18", "strike": 33.0,  "opt_type": "calls", "alert": 12.61 },
+        { "ticker": "MU",   "name": "Micron Technology",     "contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": null }
+      ]
+    }
+  ],
+  "watchlist_only": {
+    "_note": "Stocks Troy has discussed / in his book but no specific class entry yet. Add alert price when Troy gives one.",
+    "stocks": [
+      { "ticker": "TSM",  "name": "Taiwan Semiconductor", "reason": "Troy's semiconductor ecosystem thesis", "contract": "Jan '27 $460C", "expiry": "2027-01-15", "strike": 460.0, "opt_type": "calls", "alert": null },
+      { "ticker": "MRVL", "name": "Marvell Technology",   "reason": "AI networking — Troy's book",         "contract": "Jan '27 $325C", "expiry": "2027-01-15", "strike": 325.0, "opt_type": "calls", "alert": null },
+      { "ticker": "DELL", "name": "Dell Technologies",    "reason": "AI server play",                       "contract": "Jan '27 $430C", "expiry": "2027-01-15", "strike": 430.0, "opt_type": "calls", "alert": null },
+      { "ticker": "ORCL", "name": "Oracle Corporation",   "reason": "Cloud + AI infrastructure",            "contract": "Jan '27 $190C", "expiry": "2027-01-15", "strike": 190.0, "opt_type": "calls", "alert": null },
+      { "ticker": "VRT",  "name": "Vertiv Holdings",      "reason": "Data center cooling",                  "contract": "Jan '27 $335C", "expiry": "2027-01-15", "strike": 335.0, "opt_type": "calls", "alert": null },
+      { "ticker": "NOW",  "name": "ServiceNow",           "reason": "Enterprise AI software",               "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
+      { "ticker": "HOOD", "name": "Robinhood Markets",    "reason": "Retail investing boom",                "contract": "Sep '26 $90C",  "expiry": "2026-09-18", "strike": 90.0,  "opt_type": "calls", "alert": null },
+      { "ticker": "UBER", "name": "Uber Technologies",    "reason": "Troy watching for entry",              "contract": "Jan '27 $75C",  "expiry": "2027-01-15", "strike": 75.0,  "opt_type": "calls", "alert": null },
+      { "ticker": "COHR", "name": "Coherent Corp.",       "reason": "NVDA $2B photonics investment",        "contract": "Jan '27 $395C", "expiry": "2027-01-15", "strike": 395.0, "opt_type": "calls", "alert": null },
+      { "ticker": "LITE", "name": "Lumentum Holdings",    "reason": "NVDA $2B photonics investment",        "contract": "Jan '27 $845C", "expiry": "2027-01-15", "strike": 845.0, "opt_type": "calls", "alert": null },
+      { "ticker": "GLW",  "name": "Corning Inc.",         "reason": "NVDA $3.2B fiber investment",          "contract": "Jan '27 $195C", "expiry": "2027-01-15", "strike": 195.0, "opt_type": "calls", "alert": null },
+      { "ticker": "IREN", "name": "IREN Limited",         "reason": "NVDA $2.1B AI data center investment", "contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": null }
+    ]
+  },
+  "how_to_add_new_class": {
+    "step1": "Copy the class template below into the 'classes' array above (newest first)",
+    "step2": "Fill in date, label, notes, and the stocks Troy covered with their contracts",
+    "step3": "Set alert to Troy's entry price if he gave one, null if not",
+    "step4": "Commit and push — troy-monitor.py will auto-add any new tickers to the dashboard",
+    "template": {
+      "id": "YYYY-MM-DD",
+      "date": "Mon DD, YYYY",
+      "label": "Month 'YY Class",
+      "notes": "Brief description of what was covered",
+      "stocks": [
+        { "ticker": "TICK", "name": "Company Name", "contract": "Mon 'YY $XXXC", "expiry": "YYYY-MM-DD", "strike": 0.0, "opt_type": "calls", "alert": null }
+      ]
+    }
+  }
+}
