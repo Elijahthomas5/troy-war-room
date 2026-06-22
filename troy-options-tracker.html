@@ -499,6 +499,15 @@
           <div class="class-date">📅 Apr 16 class</div>
           <div class="bz-section" id="bz-MU"></div>
         </div>
+        <div class="watch-card" data-ticker="SNPS">
+          <div class="watch-ticker" style="color:#f5c842">SNPS</div>
+          <div class="watch-name">Synopsys Inc.</div>
+          <div class="watch-price" id="wp-SNPS">--</div>
+          <div class="watch-change" id="wc-SNPS">--</div>
+          <div class="watch-badge">CALLS ✓</div>
+          <div class="class-date">📅 Feb 19 class</div>
+          <div class="bz-section" id="bz-SNPS"></div>
+        </div>
       </div>
     </div>
 
@@ -662,7 +671,7 @@
         <button class="brief-edit-btn" onclick="toggleBrief()">Edit</button>
       </div>
       <div class="brief-content" id="briefContent">
-        <p>AI Chip LEAPS: <span class="brief-ticker">NVDA</span> <span class="brief-ticker">DRAM</span> <span class="brief-ticker">ANET</span> <span class="brief-ticker">CDNS</span> <span class="brief-ticker">MRVL</span> <span class="brief-ticker">TSM</span></p>
+        <p>AI Chip LEAPS: <span class="brief-ticker">NVDA</span> <span class="brief-ticker">DRAM</span> <span class="brief-ticker">ANET</span> <span class="brief-ticker">CDNS</span> <span class="brief-ticker">SNPS</span> <span class="brief-ticker">MRVL</span> <span class="brief-ticker">TSM</span></p>
         <p>AI Infrastructure: <span class="brief-ticker">DELL</span> <span class="brief-ticker">ORCL</span> <span class="brief-ticker">VRT</span> <span class="brief-ticker">NOW</span></p>
         <p>Other Plays: <span class="brief-ticker">AMKR</span> <span class="brief-ticker">ARM</span> <span class="brief-ticker">HOOD</span> <span class="brief-ticker">LLY</span> <span class="brief-ticker">UBER</span></p>
         <p>📌 Next live class: <strong>June 25, 2026</strong></p>
@@ -793,6 +802,7 @@
     GLW : { contract: "Jan '27 $195C", alert: null, current: 51.05  },
     IREN: { contract: "Jan '27 $60C", alert: null, current: 17.12  },
     MU  : { contract: "Jan '27 $120C", alert: null, current: null   },
+    SNPS: { contract: "Jun '26 $440C", alert: 30.00, current: null  },
   };
   const OPT_PRICES_AS_OF = 'Jun 22, 2026 ~5:41 PM EDT';
 
@@ -819,6 +829,7 @@
     GLW : 211.47,
     IREN: 76.87,
     MU  : 157.54,
+    SNPS: 651.00,
   };
 
   function getOptionInfo(ticker) {
@@ -898,6 +909,35 @@
       stocks: [
         { ticker: "DRAM", contract: "Jan '27 $33C",  alert: 9.70 },
         { ticker: "MU",   contract: "Jan '27 $120C", alert: null },
+      ]
+    },
+    {
+      id: "2026-03-19",
+      date: "Mar 19, 2026",
+      label: "Mar '26 Class",
+      notes: "Micron earnings review. Photonics deep-dive — GLW (Corning) + LITE (Lumentum) earnings blowout. Fiber optics as AI data center infrastructure play. No new contracts given.",
+      stocks: [
+        { ticker: "GLW",  contract: "Jan '27 $195C", alert: null },
+        { ticker: "LITE", contract: "Jan '27 $845C", alert: null },
+      ]
+    },
+    {
+      id: "2026-02-19",
+      date: "Feb 19, 2026",
+      label: "Feb '26 Class (feat. Illio)",
+      notes: "EDA thesis: NVDA $2B investment in Synopsys. SNPS pulled back 30% to $442 from 52-week high $651. Troy bought Jun '26 $440C at ~$30/contract. CDNS already in portfolio up 13%.",
+      stocks: [
+        { ticker: "SNPS", contract: "Jun '26 $440C", alert: 30.00 },
+        { ticker: "CDNS", contract: "Jun '26 $310C", alert: null },
+      ]
+    },
+    {
+      id: "2025-10-02",
+      date: "Oct 2, 2025",
+      label: "Oct '25 Class",
+      notes: "Portfolio rotation — Dec 2025 expiries into Jan 2026/2027 LEAPS. Corning (GLW) introduced: iPhone 17 glass + AI data center fiber optics thesis, up 83% in prior 12 months.",
+      stocks: [
+        { ticker: "GLW", contract: "Jan '27 $195C", alert: null },
       ]
     },
   ];

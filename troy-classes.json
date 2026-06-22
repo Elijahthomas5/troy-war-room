@@ -2,6 +2,35 @@
   "_readme": "Troy's EYL University Option Classes — source of truth for all picks. Add a new class entry whenever Troy covers new names. troy-monitor.py reads this file and auto-injects new tickers into the dashboard.",
   "classes": [
     {
+      "id": "2026-03-19",
+      "date": "Mar 19, 2026",
+      "label": "Mar '26 Class",
+      "notes": "Micron earnings review (beat but stock sold off). Photonics deep-dive — GLW (Corning) + LITE (Lumentum) earnings blowout. Fiber optics as AI data center infrastructure play. No new contracts given; reinforcement of existing thesis. No PDF.",
+      "stocks": [
+        { "ticker": "GLW",  "name": "Corning Inc.",      "contract": "Jan '27 $195C", "expiry": "2027-01-17", "strike": 195.0, "opt_type": "calls", "alert": null },
+        { "ticker": "LITE", "name": "Lumentum Holdings", "contract": "Jan '27 $845C", "expiry": "2027-01-17", "strike": 845.0, "opt_type": "calls", "alert": null }
+      ]
+    },
+    {
+      "id": "2026-02-19",
+      "date": "Feb 19, 2026",
+      "label": "Feb '26 Class (feat. Illio)",
+      "notes": "EDA (Electronic Design Automation) thesis: NVDA $2B investment in Synopsys signals AI chip design software boom. SNPS 52-week high $651, pulled back 30% to $442. Troy bought Jun '26 $440C at ~$30/contract ($3,000 ea). CDNS already in portfolio up 13%. Illio options income demo in second half. No PDF.",
+      "stocks": [
+        { "ticker": "SNPS", "name": "Synopsys Inc.",          "contract": "Jun '26 $440C", "expiry": "2026-06-19", "strike": 440.0, "opt_type": "calls", "alert": 30.00 },
+        { "ticker": "CDNS", "name": "Cadence Design Systems", "contract": "Jun '26 $310C", "expiry": "2026-06-20", "strike": 310.0, "opt_type": "calls", "alert": null }
+      ]
+    },
+    {
+      "id": "2025-10-02",
+      "date": "Oct 2, 2025",
+      "label": "Oct '25 Class",
+      "notes": "Portfolio rotation class — rotating Dec 2025 expiries into Jan 2026/2027 LEAPS. Corning (GLW) introduced: Apple iPhone 17 glass + AI data center fiber optics thesis, up 83% over prior 12 months. Broadcom-Corning partnership highlight. No specific contract prices given for GLW. No PDF.",
+      "stocks": [
+        { "ticker": "GLW", "name": "Corning Inc.", "contract": "Jan '27 $195C", "expiry": "2027-01-17", "strike": 195.0, "opt_type": "calls", "alert": null }
+      ]
+    },
+    {
       "id": "2026-05-14",
       "date": "May 14, 2026",
       "label": "May '26 Options Masterclass",
