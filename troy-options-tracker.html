@@ -161,6 +161,52 @@
 
     .loading { color: var(--muted); font-size: 12px; }
 
+    /* WAR ROOM STATUS BAR */
+    .status-cmd-bar { background: #0a0c12; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .zone-counter { display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-radius: 10px; min-width: 150px; }
+    .zone-counter.zc-buy { background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.4); }
+    .zone-counter.zc-watch { background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.3); }
+    .zone-counter.zc-safe { background: rgba(0,212,160,0.06); border: 1px solid rgba(0,212,160,0.2); }
+    .zc-count { font-size: 32px; font-weight: 900; line-height: 1; }
+    .zc-buy .zc-count { color: #f97316; }
+    .zc-watch .zc-count { color: var(--yellow); }
+    .zc-safe .zc-count { color: var(--green); }
+    .zc-info {}
+    .zc-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .zc-buy .zc-label { color: #f97316; }
+    .zc-watch .zc-label { color: var(--yellow); }
+    .zc-safe .zc-label { color: var(--green); }
+    .zc-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .filter-group { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .filter-label { font-size: 11px; color: var(--muted); }
+    .filter-bar { display: flex; gap: 6px; }
+    .filter-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .filter-btn:hover { border-color: var(--eyl-gold); color: var(--text); }
+    .filter-btn.f-active { border-color: var(--eyl-gold); color: var(--eyl-gold); background: rgba(201,162,39,0.1); }
+    .filter-btn.f-active-buy { border-color: #f97316; color: #f97316; background: rgba(249,115,22,0.12); }
+    .filter-btn.f-active-watch { border-color: var(--yellow); color: var(--yellow); background: rgba(245,200,66,0.1); }
+
+    /* CARD ZONE STATES */
+    .watch-card.card-buy { background: rgba(249,115,22,0.07); border: 1px solid #f97316 !important; animation: pulse-card 2.5s ease-in-out infinite; }
+    .watch-card.card-both { background: rgba(249,115,22,0.13); border: 2px solid #f97316 !important; animation: pulse-card 1.8s ease-in-out infinite; }
+    .watch-card.card-watch { background: rgba(245,200,66,0.04); border: 1px solid rgba(245,200,66,0.5) !important; }
+    @keyframes pulse-card { 0%,100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); } 50% { box-shadow: 0 0 10px 2px rgba(249,115,22,0.18); } }
+
+    /* BZ SECTION — key metric display */
+    .bz-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .pct-big { font-size: 26px; font-weight: 900; line-height: 1.1; margin-bottom: 2px; }
+    .zone-pill { display: inline-block; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 10px; margin-bottom: 3px; }
+    .pill-buy   { background: rgba(249,115,22,0.2); color: #f97316; }
+    .pill-watch { background: rgba(245,200,66,0.15); color: var(--yellow); }
+    .pill-near  { background: rgba(0,212,160,0.12); color: var(--green); }
+    .pill-below { background: rgba(255,77,109,0.12); color: var(--red); }
+    .zone-range { font-size: 9px; color: var(--muted); margin-bottom: 5px; }
+    .opt-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 5px 0; }
+    .opt-compact { font-size: 9px; display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+    .opt-tag { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #434d65; background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; flex-shrink: 0; }
+    .opt-val { font-size: 10px; font-weight: 700; }
+    .opt-sub { font-size: 8px; color: var(--muted); display: block; margin-top: 1px; }
+
     /* MOBILE */
     @media (max-width: 768px) {
       body { font-size: 13px; }
@@ -220,6 +266,39 @@
 
 <!-- prices injected via Claude — no API key needed -->
 
+<!-- WAR ROOM STATUS BAR -->
+<div class="status-cmd-bar">
+  <div class="zone-counter zc-buy">
+    <div class="zc-count" id="cnt-buy">–</div>
+    <div class="zc-info">
+      <div class="zc-label">In Buy Zone</div>
+      <div class="zc-sub">Stock 20–30% off high</div>
+    </div>
+  </div>
+  <div class="zone-counter zc-watch">
+    <div class="zc-count" id="cnt-watch">–</div>
+    <div class="zc-info">
+      <div class="zc-label">Approaching</div>
+      <div class="zc-sub">10–20% off — get ready</div>
+    </div>
+  </div>
+  <div class="zone-counter zc-safe">
+    <div class="zc-count" id="cnt-safe">–</div>
+    <div class="zc-info">
+      <div class="zc-label">Safe Zone</div>
+      <div class="zc-sub">Near highs — stay patient</div>
+    </div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">View:</span>
+    <div class="filter-bar">
+      <button class="filter-btn f-active" id="fb-all" onclick="filterCards('all')">All</button>
+      <button class="filter-btn" id="fb-buy" onclick="filterCards('buy')">🟠 In Zone</button>
+      <button class="filter-btn" id="fb-watch" onclick="filterCards('watch')">👀 Approaching</button>
+    </div>
+  </div>
+</div>
+
 <!-- ALERT BANNER -->
 <div class="alert-banner" id="alertBanner">
   <h3>🚨 STOP LOSS ALERT — Troy's 30% Rule Triggered</h3>
@@ -233,139 +312,158 @@
     <!-- WATCHLIST -->
     <div class="section">
       <div class="section-title"><span>📡</span> Troy's Watch List</div>
-      <div class="watchlist">
-        <div class="watch-card">
+      <div class="watchlist" id="watchlistGrid">
+        <div class="watch-card" data-ticker="AMKR">
           <div class="watch-ticker" style="color:#4d9fff">AMKR</div>
           <div class="watch-name">Amkor Technology</div>
           <div class="watch-price" id="wp-AMKR">--</div>
           <div class="watch-change" id="wc-AMKR">--</div>
           <div class="watch-badge">CALLS ✓</div>
+          <div class="bz-section" id="bz-AMKR"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="ARM">
           <div class="watch-ticker" style="color:#a78bfa">ARM</div>
           <div class="watch-name">ARM Holdings</div>
           <div class="watch-price" id="wp-ARM">--</div>
           <div class="watch-change" id="wc-ARM">--</div>
           <div class="watch-badge">DEC '26 $270C ✓</div>
+          <div class="bz-section" id="bz-ARM"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="DRAM">
           <div class="watch-ticker" style="color:#00d4a0">DRAM</div>
           <div class="watch-name">Roundhill Memory ETF</div>
           <div class="watch-price" id="wp-DRAM">--</div>
           <div class="watch-change" id="wc-DRAM">--</div>
           <div class="watch-badge">SHARES + LEAPS ✓</div>
+          <div class="bz-section" id="bz-DRAM"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="HOOD">
           <div class="watch-ticker" style="color:#f5c842">HOOD</div>
           <div class="watch-name">Robinhood Markets</div>
           <div class="watch-price" id="wp-HOOD">--</div>
           <div class="watch-change" id="wc-HOOD">--</div>
           <div class="watch-badge">$90/$95 CALLS ✓</div>
+          <div class="bz-section" id="bz-HOOD"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="NOW">
           <div class="watch-ticker" style="color:#ff7a4d">NOW</div>
           <div class="watch-name">ServiceNow</div>
           <div class="watch-price" id="wp-NOW">--</div>
           <div class="watch-change" id="wc-NOW">--</div>
           <div class="watch-badge">CALLS ✓</div>
+          <div class="bz-section" id="bz-NOW"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="NVDA">
           <div class="watch-ticker" style="color:#00d4a0">NVDA</div>
           <div class="watch-name">NVIDIA Corporation</div>
           <div class="watch-price" id="wp-NVDA">--</div>
           <div class="watch-change" id="wc-NVDA">--</div>
           <div class="watch-badge">4x LEAPS CALLS ✓</div>
+          <div class="bz-section" id="bz-NVDA"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="TSM">
           <div class="watch-ticker" style="color:#4d9fff">TSM</div>
           <div class="watch-name">Taiwan Semiconductor</div>
           <div class="watch-price" id="wp-TSM">--</div>
           <div class="watch-change" id="wc-TSM">--</div>
           <div class="watch-badge">CALLS ✓</div>
+          <div class="bz-section" id="bz-TSM"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="CDNS">
           <div class="watch-ticker" style="color:#a78bfa">CDNS</div>
           <div class="watch-name">Cadence Design Systems</div>
           <div class="watch-price" id="wp-CDNS">--</div>
           <div class="watch-change" id="wc-CDNS">--</div>
           <div class="watch-badge">JUN '26 $310C ✓</div>
+          <div class="bz-section" id="bz-CDNS"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="ANET">
           <div class="watch-ticker" style="color:#06b6d4">ANET</div>
           <div class="watch-name">Arista Networks</div>
           <div class="watch-price" id="wp-ANET">--</div>
           <div class="watch-change" id="wc-ANET">--</div>
           <div class="watch-badge">JAN '27 $110C ✓</div>
+          <div class="bz-section" id="bz-ANET"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="MRVL">
           <div class="watch-ticker" style="color:#34d399">MRVL</div>
           <div class="watch-name">Marvell Technology</div>
           <div class="watch-price" id="wp-MRVL">--</div>
           <div class="watch-change" id="wc-MRVL">--</div>
           <div class="watch-badge">LEAPS ✓</div>
+          <div class="bz-section" id="bz-MRVL"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="DELL">
           <div class="watch-ticker" style="color:#60a5fa">DELL</div>
           <div class="watch-name">Dell Technologies</div>
           <div class="watch-price" id="wp-DELL">--</div>
           <div class="watch-change" id="wc-DELL">--</div>
           <div class="watch-badge">AI SERVER PLAY ✓</div>
+          <div class="bz-section" id="bz-DELL"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="ORCL">
           <div class="watch-ticker" style="color:#f97316">ORCL</div>
           <div class="watch-name">Oracle Corporation</div>
           <div class="watch-price" id="wp-ORCL">--</div>
           <div class="watch-change" id="wc-ORCL">--</div>
           <div class="watch-badge">CALLS ✓</div>
+          <div class="bz-section" id="bz-ORCL"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="VRT">
           <div class="watch-ticker" style="color:#c9a227">VRT</div>
           <div class="watch-name">Vertiv Holdings</div>
           <div class="watch-price" id="wp-VRT">--</div>
           <div class="watch-change" id="wc-VRT">--</div>
           <div class="watch-badge">CALLS ✓</div>
+          <div class="bz-section" id="bz-VRT"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="LLY">
           <div class="watch-ticker" style="color:#f472b6">LLY</div>
           <div class="watch-name">Eli Lilly</div>
           <div class="watch-price" id="wp-LLY">--</div>
           <div class="watch-change" id="wc-LLY">--</div>
           <div class="watch-badge">MAR '27 $860C ✓</div>
+          <div class="bz-section" id="bz-LLY"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="UBER">
           <div class="watch-ticker" style="color:#fb923c">UBER</div>
           <div class="watch-name">Uber Technologies</div>
           <div class="watch-price" id="wp-UBER">--</div>
           <div class="watch-change" id="wc-UBER">--</div>
           <div class="watch-badge">WATCHING 👀</div>
+          <div class="bz-section" id="bz-UBER"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="COHR">
           <div class="watch-ticker" style="color:#818cf8">COHR</div>
           <div class="watch-name">Coherent Corp.</div>
           <div class="watch-price" id="wp-COHR">--</div>
           <div class="watch-change" id="wc-COHR">--</div>
           <div class="watch-badge">NVDA $2B INVEST ✓</div>
+          <div class="bz-section" id="bz-COHR"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="LITE">
           <div class="watch-ticker" style="color:#e879f9">LITE</div>
           <div class="watch-name">Lumentum Holdings</div>
           <div class="watch-price" id="wp-LITE">--</div>
           <div class="watch-change" id="wc-LITE">--</div>
           <div class="watch-badge">NVDA $2B INVEST ✓</div>
+          <div class="bz-section" id="bz-LITE"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="GLW">
           <div class="watch-ticker" style="color:#38bdf8">GLW</div>
           <div class="watch-name">Corning Inc.</div>
           <div class="watch-price" id="wp-GLW">--</div>
           <div class="watch-change" id="wc-GLW">--</div>
           <div class="watch-badge">NVDA $3.2B INVEST ✓</div>
+          <div class="bz-section" id="bz-GLW"></div>
         </div>
-        <div class="watch-card">
+        <div class="watch-card" data-ticker="IREN">
           <div class="watch-ticker" style="color:#4ade80">IREN</div>
           <div class="watch-name">IREN Limited</div>
           <div class="watch-price" id="wp-IREN">--</div>
           <div class="watch-change" id="wc-IREN">--</div>
           <div class="watch-badge">NVDA $2.1B INVEST ✓</div>
+          <div class="bz-section" id="bz-IREN"></div>
         </div>
       </div>
     </div>
@@ -729,6 +827,65 @@
     return { zone, cls, dotCls, label, buyHi, buyLo, high, pctOff };
   }
 
+  function zoneLabel(zone) {
+    if (zone === 'near')  return '📈 Near High';
+    if (zone === 'watch') return '👀 Approaching';
+    if (zone === 'buy')   return '🟠 BUY ZONE';
+    return '❌ Past Zone';
+  }
+  function zonePillClass(zone) {
+    if (zone === 'near')  return 'pill-near';
+    if (zone === 'watch') return 'pill-watch';
+    if (zone === 'buy')   return 'pill-buy';
+    return 'pill-below';
+  }
+
+  let activeFilter = 'all';
+  function filterCards(f) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('f-active','f-active-buy','f-active-watch'));
+    if (f === 'buy')   document.getElementById('fb-buy')?.classList.add('f-active-buy');
+    else if (f === 'watch') document.getElementById('fb-watch')?.classList.add('f-active-watch');
+    else               document.getElementById('fb-all')?.classList.add('f-active');
+    document.querySelectorAll('.watch-card').forEach(card => {
+      const zone = card.dataset.zone || 'near';
+      if      (f === 'all')   card.style.display = '';
+      else if (f === 'buy')   card.style.display = zone === 'buy'   ? '' : 'none';
+      else if (f === 'watch') card.style.display = zone === 'watch' ? '' : 'none';
+    });
+  }
+
+  function sortAndCountCards() {
+    const grid = document.getElementById('watchlistGrid');
+    if (!grid) return;
+    const cards = [...grid.querySelectorAll('.watch-card')];
+    const order = { buy: 0, watch: 1, near: 2, below: 3 };
+    cards.sort((a, b) => {
+      const za = order[a.dataset.zone] ?? 2;
+      const zb = order[b.dataset.zone] ?? 2;
+      if (za !== zb) return za - zb;
+      // secondary sort: by pctOff descending within same zone
+      return parseFloat(b.dataset.pct || 0) - parseFloat(a.dataset.pct || 0);
+    });
+    cards.forEach(c => grid.appendChild(c));
+    // Update counters
+    let buyCnt = 0, watchCnt = 0, safeCnt = 0;
+    cards.forEach(c => {
+      const z = c.dataset.zone;
+      if (z === 'buy') buyCnt++;
+      else if (z === 'watch') watchCnt++;
+      else safeCnt++;
+    });
+    const bEl = document.getElementById('cnt-buy');
+    const wEl = document.getElementById('cnt-watch');
+    const sEl = document.getElementById('cnt-safe');
+    if (bEl) bEl.textContent = buyCnt;
+    if (wEl) wEl.textContent = watchCnt;
+    if (sEl) sEl.textContent = safeCnt;
+    // Re-apply filter
+    filterCards(activeFilter);
+  }
+
   function refreshPrices() {
     for (const [t, { price, change }] of Object.entries(PRICES)) {
       const pEl  = document.getElementById(`p-${t}`);
@@ -736,9 +893,8 @@
       const wpEl = document.getElementById(`wp-${t}`);
       const wcEl = document.getElementById(`wc-${t}`);
       const bzEl = document.getElementById(`bz-${t}`);
-      if (pEl) {
-        pEl.textContent = (t === 'VIX' ? '' : '$') + price.toFixed(2);
-      }
+
+      if (pEl) pEl.textContent = (t === 'VIX' ? '' : '$') + price.toFixed(2);
       if (cEl) {
         cEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
         cEl.className = `pulse-change ${change >= 0 ? 'tag-up' : 'tag-down'}`;
@@ -748,63 +904,70 @@
         wcEl.textContent = `${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%`;
         wcEl.className = `watch-change ${change >= 0 ? 'up' : 'down'}`;
       }
-      // Buy zone + option dual-metric display
-      if (bzEl) {
-        const bz  = getBuyZoneInfo(t, price);
-        const opt = getOptionInfo(t);
-        let html = '';
 
-        // ── Row 1: Stock equity metric ──
-        if (bz) {
-          html += `<div class="metric-row">
-            <span class="metric-tag">Stock</span>
-            <span class="metric-val ${bz.cls}">
-              <span class="zone-dot ${bz.dotCls}"></span>${bz.label}
-            </span>
-          </div>`;
-          if (bz.zone === 'buy') {
-            html += `<div style="font-size:9px;color:var(--muted);margin-left:2px;margin-top:1px">zone: $${bz.buyHi}–$${bz.buyLo}</div>`;
-          }
+      if (!bzEl) continue;
+
+      const bz  = getBuyZoneInfo(t, price);
+      const opt = getOptionInfo(t);
+      let html  = '';
+
+      // ── Big % number (hero metric) ──
+      if (bz) {
+        const pctStr = bz.pctOff.toFixed(1);
+        const cls = bz.zone === 'buy' ? 'zone-buy' : bz.zone === 'watch' ? 'zone-watch' : bz.zone === 'near' ? 'zone-near' : 'zone-below';
+        html += `<div class="pct-big ${cls}">${pctStr}%</div>`;
+        html += `<div><span class="zone-pill ${zonePillClass(bz.zone)}">${zoneLabel(bz.zone)}</span></div>`;
+        if (bz.zone === 'buy') {
+          html += `<div class="zone-range">zone: $${bz.buyHi} – $${bz.buyLo}</div>`;
         }
+      }
 
-        // ── Row 2: Option metric (always shown) ──
-        if (opt && !opt.noContract && opt.label) {
-          html += `<div class="metric-row">
-            <span class="metric-tag">Option</span>
-            <span class="metric-val ${opt.cls}">${opt.label}</span>
-          </div>`;
-          if (opt.pctVsAlert !== null) {
-            html += `<div style="font-size:9px;color:var(--muted);margin-left:2px;margin-top:1px">${opt.contract} · now $${opt.current?.toFixed(2)}</div>`;
-          }
-        } else if (opt && !opt.noContract && opt.contract) {
-          // contract known but no price data yet
-          html += `<div class="metric-row">
-            <span class="metric-tag">Option</span>
-            <span class="metric-val" style="color:var(--muted)">${opt.contract} · price pending</span>
+      // ── Option line (compact, below divider) ──
+      html += `<hr class="opt-divider">`;
+      if (opt && !opt.noContract && opt.label) {
+        // Has alert price + current price — show % vs entry
+        html += `<div class="opt-compact">
+          <span class="opt-tag">OPT</span>
+          <span class="opt-val ${opt.cls}">${opt.label}</span>
+        </div>`;
+        if (opt.pctVsAlert !== null) {
+          html += `<span class="opt-sub">${opt.contract} · $${opt.current?.toFixed(2)}</span>`;
+        }
+      } else if (opt && !opt.noContract && opt.contract) {
+        // Contract tracked but no price yet (or no alert price — just show current)
+        if (opt.current != null) {
+          html += `<div class="opt-compact">
+            <span class="opt-tag">OPT</span>
+            <span class="opt-val" style="color:var(--muted)">${opt.contract} · $${opt.current.toFixed(2)}</span>
           </div>`;
         } else {
-          // no contract tracked for this ticker
-          html += `<div class="metric-row">
-            <span class="metric-tag">Option</span>
-            <span style="font-size:9px;color:#3a4259">— no contract tracked</span>
+          html += `<div class="opt-compact">
+            <span class="opt-tag">OPT</span>
+            <span style="color:#434d65;font-size:9px">${opt.contract} · pending</span>
           </div>`;
         }
+      } else {
+        html += `<div class="opt-compact"><span style="color:#2e3a52;font-size:9px">no contract yet</span></div>`;
+      }
 
-        bzEl.innerHTML = html;
+      bzEl.innerHTML = html;
 
-        // Card border: orange solid if BOTH zones triggered, orange faint if just stock, yellow if approaching
-        const card = bzEl.closest('.watch-card');
-        if (card) {
-          const stockBuy = bz?.zone === 'buy';
-          const optBuy   = opt != null && opt.pctVsAlert != null && opt.pctVsAlert <= -29;
-          if (stockBuy && optBuy) card.style.borderColor = '#f97316';
-          else if (stockBuy)      card.style.borderColor = 'rgba(249,115,22,0.45)';
-          else if (bz?.zone === 'watch') card.style.borderColor = 'rgba(245,200,66,0.45)';
-          else                    card.style.borderColor = '';
-        }
+      // ── Card class & data attributes ──
+      const card = bzEl.closest('.watch-card');
+      if (card) {
+        card.dataset.zone = bz?.zone || 'near';
+        card.dataset.pct  = bz?.pctOff?.toFixed(1) || '0';
+        card.classList.remove('card-buy', 'card-both', 'card-watch');
+        card.style.borderColor = '';
+        const stockBuy = bz?.zone === 'buy';
+        const optBuy   = opt != null && opt.pctVsAlert != null && opt.pctVsAlert <= -29;
+        if   (stockBuy && optBuy) card.classList.add('card-both');
+        else if (stockBuy)        card.classList.add('card-buy');
+        else if (bz?.zone === 'watch') card.classList.add('card-watch');
       }
     }
     document.getElementById('lastUpdated').textContent = `✓ Prices as of ${PRICES_AS_OF}`;
+    sortAndCountCards();
   }
 
   // ── POSITIONS ─────────────────────────────────────────────────
