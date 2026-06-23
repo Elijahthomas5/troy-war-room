@@ -665,6 +665,16 @@
           <div class="class-date">📅 May '24 Class Vol.3 — Options Fundamentals</div>
           <div class="bz-section" id="bz-TMO"></div>
         </div>
+
+        <div class="watch-card" data-ticker="KAVA">
+          <div class="watch-ticker" style="color:#fb923c">KAVA</div>
+          <div class="watch-name">Kava Group Inc.</div>
+          <div class="watch-price" id="wp-KAVA">--</div>
+          <div class="watch-change" id="wc-KAVA">--</div>
+          <div class="watch-badge">Jan '27 $60C ✓</div>
+          <div class="class-date">📅 Nov '24 Class</div>
+          <div class="bz-section" id="bz-KAVA"></div>
+        </div>
       </div>
     </div>
 
@@ -901,99 +911,137 @@
   }
 
   // ── PRE-LOADED PRICES (updated by troy-monitor.py) ───
-  // Last refreshed: Jun 23, 2026 ~12:21 PM EDT
+  // Last refreshed: Jun 23, 2026 ~2:40 PM EDT
   // To update: run troy-monitor.py or trigger GitHub Action
   const PRICES = {
     // Market Pulse
-    SPY : { price: 736.78,  change: -1.02  },
-    QQQ : { price: 718.56,  change: -2.63  },
-    SMH : { price: 626.38,  change: -6.36  },
+    SPY : { price: 734.58,  change: -1.32  },
+    QQQ : { price: 714.44,  change: -3.19  },
+    SMH : { price: 621.26,  change: -7.12  },
     // Watchlist
-    V   : { price: 330.70,  change: +1.26  },
-    AAPL: { price: 298.71,  change: +0.57  },
-    NFLX: { price: 73.07,  change: +0.26  },
-    TMO : { price: 464.13,  change: +0.03  },
-    CDNS: { price: 383.42,  change: -1.44  },
-    AMD : { price: 525.17,  change: -4.80  },
-    AVGO: { price: 382.21,  change: -2.53  },
-    CRM : { price: 153.50,  change: +2.25  },
-    TSM : { price: 442.13,  change: -5.46  },
-    SMCI: { price: 34.02,  change: -4.06  },
-    SMH : { price: 626.38,  change: -6.36  },
-    MSFT: { price: 372.33,  change: +1.36  },
-    VRT : { price: 325.20,  change: -9.15  },
-    VST : { price: 164.48,  change: -1.66  },
-    AMZN: { price: 234.58,  change: +0.77  },
-    CLS : { price: 354.24,  change: -6.00  },
-    GLW : { price: 191.27,  change: -8.85  },
-    WDC : { price: 676.24,  change: -7.70  },
-    CEG : { price: 274.60,  change: -0.34  },
-    SNPS: { price: 470.88,  change: +1.36  },
-    LITE: { price: 834.64,  change: -6.63  },
-    DRAM: { price: 70.92,  change: -12.14  },
-    MU  : { price: 1086.05,  change: -10.35  },
-    NVDA: { price: 202.18,  change: -3.10  },
-    ANET: { price: 163.46,  change: -6.36  },
-    LLY : { price: 1099.56,  change: -0.23  },
-    ARM : { price: 369.75,  change: -9.31  },
-    AMKR: { price: 86.23,  change: -7.82  },
-    MRVL: { price: 281.27,  change: -8.64  },
-    DELL: { price: 430.06,  change: +2.71  },
-    ORCL: { price: 168.39,  change: -3.82  },
-    NOW : { price: 96.73,  change: +4.00  },
-    HOOD: { price: 105.34,  change: -0.35  },
-    UBER: { price: 70.34,  change: -1.53  },
-    COHR: { price: 391.15,  change: -8.07  },
-    IREN: { price: 55.89,  change: -1.72  },
+    V   : { price: 328.98,  change: +0.73  },
+    AAPL: { price: 298.01,  change: +0.34  },
+    NFLX: { price: 73.34,  change: +0.63  },
+    TMO : { price: 466.21,  change: +0.47  },
+    CDNS: { price: 379.40,  change: -2.48  },
+    AMD : { price: 518.22,  change: -6.06  },
+    AVGO: { price: 381.27,  change: -2.77  },
+    CRM : { price: 153.73,  change: +2.40  },
+    TSM : { price: 438.17,  change: -6.31  },
+    SMCI: { price: 33.14,  change: -6.54  },
+    SMH : { price: 621.26,  change: -7.12  },
+    MSFT: { price: 373.07,  change: +1.56  },
+    VRT : { price: 319.20,  change: -10.83  },
+    VST : { price: 162.77,  change: -2.68  },
+    AMZN: { price: 234.50,  change: +0.73  },
+    CLS : { price: 349.51,  change: -7.25  },
+    GLW : { price: 192.00,  change: -8.50  },
+    WDC : { price: 669.06,  change: -8.68  },
+    CEG : { price: 272.79,  change: -0.99  },
+    SNPS: { price: 468.01,  change: +0.74  },
+    LITE: { price: 819.17,  change: -8.36  },
+    DRAM: { price: 69.40,  change: -14.02  },
+    MU  : { price: 1051.89,  change: -13.17  },
+    NVDA: { price: 201.00,  change: -3.67  },
+    ANET: { price: 162.42,  change: -6.95  },
+    LLY : { price: 1107.20,  change: +0.46  },
+    ARM : { price: 366.78,  change: -10.04  },
+    AMKR: { price: 86.20,  change: -7.86  },
+    MRVL: { price: 278.20,  change: -9.63  },
+    DELL: { price: 427.71,  change: +2.15  },
+    ORCL: { price: 165.38,  change: -5.53  },
+    NOW : { price: 96.48,  change: +3.73  },
+    HOOD: { price: 103.04,  change: -2.53  },
+    UBER: { price: 69.83,  change: -2.24  },
+    COHR: { price: 382.91,  change: -10.01  },
+    IREN: { price: 54.86,  change: -3.53  },
   };
-  const PRICES_AS_OF = 'Jun 23, 2026 ~12:21 PM EDT';
+  const PRICES_AS_OF = 'Jun 23, 2026 ~2:40 PM EDT';
 
   // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────
   // alert  = Troy's entry price  |  current = live bid/ask mid
   // Troy's option buy rule: option drops 30–40% BELOW alert → entry signal
   const OPT_PRICES = {
-    V   : { contract: "Jan '27 $280C", alert: null, current: 61.98  },
-    AAPL: { contract: "Jan '27 $220C", alert: null, current: 85.75  },
+    V   : { contract: "Jan '27 $280C", alert: null, current: 62.08  },
+    AAPL: { contract: "Jan '27 $220C", alert: null, current: 86.57  },
     NFLX: { contract: "Jan '27 $650C", alert: null, current: 512.00  },
     TMO : { contract: "Jan '27 $600C", alert: null, current: 11.95  },
-    CDNS: { contract: "Jun '26 $310C", alert: 23.01, current: 70.95  },
-    AMD : { contract: "Jan '27 $160C", alert: null, current: 366.48  },
-    AVGO: { contract: "Jan '27 $160C", alert: null, current: 224.82  },
-    CRM : { contract: "Jan '27 $250C", alert: null, current: 3.40  },
-    TSM : { contract: "Jan '27 $200C", alert: null, current: 246.05  },
+    CDNS: { contract: "Jun '26 $310C", alert: 23.01, current: 71.85  },
+    AMD : { contract: "Jan '27 $160C", alert: null, current: 366.80  },
+    AVGO: { contract: "Jan '27 $160C", alert: null, current: 226.32  },
+    CRM : { contract: "Jan '27 $250C", alert: null, current: 3.45  },
+    TSM : { contract: "Jan '27 $200C", alert: null, current: 247.00  },
     SMCI: { contract: "Jan '27 $600C", alert: null, current: 0.00  },
     SMH : { contract: "Jan '27 $120C", alert: null, current: 222.57  },
-    MSFT: { contract: "Jan '27 $420C", alert: null, current: 24.95  },
-    VRT : { contract: "Jan '27 $120C", alert: null, current: 206.27  },
-    VST : { contract: "Jan '27 $220C", alert: null, current: 10.98  },
-    AMZN: { contract: "Jan '27 $220C", alert: null, current: 36.03  },
-    CLS : { contract: "Jan '27 $90C", alert: null, current: 265.55  },
-    GLW : { contract: "Jan '27 $195C", alert: null, current: 41.65  },
+    MSFT: { contract: "Jan '27 $420C", alert: null, current: 25.35  },
+    VRT : { contract: "Jan '27 $120C", alert: null, current: 204.30  },
+    VST : { contract: "Jan '27 $220C", alert: null, current: 10.82  },
+    KAVA: { contract: "Jan '27 $60C", alert: null, current: null  },
+    AMZN: { contract: "Jan '27 $220C", alert: null, current: 36.78  },
+    CLS : { contract: "Jan '27 $90C", alert: null, current: 266.65  },
+    GLW : { contract: "Jan '27 $195C", alert: null, current: 45.42  },
     WDC : { contract: "Jan '27 $65C", alert: null, current: 210.50  },
-    CEG : { contract: "Jan '27 $260C", alert: null, current: 49.05  },
-    SNPS: { contract: "Jun '26 $440C", alert: 30.00, current: 33.50  },
-    LITE: { contract: "Jan '27 $845C", alert: null, current: 237.10  },
-    DRAM: { contract: "Jun '27 $33C", alert: 12.61, current: 43.45  },
-    MU  : { contract: "Jan '27 $120C", alert: null, current: 963.75  },
-    NVDA: { contract: "Mar '27 $180C", alert: 36.67, current: 43.85  },
-    ANET: { contract: "Jan '27 $110C", alert: 27.67, current: 60.67  },
-    LLY : { contract: "Mar '27 $860C", alert: 130.98, current: 301.35  },
-    ARM : { contract: "Dec '26 $270C", alert: null, current: 147.27  },
-    AMKR: { contract: "Jan '27 $90C", alert: null, current: 23.30  },
-    MRVL: { contract: "Jan '27 $325C", alert: null, current: 66.67  },
-    DELL: { contract: "Jan '27 $430C", alert: null, current: 97.00  },
-    ORCL: { contract: "Jan '27 $190C", alert: null, current: 22.67  },
-    NOW : { contract: "Jan '27 $100C", alert: null, current: 17.50  },
-    HOOD: { contract: "Sep '26 $90C", alert: null, current: 22.65  },
-    UBER: { contract: "Jan '27 $75C", alert: null, current: 7.05  },
+    CEG : { contract: "Jan '27 $260C", alert: null, current: 49.20  },
+    SNPS: { contract: "Jun '26 $440C", alert: 30.00, current: 32.50  },
+    LITE: { contract: "Jan '27 $845C", alert: null, current: 235.75  },
+    DRAM: { contract: "Jun '27 $33C", alert: 12.61, current: 42.65  },
+    MU  : { contract: "Jan '27 $120C", alert: null, current: 943.58  },
+    NVDA: { contract: "Mar '27 $180C", alert: 36.67, current: 43.73  },
+    ANET: { contract: "Jan '27 $110C", alert: 27.67, current: 62.73  },
+    LLY : { contract: "Mar '27 $860C", alert: 130.98, current: 311.62  },
+    ARM : { contract: "Dec '26 $270C", alert: null, current: 146.03  },
+    AMKR: { contract: "Jan '27 $90C", alert: null, current: 23.45  },
+    MRVL: { contract: "Jan '27 $325C", alert: null, current: 66.03  },
+    DELL: { contract: "Jan '27 $430C", alert: null, current: 102.38  },
+    ORCL: { contract: "Jan '27 $190C", alert: null, current: 21.93  },
+    NOW : { contract: "Jan '27 $100C", alert: null, current: 17.90  },
+    HOOD: { contract: "Sep '26 $90C", alert: null, current: 22.00  },
+    UBER: { contract: "Jan '27 $75C", alert: null, current: 6.97  },
     COHR: { contract: "Jan '27 $395C", alert: null, current: 107.35  },
-    IREN: { contract: "Jan '27 $60C", alert: null, current: 16.00  },
+    IREN: { contract: "Jan '27 $60C", alert: null, current: 16.52  },
   };
-  const OPT_PRICES_AS_OF = 'Jun 23, 2026 ~12:21 PM EDT';
+  const OPT_PRICES_AS_OF = 'Jun 23, 2026 ~2:40 PM EDT';
 
   // ── IMPLIED VOLATILITY (updated by troy-monitor.py) ──────────────────────────
   // Troy's rule: IV < 35% = low risk / good entry. 35-50% = caution. >50% = avoid.
   const IV_DATA = {
+    V   : 36.3,
+    AAPL: 45.7,
+    NFLX: null,
+    TMO : 36.5,
+    CDNS: 152.7,
+    AMD : 112.2,
+    AVGO: 81.0,
+    CRM : 50.3,
+    TSM : 83.3,
+    SMCI: 50.0,
+    SMH : 0.0,
+    MSFT: 38.0,
+    VRT : 94.6,
+    VST : 55.6,
+    KAVA: null,
+    AMZN: 42.8,
+    CLS : 135.7,
+    GLW : 81.9,
+    WDC : 0.0,
+    CEG : 53.5,
+    SNPS: 75.0,
+    LITE: 101.2,
+    DRAM: 103.3,
+    MU  : 190.2,
+    NVDA: 50.0,
+    ANET: 73.5,
+    LLY : 50.1,
+    ARM : 103.8,
+    AMKR: 98.0,
+    MRVL: 97.1,
+    DELL: 81.6,
+    ORCL: 62.0,
+    NOW : 67.2,
+    HOOD: 77.7,
+    UBER: 44.4,
+    COHR: 100.7,
+    IREN: 113.5,
   };
 
   // ── 52-WEEK HIGHS (updated by troy-monitor.py) ───────────────
@@ -1350,9 +1398,12 @@
           <span class="iv-badge ${ivCls}">${iv.toFixed(1)}%</span>
           <span style="color:var(--muted);font-size:8px">${ivNote}</span>
         </div>`;
-        // Full entry signal: stock in ATH buy zone AND IV < 35%
-        if (bz?.zone === 'buy' && iv < 35) {
-          html += `<div class="entry-signal">⚡ READY TO ENTER — stock + IV in range</div>`;
+        // Full entry signal: stock in ATH zone + option 30-40% below alert + IV < 35%
+        const optInBuyZone = opt?.pctVsAlert != null && opt.pctVsAlert >= -40 && opt.pctVsAlert <= -29;
+        if (bz?.zone === 'buy' && optInBuyZone && iv < 35) {
+          html += `<div class="entry-signal">⚡ READY TO ENTER — all 3 criteria met</div>`;
+        } else if (bz?.zone === 'buy' && iv < 35) {
+          html += `<div class="entry-signal" style="color:#f5c842;border-color:rgba(245,200,66,0.35);background:rgba(245,200,66,0.08)">👀 2 of 3 — stock + IV ready, wait for option price</div>`;
         }
       }
 

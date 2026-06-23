@@ -628,7 +628,7 @@ def main():
     print("\n  Fetching option prices + IV...")
     opt_data       = {}   # {ticker: {"mid": price, "iv": iv_pct}}
     both_zone_hits = []
-    full_entry_signals = []  # stock in ATH buy zone AND IV < 35%
+    full_entry_signals = []  # ALL 3 criteria: stock ATH% + option price in zone + IV < 35%
     for ticker, info in opt_contracts.items():
         print(f"    {ticker:<5}", end=" ")
         result = fetch_option_price(ticker, info["expiry"], info["strike"], info["opt_type"])
@@ -642,25 +642,31 @@ def main():
         if iv_pct is not None:
             iv_flag = " ✓low-IV" if iv_pct < 35 else (" ⚠IV" if iv_pct < 50 else " ⛔HIGH-IV")
         alert = info.get("alert")
+        opt_pct_vs = None
         if alert:
-            pct_vs = (mid - alert) / alert * 100
+            opt_pct_vs = (mid - alert) / alert * 100
             flag   = ""
-            if -40 <= pct_vs <= -29: flag = "🟠 OPTION BUY ZONE ←"
-            elif pct_vs < -40:       flag = "❌ below opt zone"
-            print(f"${mid:>7.2f}  (alert ${alert})  |  {pct_vs:+.1f}%  {flag}{iv_str}{iv_flag}")
+            if -40 <= opt_pct_vs <= -29: flag = "🟠 OPTION BUY ZONE ←"
+            elif opt_pct_vs < -40:       flag = "❌ below opt zone"
+            print(f"${mid:>7.2f}  (alert ${alert})  |  {opt_pct_vs:+.1f}%  {flag}{iv_str}{iv_flag}")
             eq = all_data.get(ticker)
             if eq:
                 pf = eq["pct_from_high"] / 100
-                if BUY_ZONE_LOW <= pf <= BUY_ZONE_HIGH and -40 <= pct_vs <= -29:
-                    both_zone_hits.append((ticker, eq, info, mid, pct_vs))
+                if BUY_ZONE_LOW <= pf <= BUY_ZONE_HIGH and -40 <= opt_pct_vs <= -29:
+                    both_zone_hits.append((ticker, eq, info, mid, opt_pct_vs))
         else:
             print(f"${mid:>7.2f}  (no alert set){iv_str}{iv_flag}")
 
-        # Full entry signal: stock in ATH buy zone + IV < Troy's threshold
+        # Full entry signal: ALL 3 of Troy's criteria must be met
+        #   ① Stock 20-30% off 52W high
+        #   ② Option 30-40% below alert price (the "undervalued contract" rule)
+        #   ③ IV < 35% (low risk entry)
         eq = all_data.get(ticker)
-        if eq and BUY_ZONE_LOW <= eq["pct_from_high"] / 100 <= BUY_ZONE_HIGH:
-            if iv_pct is not None and iv_pct < 35:
-                full_entry_signals.append((ticker, eq, iv_pct, info))
+        stock_in_zone = eq and BUY_ZONE_LOW <= eq["pct_from_high"] / 100 <= BUY_ZONE_HIGH
+        opt_in_zone   = alert and opt_pct_vs is not None and -40 <= opt_pct_vs <= -29
+        iv_ok         = iv_pct is not None and iv_pct < 35
+        if stock_in_zone and opt_in_zone and iv_ok:
+            full_entry_signals.append((ticker, eq, iv_pct, info, mid, opt_pct_vs))
 
     print(f"\n  → {len(buy_zone_hits)} stocks in equity buy zone")
     print(f"  → {len(both_zone_hits)} with BOTH conditions met\n")
@@ -766,24 +772,28 @@ def main():
         notify("FULL BUY SIGNAL — both zones hit!", body,
                priority="urgent", tags=("rotating_light", "chart_with_upwards_trend"))
 
-    # ── Full entry signal: stock ATH% + IV both in range ─────────
+    # ── Full entry signal: ALL 3 criteria met ────────────────────
     if full_entry_signals:
         lines = []
-        for t, d, iv, info in full_entry_signals:
-            mid = opt_data.get(t, {}).get("mid")
-            opt_str = f"${mid:.2f}" if mid is not None else "n/a"
+        for t, d, iv, info, mid, opt_pct in full_entry_signals:
+            buy_price = round(info["alert"] * 0.65, 2)  # midpoint of 30-40% off
             lines.append(
-                f"• {t} — ${d['price']} | {d['pct_from_high']:.1f}% off ATH | IV: {iv:.0f}% (low risk)\n"
-                f"  Contract: {info['contract']} · current: {opt_str}"
+                f"• {t} — {info['contract']}\n"
+                f"  Stock:  ${d['price']} ({d['pct_from_high']:.1f}% off ATH)  ✓\n"
+                f"  Option: ${mid:.2f}  ({opt_pct:+.1f}% vs ${info['alert']} alert)  ✓\n"
+                f"  IV:     {iv:.0f}%  (low risk)  ✓\n"
+                f"  Suggested entry near: ${buy_price}"
             )
         body = (
-            "Troy's full entry checklist is GREEN:\n"
-            "  Stock 20-30% off ATH + Implied Volatility < 35%\n\n"
+            "ALL 3 of Troy's entry criteria are GREEN:\n"
+            "  ① Stock 20-30% off 52W high\n"
+            "  ② Option 30-40% below alert price\n"
+            "  ③ IV < 35% (low risk)\n\n"
             + "\n\n".join(lines)
-            + "\n\nVerify catalyst before entering. Check community board."
+            + "\n\nVerify catalyst before entering. Check EYL community board."
         )
-        notify("ENTRY SIGNAL — Stock + IV criteria met", body,
-               priority="high", tags=("green_circle", "chart_with_upwards_trend"))
+        notify("ENTRY SIGNAL — All 3 criteria met", body,
+               priority="urgent", tags=("green_circle", "chart_with_upwards_trend"))
 
     # ── EYL community board check (once per day, ~market close) ──
     hour = datetime.now().hour
