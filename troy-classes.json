@@ -140,12 +140,13 @@
       "id": "2024-11-21",
       "date": "Nov 21, 2024",
       "label": "Nov '24 Class",
-      "notes": "Portfolio review and thesis reinforcement. TSM, VRT, AMD, VST all discussed as active positions. Data center cooling (VRT) and nuclear/power (VST) emerging as new AI infrastructure plays alongside semiconductors. No specific contracts given. No PDF.",
+      "notes": "Major energy thesis class. VST (Vistra) INTRODUCED: #1 stock in 2024 (+210%), nuclear power for AI data centers, 20-yr deal with Microsoft. Troy put on watch list, entry at 20% off ATH (~$133 given $166 ATH). VRT (Vertiv) INTRODUCED: liquid cooling for Blackwell data centers, trading at $141 with analyst consensus $142, high target $155. Troy entry criteria: 20% off ATH. Active portfolio recap: TSM leading at 900%+, to be closed 'at top of year'; AMD at ~50% down (testing stop-loss patience), still believes due to NVDA demand overflow thesis; LLY pulled back from high but holding; KAVA 2027 LEAP was +30%, pulled back to -3% at class time, still holding. Short-term trade showcased: DELL Nov 29th call (close to money) played NVDA partnership + liquid cooling catalyst — plan to exit at +50% profit. TOAST (TOST) Jan '25 $33C success story: bought at $2/contract (~$200), up 284% by class time; took initial out at 100%, rest riding. Troy also bought new NVDA May '25 $170C the day before class on pullback. Education: implied volatility (stay under ~30-35%), theta/time decay (counts weekends), rules — take profit early on short-term, set stop-losses, never hold into expiration week, never average down on options. Source: 'Stock options set up.txt' transcript.",
       "stocks": [
-        { "ticker": "TSM", "name": "Taiwan Semiconductor", "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VRT", "name": "Vertiv Holdings",      "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD", "name": "Advanced Micro Devices","contract": "Jan '27 $140C", "expiry": "2027-01-15", "strike": 140.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VST", "name": "Vistra Energy",        "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null }
+        { "ticker": "TSM",  "name": "Taiwan Semiconductor",   "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
+        { "ticker": "VRT",  "name": "Vertiv Holdings",        "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
+        { "ticker": "AMD",  "name": "Advanced Micro Devices", "contract": "Jan '27 $140C", "expiry": "2027-01-15", "strike": 140.0, "opt_type": "calls", "alert": null },
+        { "ticker": "VST",  "name": "Vistra Energy",          "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
+        { "ticker": "KAVA", "name": "Kava Group Inc.",        "contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": null, "_note": "2027 LEAP; Troy's thesis: next Chipotle, debt-free expansion, strong gross margins" }
       ]
     },
     {
