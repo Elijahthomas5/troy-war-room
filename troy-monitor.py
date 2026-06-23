@@ -190,10 +190,17 @@ def inject_new_stock_card(html, ticker, info, opt_info):
 def send_push(title, body, priority="high", tags=("bell",)):
     """iPhone push via ntfy.sh — install the ntfy app and subscribe to NTFY_TOPIC."""
     try:
+        # HTTP headers must be latin-1 safe; strip/replace non-ASCII chars in title
+        safe_title = title.encode("ascii", errors="replace").decode("ascii")
         r = requests.post(
             NTFY_URL,
             data=body.encode("utf-8"),
-            headers={"Title": title, "Priority": priority, "Tags": ",".join(tags)},
+            headers={
+                "Title": safe_title,
+                "Priority": priority,
+                "Tags": ",".join(tags),
+                "Content-Type": "text/plain; charset=utf-8",
+            },
             timeout=10,
         )
         ok = r.status_code == 200
