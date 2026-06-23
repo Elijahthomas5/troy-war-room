@@ -192,6 +192,25 @@
         { "ticker": "AVGO", "name": "Broadcom Inc.",           "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
         { "ticker": "CRM",  "name": "Salesforce Inc.",         "contract": "Jan '27 $250C", "expiry": "2027-01-15", "strike": 250.0, "opt_type": "calls", "alert": null }
       ]
+    },
+    {
+      "id": "2024-05-09",
+      "date": "May 9, 2024",
+      "label": "May '24 Class Vol.3 — Options Fundamentals",
+      "notes": "Foundational options education class (PowerPoint format). Covered: what options are, calls vs puts, contracts (1 contract = 100 shares), strike price, expiration dates, bid/ask spread, reading an option chain, contract multiplier, and Troy's core buy strategy (find calls 40% below alert price — 'finding undervalued contracts'). Key quote: 'If META stock grows 5%, the option can grow 50% — the stock grew $15, the option grew $350.' Next targets given as stock price alerts: VISA $267-270, AAPL 'soon', NFLX $535-540, TMO $552-558. Source: uploaded PowerPoint eyl-options-may-9th.pptx.",
+      "stocks": [
+        { "ticker": "V",    "name": "Visa Inc.",              "contract": "Jan '27 $280C", "expiry": "2027-01-15", "strike": 280.0, "opt_type": "calls", "alert": null, "_note": "Stock alert $267-270 given in class" },
+        { "ticker": "AAPL", "name": "Apple Inc.",             "contract": "Jan '27 $220C", "expiry": "2027-01-15", "strike": 220.0, "opt_type": "calls", "alert": null, "_note": "Troy said 'soon' — no specific price given" },
+        { "ticker": "NFLX", "name": "Netflix Inc.",           "contract": "Jan '27 $650C", "expiry": "2027-01-15", "strike": 650.0, "opt_type": "calls", "alert": null, "_note": "Stock alert $535-540 given in class (2024 prices)" },
+        { "ticker": "TMO",  "name": "Thermo Fisher Scientific","contract": "Jan '27 $600C","expiry": "2027-01-15", "strike": 600.0, "opt_type": "calls", "alert": null, "_note": "Stock alert $552-558 given in class (2024 prices)" }
+      ]
+    },
+    {
+      "id": "2024-03-06",
+      "date": "Mar 6, 2024",
+      "label": "Mar '24 Class Vol.1 — First Options Class",
+      "notes": "PENDING — Vol.1, the original EYL options masterclass. No subtitle file available. User will provide screenshots for content extraction.",
+      "stocks": []
     }
   ],
   "watchlist_only": {
