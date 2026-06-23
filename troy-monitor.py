@@ -411,27 +411,39 @@ def check_eyl_board(watchlist, opt_contracts, classes_data):
 
 # ─── DATA FETCH ──────────────────────────────────────────────────────────────
 def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
+    """Returns dict {"mid": price, "iv": implied_vol_pct} — iv is 0-100 scale."""
+    empty = {"mid": None, "iv": None}
     try:
         tk        = yf.Ticker(symbol)
         available = tk.options
         if not available:
-            return None
+            return empty
         target  = datetime.strptime(expiry, "%Y-%m-%d").date()
         closest = min(available, key=lambda d: abs(
             (datetime.strptime(d, "%Y-%m-%d").date() - target).days))
         chain     = tk.option_chain(closest)
         contracts = getattr(chain, opt_type, None)
         if contracts is None or contracts.empty:
-            return None
+            return empty
         row = contracts[contracts["strike"] == float(strike)]
         if row.empty:
             row = contracts.iloc[(contracts["strike"] - float(strike)).abs().argsort()[:1]]
         bid = float(row["bid"].iloc[0])
         ask = float(row["ask"].iloc[0])
-        return round((bid + ask) / 2, 2)
+        mid = round((bid + ask) / 2, 2)
+        # Implied volatility — yfinance returns as decimal (0.28 = 28%)
+        iv_pct = None
+        if "impliedVolatility" in row.columns:
+            try:
+                iv_raw = float(row["impliedVolatility"].iloc[0])
+                if iv_raw > 0:
+                    iv_pct = round(iv_raw * 100, 1)
+            except (ValueError, TypeError):
+                pass
+        return {"mid": mid, "iv": iv_pct}
     except Exception as e:
         print(f"    ⚠  {symbol} option: {e}")
-        return None
+        return empty
 
 def fetch_ticker(symbol):
     try:
@@ -531,7 +543,8 @@ def update_html(all_data, opt_data, watchlist, opt_contracts):
                     existing_opt[tm.group(1)] = float(tm.group(2))
 
         for t, info in opt_contracts.items():
-            fetched = opt_data.get(t)
+            fetched_result = opt_data.get(t, {})
+            fetched = fetched_result.get("mid") if isinstance(fetched_result, dict) else fetched_result
             current = fetched if fetched is not None else existing_opt.get(t)
             cur_str   = f"{current:.2f}" if current is not None else "null"
             alert     = info.get("alert")
@@ -546,6 +559,22 @@ def update_html(all_data, opt_data, watchlist, opt_contracts):
         html = re.sub(
             r"  // ── OPTION CONTRACT REFERENCE PRICES.*?const OPT_PRICES_AS_OF = '[^']*';",
             new_opt, html, flags=re.DOTALL,
+        )
+
+        # ── 5. Build IV_DATA block ───────────────────────────────
+        ivlines = ["  // ── IMPLIED VOLATILITY (updated by troy-monitor.py) ──────────────────────────",
+                   "  // Troy's rule: IV < 35% = low risk / good entry. 35-50% = caution. >50% = avoid.",
+                   "  const IV_DATA = {"]
+        for t, info in opt_contracts.items():
+            result = opt_data.get(t, {})
+            iv = result.get("iv") if isinstance(result, dict) else None
+            iv_str = f"{iv:.1f}" if iv is not None else "null"
+            ivlines.append(f"    {t.ljust(4)}: {iv_str},")
+        ivlines.append("  };")
+        new_iv = "\n".join(ivlines)
+        html = re.sub(
+            r"  // ── IMPLIED VOLATILITY.*?const IV_DATA = \{[^}]*\};",
+            new_iv, html, flags=re.DOTALL,
         )
 
         with open(HTML_PATH, "w") as f:
@@ -595,30 +624,43 @@ def main():
         d = fetch_ticker(t)
         if d: all_data[t] = d
 
-    # ── Fetch option prices ──────────────────────────────────────
-    print("\n  Fetching option prices...")
-    opt_data       = {}
+    # ── Fetch option prices + IV ─────────────────────────────────
+    print("\n  Fetching option prices + IV...")
+    opt_data       = {}   # {ticker: {"mid": price, "iv": iv_pct}}
     both_zone_hits = []
+    full_entry_signals = []  # stock in ATH buy zone AND IV < 35%
     for ticker, info in opt_contracts.items():
         print(f"    {ticker:<5}", end=" ")
-        mid = fetch_option_price(ticker, info["expiry"], info["strike"], info["opt_type"])
-        opt_data[ticker] = mid
+        result = fetch_option_price(ticker, info["expiry"], info["strike"], info["opt_type"])
+        opt_data[ticker] = result
+        mid    = result["mid"]
+        iv_pct = result["iv"]
         if mid is None:
             print("— skip"); continue
+        iv_str = f"  IV:{iv_pct:.0f}%" if iv_pct is not None else ""
+        iv_flag = ""
+        if iv_pct is not None:
+            iv_flag = " ✓low-IV" if iv_pct < 35 else (" ⚠IV" if iv_pct < 50 else " ⛔HIGH-IV")
         alert = info.get("alert")
         if alert:
             pct_vs = (mid - alert) / alert * 100
             flag   = ""
             if -40 <= pct_vs <= -29: flag = "🟠 OPTION BUY ZONE ←"
             elif pct_vs < -40:       flag = "❌ below opt zone"
-            print(f"${mid:>7.2f}  (alert ${alert})  |  {pct_vs:+.1f}%  {flag}")
+            print(f"${mid:>7.2f}  (alert ${alert})  |  {pct_vs:+.1f}%  {flag}{iv_str}{iv_flag}")
             eq = all_data.get(ticker)
             if eq:
                 pf = eq["pct_from_high"] / 100
                 if BUY_ZONE_LOW <= pf <= BUY_ZONE_HIGH and -40 <= pct_vs <= -29:
                     both_zone_hits.append((ticker, eq, info, mid, pct_vs))
         else:
-            print(f"${mid:>7.2f}  (no alert set)")
+            print(f"${mid:>7.2f}  (no alert set){iv_str}{iv_flag}")
+
+        # Full entry signal: stock in ATH buy zone + IV < Troy's threshold
+        eq = all_data.get(ticker)
+        if eq and BUY_ZONE_LOW <= eq["pct_from_high"] / 100 <= BUY_ZONE_HIGH:
+            if iv_pct is not None and iv_pct < 35:
+                full_entry_signals.append((ticker, eq, iv_pct, info))
 
     print(f"\n  → {len(buy_zone_hits)} stocks in equity buy zone")
     print(f"  → {len(both_zone_hits)} with BOTH conditions met\n")
@@ -636,7 +678,7 @@ def main():
         alert = info.get("alert")
         if not alert:
             continue
-        mid = opt_data.get(ticker)
+        mid = opt_data.get(ticker, {}).get("mid")
         if mid is None:
             continue
 
@@ -710,7 +752,7 @@ def main():
         notify("⑤ Approaching Buy Zone", body,
                priority="default", tags=("eyes",))
 
-    # ── Legacy: stock-only buy zone (no option data yet) ─────────
+    # ── Both zone hits (stock + option price both in range) ──────
     if both_zone_hits:
         lines = []
         for t, d, info, opt_mid, opt_pct in both_zone_hits:
@@ -723,6 +765,25 @@ def main():
                 "\n\n".join(lines))
         notify("FULL BUY SIGNAL — both zones hit!", body,
                priority="urgent", tags=("rotating_light", "chart_with_upwards_trend"))
+
+    # ── Full entry signal: stock ATH% + IV both in range ─────────
+    if full_entry_signals:
+        lines = []
+        for t, d, iv, info in full_entry_signals:
+            mid = opt_data.get(t, {}).get("mid")
+            opt_str = f"${mid:.2f}" if mid is not None else "n/a"
+            lines.append(
+                f"• {t} — ${d['price']} | {d['pct_from_high']:.1f}% off ATH | IV: {iv:.0f}% (low risk)\n"
+                f"  Contract: {info['contract']} · current: {opt_str}"
+            )
+        body = (
+            "Troy's full entry checklist is GREEN:\n"
+            "  Stock 20-30% off ATH + Implied Volatility < 35%\n\n"
+            + "\n\n".join(lines)
+            + "\n\nVerify catalyst before entering. Check community board."
+        )
+        notify("ENTRY SIGNAL — Stock + IV criteria met", body,
+               priority="high", tags=("green_circle", "chart_with_upwards_trend"))
 
     # ── EYL community board check (once per day, ~market close) ──
     hour = datetime.now().hour
