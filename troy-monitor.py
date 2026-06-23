@@ -113,6 +113,7 @@ def load_classes():
                 "strike":      stock["strike"],
                 "opt_type":    stock.get("opt_type", "calls"),
                 "alert":       stock.get("alert"),
+                "owned":       stock.get("owned", False),   # True = you actually hold this position
                 "class_date":  cls.get("date", ""),
                 "class_label": label,
             }
@@ -133,6 +134,7 @@ def load_classes():
                 "strike":      stock["strike"],
                 "opt_type":    stock.get("opt_type", "calls"),
                 "alert":       stock.get("alert"),
+                "owned":       stock.get("owned", False),
                 "class_date":  None,
                 "class_label": None,
             }
@@ -644,10 +646,12 @@ def main():
             alert_hits.append((ticker, info, mid, pct))
         elif OPT_BUY_ZONE_LOW <= -pct <= OPT_BUY_ZONE_HIGH:
             opt_buy_zone.append((ticker, info, mid, pct))
-        elif -pct > OPT_STOP_LOSS:
+        elif -pct > OPT_STOP_LOSS and info.get("owned"):
+            # ③ Stop-loss: only fire if you actually own this position
             stop_loss_hits.append((ticker, info, mid, pct))
 
-        if pct >= OPT_TAKE_PROFIT:
+        if pct >= OPT_TAKE_PROFIT and info.get("owned"):
+            # ④ Take-profit: only fire if you actually own this position
             take_profit_hits.append((ticker, info, mid, pct))
 
     # ── ① Option AT alert price ───────────────────────────────────
