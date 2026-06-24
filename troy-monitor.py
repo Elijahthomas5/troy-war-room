@@ -440,7 +440,24 @@ def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
                     iv_pct = round(iv_raw * 100, 1)
             except (ValueError, TypeError):
                 pass
-        return {"mid": mid, "iv": iv_pct}
+
+        # Delta — how much option moves per $1 stock move (0-1 scale)
+        delta = None
+        if "delta" in row.columns:
+            try:
+                delta = round(float(row["delta"].iloc[0]), 3)
+            except (ValueError, TypeError):
+                pass
+
+        # Theta — daily time decay in $ (negative number, e.g. -0.06 = loses $6/day per contract)
+        theta = None
+        if "theta" in row.columns:
+            try:
+                theta = round(float(row["theta"].iloc[0]), 3)
+            except (ValueError, TypeError):
+                pass
+
+        return {"mid": mid, "iv": iv_pct, "delta": delta, "theta": theta}
     except Exception as e:
         print(f"    ⚠  {symbol} option: {e}")
         return empty
@@ -575,6 +592,26 @@ def update_html(all_data, opt_data, watchlist, opt_contracts):
         html = re.sub(
             r"  // ── IMPLIED VOLATILITY.*?const IV_DATA = \{[^}]*\};",
             new_iv, html, flags=re.DOTALL,
+        )
+
+        # ── 6. Build GREEKS_DATA block ───────────────────────────
+        glines = [
+            "  // ── GREEKS (updated by troy-monitor.py) ────────────────────────────────────────",
+            "  // delta = option moves $X per $1 stock move  |  theta = $ lost per day (per contract = theta*100)",
+            "  const GREEKS_DATA = {",
+        ]
+        for t, info in opt_contracts.items():
+            result = opt_data.get(t, {})
+            delta = result.get("delta") if isinstance(result, dict) else None
+            theta = result.get("theta") if isinstance(result, dict) else None
+            d_str = f"{delta:.3f}" if delta is not None else "null"
+            t_str = f"{theta:.3f}" if theta is not None else "null"
+            glines.append(f"    {t.ljust(4)}: {{ delta: {d_str}, theta: {t_str} }},")
+        glines.append("  };")
+        new_greeks = "\n".join(glines)
+        html = re.sub(
+            r"  // ── GREEKS.*?const GREEKS_DATA = \{.*?\};",
+            new_greeks, html, flags=re.DOTALL,
         )
 
         with open(HTML_PATH, "w") as f:

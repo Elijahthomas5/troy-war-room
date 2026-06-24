@@ -1044,6 +1044,11 @@
     IREN: 113.5,
   };
 
+  // ── GREEKS (updated by troy-monitor.py) ────────────────────────────────────────
+  // delta = option moves $X per $1 stock move  |  theta = $ lost per day (per contract = theta*100)
+  const GREEKS_DATA = {
+  };
+
   // ── 52-WEEK HIGHS (updated by troy-monitor.py) ───────────────
   // Used to calculate buy zones: Troy buys when stock is 20–30% off its high
   const HIGHS_52W = {
@@ -1405,6 +1410,24 @@
         } else if (bz?.zone === 'buy' && iv < 35) {
           html += `<div class="entry-signal" style="color:#f5c842;border-color:rgba(245,200,66,0.35);background:rgba(245,200,66,0.08)">👀 2 of 3 — stock + IV ready, wait for option price</div>`;
         }
+      }
+
+      // ── Greeks (Delta + Theta) ──
+      const grk = GREEKS_DATA[t];
+      if (grk && (grk.delta != null || grk.theta != null)) {
+        let grkHtml = `<div class="opt-compact" style="margin-top:3px;gap:8px">`;
+        if (grk.delta != null) {
+          // Delta: 0-1 scale; color-code by depth (>0.7 deep ITM, 0.5-0.7 sweet spot, <0.5 OTM)
+          const dCls = grk.delta >= 0.7 ? 'color:#00d4a0' : (grk.delta >= 0.5 ? 'color:var(--yellow)' : 'color:var(--muted)');
+          grkHtml += `<span><span class="opt-tag">&#916;</span> <span style="font-size:10px;font-weight:700;${dCls}">${grk.delta.toFixed(2)}</span></span>`;
+        }
+        if (grk.theta != null) {
+          // Theta is negative; per contract = theta * 100
+          const thetaPerContract = (grk.theta * 100).toFixed(2);
+          grkHtml += `<span><span class="opt-tag">&#952;</span> <span style="font-size:10px;font-weight:700;color:var(--red)">-$${Math.abs(thetaPerContract)}/day</span></span>`;
+        }
+        grkHtml += `</div>`;
+        html += grkHtml;
       }
 
       bzEl.innerHTML = html;
