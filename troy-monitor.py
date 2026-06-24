@@ -546,13 +546,33 @@ def fetch_option_chain(symbol, current_price):
                     else:
                         moneyness = "OTM"
 
+                    vol = None
+                    try:
+                        v = row.get("volume")
+                        if v is not None and str(v) not in ("nan", "None", ""):
+                            vol = int(float(v))
+                    except (ValueError, TypeError):
+                        pass
+
+                    oi = None
+                    try:
+                        o = row.get("openInterest")
+                        if o is not None and str(o) not in ("nan", "None", ""):
+                            oi = int(float(o))
+                    except (ValueError, TypeError):
+                        pass
+
                     results.append({
                         "strike":    strike,
                         "expiry":    expiry_str,
+                        "bid":       round(float(row.get("bid", 0) or 0), 2),
+                        "ask":       round(float(row.get("ask", 0) or 0), 2),
                         "price":     mid,
                         "iv":        iv_pct,
                         "delta":     delta,
                         "theta":     theta,
+                        "volume":    vol,
+                        "oi":        oi,
                         "moneyness": moneyness,
                     })
             except Exception as e:
