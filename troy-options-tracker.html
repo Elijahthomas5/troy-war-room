@@ -264,60 +264,101 @@
     .portfolio-note strong { color: var(--eyl-gold); }
 
     /* ── CONTRACT DRAWER ── */
-    #chain-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:900; backdrop-filter:blur(3px); }
+    #chain-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:900; backdrop-filter:blur(4px); }
     #chain-overlay.open { display:block; }
     #chain-drawer {
       position:fixed; bottom:0; left:0; right:0; z-index:901;
-      background:#0f1520; border-top:1px solid rgba(255,255,255,0.08);
-      border-radius:16px 16px 0 0;
-      max-height:80vh; overflow-y:auto;
-      transform:translateY(100%); transition:transform 0.28s cubic-bezier(0.32,0.72,0,1);
-      padding:0 0 env(safe-area-inset-bottom,16px);
+      background:#0c1018; border-top:1px solid rgba(255,255,255,0.09);
+      border-radius:14px 14px 0 0;
+      max-height:82vh; display:flex; flex-direction:column;
+      transform:translateY(100%); transition:transform 0.26s cubic-bezier(0.32,0.72,0,1);
     }
     #chain-drawer.open { transform:translateY(0); }
     #chain-header {
-      position:sticky; top:0; background:#0f1520;
-      padding:16px 20px 12px; border-bottom:1px solid rgba(255,255,255,0.06);
+      flex-shrink:0; background:#0c1018;
+      padding:14px 18px 10px; border-bottom:1px solid rgba(255,255,255,0.07);
       display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-radius:14px 14px 0 0;
     }
     #chain-title { font-size:15px; font-weight:800; color:#fff; }
-    #chain-subtitle { font-size:11px; color:var(--muted); margin-top:2px; }
-    #chain-close { background:rgba(255,255,255,0.07); border:none; color:#fff; width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-    #chain-close:hover { background:rgba(255,255,255,0.14); }
-    #chain-body { padding:12px 16px 20px; }
-    .chain-expiry-group { margin-bottom:18px; }
+    #chain-subtitle { font-size:10px; color:var(--muted); margin-top:2px; }
+    #chain-legend {
+      flex-shrink:0; display:flex; gap:16px; align-items:center;
+      padding:6px 18px; border-bottom:1px solid rgba(255,255,255,0.05);
+      background:#0c1018;
+    }
+    .legend-item { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--muted); letter-spacing:0.3px; }
+    .legend-swatch { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+    #chain-close { background:rgba(255,255,255,0.07); border:none; color:#aaa; width:26px; height:26px; border-radius:50%; font-size:13px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    #chain-close:hover { background:rgba(255,255,255,0.14); color:#fff; }
+    #chain-scroll { flex:1; overflow-y:auto; }
+    .chain-expiry-group { margin-bottom:0; }
     .chain-expiry-label {
+      position:sticky; top:0; z-index:2;
       font-size:9px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
-      color:var(--muted); margin-bottom:6px; padding-bottom:4px;
+      color:#4a566e; background:#0c1018;
+      padding:8px 18px 6px; border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .chain-table-wrap { overflow-x:auto; }
+    .chain-table { width:100%; border-collapse:collapse; min-width:560px; }
+    .chain-table thead { position:sticky; top:28px; z-index:1; }
+    .chain-table thead th {
+      font-size:8px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase;
+      color:#3a4560; background:#0c1018;
+      padding:5px 16px 4px; text-align:right; white-space:nowrap;
       border-bottom:1px solid rgba(255,255,255,0.05);
     }
-    .chain-table { width:100%; border-collapse:collapse; }
-    .chain-table th {
-      font-size:8px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;
-      color:#434d65; padding:3px 6px; text-align:right;
+    .chain-table thead th:first-child { text-align:left; padding-left:18px; }
+    .chain-table tbody td {
+      padding:8px 16px; text-align:right; white-space:nowrap;
+      font-size:12px; font-variant-numeric:tabular-nums;
+      border-bottom:1px solid rgba(255,255,255,0.028);
     }
-    .chain-table th:first-child { text-align:left; }
-    .chain-table td { font-size:11px; padding:5px 6px; text-align:right; border-top:1px solid rgba(255,255,255,0.03); }
-    .chain-table td:first-child { text-align:left; }
-    .chain-table tr:hover td { background:rgba(255,255,255,0.03); }
-    .chain-table tr.atm-row td { background:rgba(245,200,66,0.04); }
-    .chain-tag { display:inline-block; font-size:8px; font-weight:800; padding:1px 5px; border-radius:3px; }
-    .chain-itm { background:rgba(0,212,160,0.12); color:#00d4a0; }
-    .chain-atm { background:rgba(245,200,66,0.15); color:var(--yellow); }
-    .chain-otm { background:rgba(255,255,255,0.06); color:var(--muted); }
-    .chain-signal-full { color:#00d4a0; font-size:9px; font-weight:800; }
-    .chain-signal-iv   { color:var(--yellow); font-size:9px; }
-    .chain-signal-none { color:#2e3a52; font-size:9px; }
-    .chain-iv-good { color:#00d4a0; }
-    .chain-iv-warn { color:var(--yellow); }
-    .chain-iv-high { color:var(--red); }
-    .chain-no-data { color:#2e3a52; font-size:12px; text-align:center; padding:24px 0; }
+    .chain-table tbody td:first-child { text-align:left; padding-left:18px; font-weight:700; font-size:12.5px; }
+    .chain-table tbody tr:hover td { filter:brightness(1.15); cursor:default; }
+    /* Moneyness shading — bands not tags */
+    .row-itm td { background:rgba(0,180,120,0.07); }
+    .row-itm td:first-child { color:#00c49a; }
+    .row-atm td {
+      background:rgba(245,200,66,0.10);
+      border-top:1px solid rgba(245,200,66,0.2) !important;
+      border-bottom:1px solid rgba(245,200,66,0.2) !important;
+    }
+    .row-atm td:first-child { color:var(--yellow); border-left:2px solid var(--yellow); padding-left:16px; }
+    .row-otm td { background:rgba(255,255,255,0.01); }
+    .row-otm td:first-child { color:#6a7a96; }
+    /* IV */
+    .iv-good { color:#00d4a0; }
+    .iv-warn { color:var(--yellow); }
+    .iv-high { color:var(--red); }
+    /* Signal */
+    .sig-enter { color:#00d4a0; font-weight:800; }
+    .sig-watch  { color:var(--yellow); }
+    .sig-wait   { color:#2e3a52; }
+    .muted-num  { color:#3a4560; }
+    .chain-no-data { color:#2e3a52; font-size:12px; text-align:center; padding:32px 0; }
+    .watch-card { cursor:pointer; }
   </style>
 </head>
 <body>
 
 <!-- CONTRACT CHAIN DRAWER -->
 <div id="chain-overlay" onclick="closeChainDrawer()"></div>
+<div id="chain-drawer">
+  <div id="chain-header">
+    <div>
+      <div id="chain-title">Option Chain</div>
+      <div id="chain-subtitle"></div>
+    </div>
+    <button id="chain-close" onclick="closeChainDrawer()">&#x2715;</button>
+  </div>
+  <div id="chain-legend">
+    <span class="legend-item"><span class="legend-swatch" style="background:rgba(0,180,120,0.35)"></span>In the Money (ITM)</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:rgba(245,200,66,0.4)"></span>At the Money (ATM)</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:rgba(255,255,255,0.08)"></span>Out of Money (OTM)</span>
+  </div>
+  <div id="chain-scroll"><div id="chain-body"></div></div>
+</div>
 <div id="chain-drawer">
   <div id="chain-header">
     <div>
@@ -1788,19 +1829,18 @@
 
   // ── OPTION CHAIN DRAWER ───────────────────────────────────────────────────
   function openChainDrawer(ticker) {
-    const contracts = CONTRACT_DATA[ticker];
-    const priceData   = PRICES[ticker];
-    const eq          = priceData ? getBuyZoneInfo(ticker, priceData.price) : null;
+    const contracts  = CONTRACT_DATA[ticker];
+    const priceData  = PRICES[ticker];
+    const eq         = priceData ? getBuyZoneInfo(ticker, priceData.price) : null;
     const stockInZone = eq && eq.zone === 'buy';
+    const currentPrice = priceData?.price;
 
-    const cardEl  = document.querySelector(`.watch-card[data-ticker="${ticker}"]`);
+    const cardEl   = document.querySelector(`.watch-card[data-ticker="${ticker}"]`);
     const cardName = cardEl?.querySelector('.watch-name')?.textContent || '';
-    document.getElementById('chain-title').textContent =
-      `${ticker}${cardName ? ' — ' + cardName : ''}`;
+    document.getElementById('chain-title').textContent = `${ticker}${cardName ? '  —  ' + cardName : ''}`;
     document.getElementById('chain-subtitle').textContent =
-      `LEAP calls · expiry >12 months · ${contracts?.length || 0} contracts · stock ${eq ? eq.pctOff.toFixed(1) + '% off ATH' : '—'}`;
+      `LEAP calls  ·  expiry > 12 months  ·  ${contracts?.length || 0} contracts  ·  stock ${eq ? eq.pctOff.toFixed(1) + '% off ATH' : '—'}`;
 
-    // Show drawer immediately — build content after
     document.getElementById('chain-overlay').classList.add('open');
     document.getElementById('chain-drawer').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1808,64 +1848,71 @@
     const body = document.getElementById('chain-body');
 
     if (!contracts || contracts.length === 0) {
-      body.innerHTML = `<div class="chain-no-data">No chain data yet — run the monitor to fetch contracts</div>`;
-    } else {
-      // Group by expiry
-      const byExpiry = {};
-      for (const c of contracts) {
-        (byExpiry[c.expiry] = byExpiry[c.expiry] || []).push(c);
-      }
-
-      let html = '';
-      for (const [expiry, rows] of Object.entries(byExpiry)) {
-        const d    = new Date(expiry + 'T12:00:00');
-        const mo   = d.toLocaleDateString('en-US', { month: 'short' });
-        const yr   = String(d.getFullYear()).slice(-2);
-        const label = `${mo} '${yr}`;
-        html += `<div class="chain-expiry-group">
-          <div class="chain-expiry-label">${label}</div>
-          <table class="chain-table">
-            <thead><tr>
-              <th>STRIKE</th><th>PRICE</th><th>IV</th>
-              <th title="Delta: $move per $1 stock">Δ</th>
-              <th title="Theta: daily decay per contract">θ/day</th>
-              <th>SIGNAL</th>
-            </tr></thead><tbody>`;
-
-        for (const c of rows) {
-          const tagCls  = c.moneyness === 'ITM' ? 'chain-itm' : (c.moneyness === 'ATM' ? 'chain-atm' : 'chain-otm');
-          const ivCls   = c.iv == null ? '' : (c.iv < 35 ? 'chain-iv-good' : (c.iv < 50 ? 'chain-iv-warn' : 'chain-iv-high'));
-          const ivTxt   = c.iv != null ? `${c.iv.toFixed(1)}%` : '—';
-          const deltaTxt = c.delta != null ? c.delta.toFixed(2) : '—';
-          const thetaTxt = c.theta != null ? `-$${Math.abs((c.theta * 100).toFixed(2))}` : '—';
-
-          // Signal logic: stock in zone + IV < 35%
-          const ivOk = c.iv != null && c.iv < 35;
-          let signalHtml;
-          if (stockInZone && ivOk) {
-            signalHtml = `<span class="chain-signal-full">⚡ Enter</span>`;
-          } else if (stockInZone && c.iv != null && c.iv < 50) {
-            signalHtml = `<span class="chain-signal-iv">👀 IV ok-ish</span>`;
-          } else if (stockInZone) {
-            signalHtml = `<span class="chain-signal-none">⛔ IV high</span>`;
-          } else {
-            signalHtml = `<span class="chain-signal-none">wait</span>`;
-          }
-
-          const rowCls = c.moneyness === 'ATM' ? ' class="atm-row"' : '';
-          html += `<tr${rowCls}>
-            <td><span class="chain-tag ${tagCls}">${c.moneyness}</span> $${c.strike}</td>
-            <td>$${c.price.toFixed(2)}</td>
-            <td class="${ivCls}">${ivTxt}</td>
-            <td>${deltaTxt}</td>
-            <td style="color:var(--red)">${thetaTxt}</td>
-            <td>${signalHtml}</td>
-          </tr>`;
-        }
-        html += `</tbody></table></div>`;
-      }
-      body.innerHTML = html;
+      body.innerHTML = `<div class="chain-no-data">No chain data yet — run the monitor to populate</div>`;
+      return;
     }
+
+    // Group by expiry
+    const byExpiry = {};
+    for (const c of contracts) {
+      (byExpiry[c.expiry] = byExpiry[c.expiry] || []).push(c);
+    }
+
+    let html = '';
+    for (const [expiry, rows] of Object.entries(byExpiry)) {
+      const d  = new Date(expiry + 'T12:00:00');
+      const mo = d.toLocaleDateString('en-US', { month: 'short' });
+      const yr = String(d.getFullYear()).slice(-2);
+
+      html += `<div class="chain-expiry-group">
+        <div class="chain-expiry-label">${mo} '${yr} &nbsp;·&nbsp; Calls</div>
+        <div class="chain-table-wrap"><table class="chain-table">
+          <thead><tr>
+            <th>STRIKE</th>
+            <th>BID</th><th>ASK</th><th>MID</th>
+            <th title="Implied Volatility">IV</th>
+            <th title="Delta — option moves $X per $1 stock move">&#916;</th>
+            <th title="Theta — daily time decay per contract">&theta;/day</th>
+            <th>VOL</th><th>OI</th>
+            <th>SIGNAL</th>
+          </tr></thead><tbody>`;
+
+      for (const c of rows) {
+        const rowCls  = c.moneyness === 'ITM' ? 'row-itm' : (c.moneyness === 'ATM' ? 'row-atm' : 'row-otm');
+        const ivCls   = c.iv == null ? 'muted-num' : (c.iv < 35 ? 'iv-good' : (c.iv < 50 ? 'iv-warn' : 'iv-high'));
+        const ivTxt   = c.iv != null ? c.iv.toFixed(1) + '%' : '—';
+        const deltaTxt = c.delta != null ? c.delta.toFixed(2) : '<span class="muted-num">—</span>';
+        const thetaTxt = c.theta != null
+          ? '<span style="color:var(--red)">-$' + Math.abs((c.theta * 100).toFixed(2)) + '</span>'
+          : '<span class="muted-num">—</span>';
+        const bidTxt  = c.bid  > 0 ? '$' + c.bid.toFixed(2)  : '<span class="muted-num">—</span>';
+        const askTxt  = c.ask  > 0 ? '$' + c.ask.toFixed(2)  : '<span class="muted-num">—</span>';
+        const midTxt  = '$' + c.price.toFixed(2);
+        const volTxt  = c.volume != null ? c.volume.toLocaleString() : '<span class="muted-num">—</span>';
+        const oiTxt   = c.oi    != null ? c.oi.toLocaleString()    : '<span class="muted-num">—</span>';
+
+        const ivOk = c.iv != null && c.iv < 35;
+        const ivMid = c.iv != null && c.iv < 50;
+        let sig;
+        if      (stockInZone && ivOk)  sig = '<span class="sig-enter">&#x26A1; Enter</span>';
+        else if (stockInZone && ivMid) sig = '<span class="sig-watch">&#x1F440; Watch</span>';
+        else if (stockInZone)          sig = '<span class="sig-wait">IV too high</span>';
+        else                           sig = '<span class="sig-wait">wait</span>';
+
+        html += `<tr class="${rowCls}">
+          <td>$${c.strike % 1 === 0 ? c.strike.toFixed(0) : c.strike}</td>
+          <td>${bidTxt}</td><td>${askTxt}</td><td>${midTxt}</td>
+          <td class="${ivCls}">${ivTxt}</td>
+          <td>${deltaTxt}</td>
+          <td>${thetaTxt}</td>
+          <td class="muted-num">${volTxt}</td>
+          <td class="muted-num">${oiTxt}</td>
+          <td>${sig}</td>
+        </tr>`;
+      }
+      html += `</tbody></table></div></div>`;
+    }
+    body.innerHTML = html;
   }
 
   function closeChainDrawer() {
