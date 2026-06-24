@@ -34,7 +34,7 @@ import sys
 import subprocess
 import smtplib
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import yfinance as yf
 import requests
@@ -478,8 +478,94 @@ def fetch_ticker(symbol):
         return None
 
 
+def fetch_option_chain(symbol, current_price):
+    """
+    Fetch all LEAP calls with expiry > 12 months from today.
+    Returns list of dicts sorted by expiry then strike, tagged ITM/ATM/OTM.
+    Strike range: 50% below to 60% above current price.
+    """
+    results = []
+    try:
+        tk = yf.Ticker(symbol)
+        available = tk.options
+        if not available:
+            return []
+        min_expiry = datetime.now() + timedelta(days=365)
+        for expiry_str in available:
+            expiry_dt = datetime.strptime(expiry_str, "%Y-%m-%d")
+            if expiry_dt < min_expiry:
+                continue
+            try:
+                chain = tk.option_chain(expiry_str)
+                calls = chain.calls
+                if calls is None or calls.empty:
+                    continue
+                for _, row in calls.iterrows():
+                    strike = float(row.get("strike", 0))
+                    # Keep strikes from 50% below to 60% above current price
+                    if strike < current_price * 0.50 or strike > current_price * 1.60:
+                        continue
+                    bid = float(row.get("bid", 0) or 0)
+                    ask = float(row.get("ask", 0) or 0)
+                    if bid == 0 and ask == 0:
+                        continue
+                    mid = round((bid + ask) / 2, 2)
+                    if mid < 0.50:  # skip near-zero illiquid contracts
+                        continue
+
+                    iv_pct = None
+                    try:
+                        iv_raw = float(row.get("impliedVolatility") or 0)
+                        if iv_raw > 0:
+                            iv_pct = round(iv_raw * 100, 1)
+                    except (ValueError, TypeError):
+                        pass
+
+                    delta = None
+                    try:
+                        d = row.get("delta")
+                        if d is not None:
+                            delta = round(float(d), 3)
+                    except (ValueError, TypeError):
+                        pass
+
+                    theta = None
+                    try:
+                        th = row.get("theta")
+                        if th is not None:
+                            theta = round(float(th), 3)
+                    except (ValueError, TypeError):
+                        pass
+
+                    # Moneyness tag
+                    pct_diff = (strike - current_price) / current_price
+                    if pct_diff < -0.03:
+                        moneyness = "ITM"
+                    elif pct_diff <= 0.03:
+                        moneyness = "ATM"
+                    else:
+                        moneyness = "OTM"
+
+                    results.append({
+                        "strike":    strike,
+                        "expiry":    expiry_str,
+                        "price":     mid,
+                        "iv":        iv_pct,
+                        "delta":     delta,
+                        "theta":     theta,
+                        "moneyness": moneyness,
+                    })
+            except Exception as e:
+                print(f"    ⚠  {symbol} chain {expiry_str}: {e}")
+                continue
+        results.sort(key=lambda x: (x["expiry"], x["strike"]))
+    except Exception as e:
+        print(f"    ⚠  {symbol} option chain: {e}")
+    return results
+
+
 # ─── HTML UPDATE ─────────────────────────────────────────────────────────────
-def update_html(all_data, opt_data, watchlist, opt_contracts):
+def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None):
     try:
         with open(HTML_PATH) as f:
             html = f.read()
@@ -613,6 +699,22 @@ def update_html(all_data, opt_data, watchlist, opt_contracts):
             r"  // ── GREEKS.*?const GREEKS_DATA = \{.*?\};",
             new_greeks, html, flags=re.DOTALL,
         )
+
+        # ── 7. Build CONTRACT_DATA block ─────────────────────────
+        if chain_data:
+            clines = [
+                "  // ── OPTION CHAIN DATA (updated by troy-monitor.py) ───────────────────────────",
+                "  // Full LEAP call chains per stock — expiry >12 months, all strikes ITM→OTM",
+                "  const CONTRACT_DATA = {",
+            ]
+            for t, contracts in chain_data.items():
+                clines.append(f"    {json.dumps(t)}: {json.dumps(contracts)},")
+            clines.append("  };")
+            new_chain = "\n".join(clines)
+            html = re.sub(
+                r"  // ── OPTION CHAIN DATA.*?const CONTRACT_DATA = \{.*?\};",
+                new_chain, html, flags=re.DOTALL,
+            )
 
         with open(HTML_PATH, "w") as f:
             f.write(html)
@@ -837,8 +939,20 @@ def main():
     if 20 <= hour <= 21:   # ~4-5 PM ET in UTC
         check_eyl_board(watchlist, opt_contracts, classes_data)
 
+    # ── Fetch full option chains for drawer ──────────────────────
+    print("\n  Fetching full option chains (LEAP calls)...")
+    chain_data = {}
+    for ticker in watchlist:
+        eq = all_data.get(ticker)
+        if not eq:
+            continue
+        print(f"    {ticker:<5}", end=" ", flush=True)
+        contracts = fetch_option_chain(ticker, eq["price"])
+        chain_data[ticker] = contracts
+        print(f"{len(contracts)} contracts")
+
     # ── Update HTML ──────────────────────────────────────────────
-    update_html(all_data, opt_data, watchlist, opt_contracts)
+    update_html(all_data, opt_data, watchlist, opt_contracts, chain_data)
     print("\n✅ Done.\n")
 
 
