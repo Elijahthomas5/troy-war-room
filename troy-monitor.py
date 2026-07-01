@@ -36,8 +36,43 @@ import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
-import yfinance as yf
 import requests
+
+# ─── SCHWAB CLIENT ───────────────────────────────────────────────────────────
+# schwab-py handles OAuth token refresh automatically once authenticated.
+# Run schwab_auth.py once to set up the token, then this loads it every run.
+_schwab_client = None
+
+def get_schwab_client():
+    """
+    Returns an authenticated Schwab client, or None if not set up.
+    Token is auto-refreshed by schwab-py — no manual intervention needed.
+    """
+    global _schwab_client
+    if _schwab_client is not None:
+        return _schwab_client
+
+    creds_path = os.path.join(BASE_DIR, ".schwab_creds.json")
+    if not os.path.exists(creds_path):
+        return None
+
+    try:
+        with open(creds_path) as f:
+            creds = json.load(f)
+        token_path = creds.get("token_path", os.path.join(BASE_DIR, ".schwab_token.json"))
+        if not os.path.exists(token_path):
+            return None
+
+        import schwab
+        _schwab_client = schwab.auth.client_from_token_file(
+            token_path=token_path,
+            api_key=creds["client_id"],
+            app_secret=creds["client_secret"],
+        )
+        return _schwab_client
+    except Exception as e:
+        print(f"  ⚠  Schwab client init failed: {e}")
+        return None
 
 # ─── PATHS ───────────────────────────────────────────────────────────────────
 BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
@@ -410,10 +445,202 @@ def check_eyl_board(watchlist, opt_contracts, classes_data):
 
 
 # ─── DATA FETCH ──────────────────────────────────────────────────────────────
-def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
-    """Returns dict {"mid": price, "iv": implied_vol_pct} — iv is 0-100 scale."""
+
+# ── Schwab quote helpers ──────────────────────────────────────────────────────
+
+def _schwab_quote(symbols):
+    """
+    Fetch live quotes from Schwab for a list of symbols.
+    Returns dict: {symbol: {"price", "change", "high52", "pct_from_high"}} or {}
+    """
+    client = get_schwab_client()
+    if client is None:
+        return {}
+    try:
+        r = client.get_quotes(symbols)
+        if not r.ok:
+            print(f"  ⚠  Schwab quotes HTTP {r.status_code}")
+            return {}
+        data = r.json()
+        out = {}
+        for sym, payload in data.items():
+            q = payload.get("quote", {})
+            rf = payload.get("reference", {})
+            current = q.get("lastPrice") or q.get("mark") or q.get("closePrice")
+            prev    = q.get("closePrice") or current
+            high52  = q.get("52WkHigh") or rf.get("52WeekHigh") or current
+            if current is None:
+                continue
+            current = round(float(current), 2)
+            prev    = round(float(prev),    2)
+            high52  = round(float(high52),  2)
+            change  = round((current - prev) / prev * 100, 2) if prev else 0.0
+            pct_off = round((high52 - current) / high52 * 100, 1) if high52 else 0.0
+            out[sym] = {
+                "price":        current,
+                "change":       change,
+                "high52":       high52,
+                "pct_from_high": pct_off,
+            }
+        return out
+    except Exception as e:
+        print(f"  ⚠  Schwab quote fetch: {e}")
+        return {}
+
+
+def _schwab_option_chain(symbol, expiry=None, strike=None, opt_type="CALL"):
+    """
+    Fetch option chain from Schwab.
+    If expiry+strike given: return the single matching contract dict (for price/IV check).
+    If neither given: return all LEAP calls (>12 months) as a list sorted by expiry, strike.
+    """
+    client = get_schwab_client()
+    if client is None:
+        return None
+
+    try:
+        import schwab as _schwab
+
+        kwargs = dict(
+            symbol=symbol,
+            contract_type=_schwab.client.Client.Options.ContractType.CALL,
+            include_underlying_quote=True,
+        )
+
+        # If we want a single contract, narrow the query
+        if expiry:
+            from_dt = datetime.strptime(expiry, "%Y-%m-%d")
+            kwargs["from_date"] = from_dt
+            kwargs["to_date"]   = from_dt
+        else:
+            # LEAP chains: >12 months out
+            kwargs["from_date"] = datetime.now() + timedelta(days=365)
+
+        if strike is not None:
+            s = float(strike)
+            kwargs["strike"]    = s
+
+        r = client.get_option_chain(**kwargs)
+        if not r.ok:
+            return None
+
+        data = r.json()
+        call_map = data.get("callExpDateMap", {})
+
+        results = []
+        for exp_key, strikes_dict in call_map.items():
+            # exp_key format: "2027-09-17:700"
+            exp_date = exp_key.split(":")[0]
+            for strike_str, contracts in strikes_dict.items():
+                for c in contracts:
+                    bid   = float(c.get("bid") or 0)
+                    ask   = float(c.get("ask") or 0)
+                    mid   = round((bid + ask) / 2, 2)
+                    if bid == 0 and ask == 0:
+                        continue
+                    if mid < 0.50:
+                        continue
+
+                    iv_raw = c.get("volatility")
+                    iv_pct = round(float(iv_raw), 1) if iv_raw and float(iv_raw) > 0 else None
+
+                    delta = c.get("delta")
+                    delta = round(float(delta), 3) if delta is not None else None
+
+                    theta = c.get("theta")
+                    theta = round(float(theta), 3) if theta is not None else None
+
+                    str_val = float(strike_str)
+                    results.append({
+                        "strike":    str_val,
+                        "expiry":    exp_date,
+                        "bid":       round(bid, 2),
+                        "ask":       round(ask, 2),
+                        "price":     mid,
+                        "iv":        iv_pct,
+                        "delta":     delta,
+                        "theta":     theta,
+                        "volume":    c.get("totalVolume"),
+                        "oi":        c.get("openInterest"),
+                        "moneyness": c.get("inTheMoney") and "ITM" or "OTM",
+                    })
+
+        results.sort(key=lambda x: (x["expiry"], x["strike"]))
+        return results
+
+    except Exception as e:
+        print(f"  ⚠  Schwab option chain {symbol}: {e}")
+        return None
+
+
+def fetch_schwab_positions():
+    """
+    Pull live positions from Schwab account.
+    Returns dict: {ticker: {"qty", "avg_cost", "current_value", "unrealized_pnl", "pnl_pct"}}
+    For options: ticker is the underlying, with contract details embedded.
+    """
+    client = get_schwab_client()
+    if client is None:
+        return {}
+    try:
+        import schwab as _schwab
+        r = client.get_accounts(fields=[_schwab.client.Client.Account.Fields.POSITIONS])
+        if not r.ok:
+            print(f"  ⚠  Schwab positions HTTP {r.status_code}")
+            return {}
+        accounts = r.json()
+        positions = {}
+        for acct in accounts:
+            for pos in acct.get("securitiesAccount", {}).get("positions", []):
+                instr = pos.get("instrument", {})
+                sym   = instr.get("symbol", "")
+                qty   = pos.get("longQuantity", 0) - pos.get("shortQuantity", 0)
+                avg   = pos.get("averagePrice", 0)
+                mktv  = pos.get("marketValue", 0)
+                pnl   = pos.get("unrealizedProfitLoss", None)
+                pnl_pct = None
+                if avg and qty:
+                    cost = avg * qty
+                    if cost:
+                        pnl_pct = round(((mktv - cost) / cost) * 100, 1)
+                positions[sym] = {
+                    "qty":            qty,
+                    "avg_cost":       round(float(avg), 2),
+                    "current_value":  round(float(mktv), 2),
+                    "unrealized_pnl": round(float(pnl), 2) if pnl is not None else None,
+                    "pnl_pct":        pnl_pct,
+                    "asset_type":     instr.get("assetType", "EQUITY"),
+                    "description":    instr.get("description", ""),
+                }
+        return positions
+    except Exception as e:
+        print(f"  ⚠  Schwab positions fetch: {e}")
+        return {}
+
+
+# ── yfinance fallbacks ────────────────────────────────────────────────────────
+
+def _yf_quote(symbol):
+    try:
+        import yfinance as yf
+        hist = yf.Ticker(symbol).history(period="1y")
+        if hist.empty:
+            return None
+        current = round(float(hist["Close"].iloc[-1]), 2)
+        prev    = round(float(hist["Close"].iloc[-2]), 2)
+        high52  = round(float(hist["High"].max()), 2)
+        change  = round((current - prev) / prev * 100, 2)
+        pct_off = round((high52 - current) / high52 * 100, 1)
+        return {"price": current, "change": change, "high52": high52, "pct_from_high": pct_off}
+    except Exception as e:
+        print(f"  ⚠  yf {symbol}: {e}")
+        return None
+
+
+def _yf_option_price(symbol, expiry, strike, opt_type="calls"):
     empty = {"mid": None, "iv": None}
     try:
+        import yfinance as yf
         tk        = yf.Ticker(symbol)
         available = tk.options
         if not available:
@@ -431,7 +658,6 @@ def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
         bid = float(row["bid"].iloc[0])
         ask = float(row["ask"].iloc[0])
         mid = round((bid + ask) / 2, 2)
-        # Implied volatility — yfinance returns as decimal (0.28 = 28%)
         iv_pct = None
         if "impliedVolatility" in row.columns:
             try:
@@ -440,52 +666,28 @@ def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
                     iv_pct = round(iv_raw * 100, 1)
             except (ValueError, TypeError):
                 pass
-
-        # Delta — how much option moves per $1 stock move (0-1 scale)
         delta = None
         if "delta" in row.columns:
             try:
                 delta = round(float(row["delta"].iloc[0]), 3)
             except (ValueError, TypeError):
                 pass
-
-        # Theta — daily time decay in $ (negative number, e.g. -0.06 = loses $6/day per contract)
         theta = None
         if "theta" in row.columns:
             try:
                 theta = round(float(row["theta"].iloc[0]), 3)
             except (ValueError, TypeError):
                 pass
-
         return {"mid": mid, "iv": iv_pct, "delta": delta, "theta": theta}
     except Exception as e:
-        print(f"    ⚠  {symbol} option: {e}")
+        print(f"    ⚠  yf {symbol} option: {e}")
         return empty
 
-def fetch_ticker(symbol):
-    try:
-        hist = yf.Ticker(symbol).history(period="1y")
-        if hist.empty:
-            return None
-        current = round(float(hist["Close"].iloc[-1]), 2)
-        prev    = round(float(hist["Close"].iloc[-2]), 2)
-        high52  = round(float(hist["High"].max()), 2)
-        change  = round((current - prev) / prev * 100, 2)
-        pct_off = round((high52 - current) / high52 * 100, 1)
-        return {"price": current, "change": change, "high52": high52, "pct_from_high": pct_off}
-    except Exception as e:
-        print(f"  ⚠  {symbol}: {e}")
-        return None
 
-
-def fetch_option_chain(symbol, current_price):
-    """
-    Fetch all LEAP calls with expiry > 12 months from today.
-    Returns list of dicts sorted by expiry then strike, tagged ITM/ATM/OTM.
-    Strike range: 50% below to 60% above current price.
-    """
+def _yf_option_chain(symbol, current_price):
     results = []
     try:
+        import yfinance as yf
         tk = yf.Ticker(symbol)
         available = tk.options
         if not available:
@@ -502,7 +704,6 @@ def fetch_option_chain(symbol, current_price):
                     continue
                 for _, row in calls.iterrows():
                     strike = float(row.get("strike", 0))
-                    # Keep strikes from 50% below to 60% above current price
                     if strike < current_price * 0.50 or strike > current_price * 1.60:
                         continue
                     bid = float(row.get("bid", 0) or 0)
@@ -510,9 +711,8 @@ def fetch_option_chain(symbol, current_price):
                     if bid == 0 and ask == 0:
                         continue
                     mid = round((bid + ask) / 2, 2)
-                    if mid < 0.50:  # skip near-zero illiquid contracts
+                    if mid < 0.50:
                         continue
-
                     iv_pct = None
                     try:
                         iv_raw = float(row.get("impliedVolatility") or 0)
@@ -520,7 +720,6 @@ def fetch_option_chain(symbol, current_price):
                             iv_pct = round(iv_raw * 100, 1)
                     except (ValueError, TypeError):
                         pass
-
                     delta = None
                     try:
                         d = row.get("delta")
@@ -528,7 +727,6 @@ def fetch_option_chain(symbol, current_price):
                             delta = round(float(d), 3)
                     except (ValueError, TypeError):
                         pass
-
                     theta = None
                     try:
                         th = row.get("theta")
@@ -536,8 +734,6 @@ def fetch_option_chain(symbol, current_price):
                             theta = round(float(th), 3)
                     except (ValueError, TypeError):
                         pass
-
-                    # Moneyness tag
                     pct_diff = (strike - current_price) / current_price
                     if pct_diff < -0.03:
                         moneyness = "ITM"
@@ -545,7 +741,6 @@ def fetch_option_chain(symbol, current_price):
                         moneyness = "ATM"
                     else:
                         moneyness = "OTM"
-
                     vol = None
                     try:
                         v = row.get("volume")
@@ -553,7 +748,6 @@ def fetch_option_chain(symbol, current_price):
                             vol = int(float(v))
                     except (ValueError, TypeError):
                         pass
-
                     oi = None
                     try:
                         o = row.get("openInterest")
@@ -561,31 +755,88 @@ def fetch_option_chain(symbol, current_price):
                             oi = int(float(o))
                     except (ValueError, TypeError):
                         pass
-
                     results.append({
-                        "strike":    strike,
-                        "expiry":    expiry_str,
-                        "bid":       round(float(row.get("bid", 0) or 0), 2),
-                        "ask":       round(float(row.get("ask", 0) or 0), 2),
-                        "price":     mid,
-                        "iv":        iv_pct,
-                        "delta":     delta,
-                        "theta":     theta,
-                        "volume":    vol,
-                        "oi":        oi,
-                        "moneyness": moneyness,
+                        "strike": strike, "expiry": expiry_str,
+                        "bid": round(float(row.get("bid", 0) or 0), 2),
+                        "ask": round(float(row.get("ask", 0) or 0), 2),
+                        "price": mid, "iv": iv_pct, "delta": delta, "theta": theta,
+                        "volume": vol, "oi": oi, "moneyness": moneyness,
                     })
             except Exception as e:
-                print(f"    ⚠  {symbol} chain {expiry_str}: {e}")
+                print(f"    ⚠  yf {symbol} chain {expiry_str}: {e}")
                 continue
         results.sort(key=lambda x: (x["expiry"], x["strike"]))
     except Exception as e:
-        print(f"    ⚠  {symbol} option chain: {e}")
+        print(f"    ⚠  yf {symbol} option chain: {e}")
     return results
 
 
+# ── Public fetch API — Schwab first, yfinance fallback ───────────────────────
+
+def fetch_ticker(symbol):
+    """Fetch stock price data. Uses Schwab live data if authenticated, else yfinance."""
+    client = get_schwab_client()
+    if client is not None:
+        result = _schwab_quote([symbol])
+        if symbol in result:
+            return result[symbol]
+    return _yf_quote(symbol)
+
+
+def fetch_tickers_bulk(symbols):
+    """Fetch multiple tickers in one Schwab API call (much faster than one-by-one)."""
+    client = get_schwab_client()
+    if client is not None:
+        result = _schwab_quote(symbols)
+        if result:
+            return result
+    # fallback: individual yfinance calls
+    return {s: _yf_quote(s) for s in symbols if _yf_quote(s)}
+
+
+def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
+    """Returns dict {"mid": price, "iv": iv_pct, "delta": delta, "theta": theta}."""
+    client = get_schwab_client()
+    if client is not None:
+        chain = _schwab_option_chain(symbol, expiry=expiry, strike=strike)
+        if chain is not None and len(chain) > 0:
+            # Find closest strike
+            target = float(strike)
+            best   = min(chain, key=lambda c: abs(c["strike"] - target))
+            return {
+                "mid":   best["price"],
+                "iv":    best["iv"],
+                "delta": best["delta"],
+                "theta": best["theta"],
+            }
+    return _yf_option_price(symbol, expiry, strike, opt_type)
+
+
+def fetch_option_chain(symbol, current_price):
+    """
+    Fetch all LEAP calls with expiry > 12 months.
+    Returns list of dicts sorted by expiry then strike, tagged ITM/ATM/OTM.
+    Strike range: 50% below to 60% above current price.
+    """
+    client = get_schwab_client()
+    if client is not None:
+        chain = _schwab_option_chain(symbol)
+        if chain is not None:
+            # Filter to price range and add moneyness
+            filtered = []
+            for c in chain:
+                s = c["strike"]
+                if s < current_price * 0.50 or s > current_price * 1.60:
+                    continue
+                pct_diff = (s - current_price) / current_price
+                c["moneyness"] = "ITM" if pct_diff < -0.03 else ("ATM" if pct_diff <= 0.03 else "OTM")
+                filtered.append(c)
+            return filtered
+    return _yf_option_chain(symbol, current_price)
+
+
 # ─── HTML UPDATE ─────────────────────────────────────────────────────────────
-def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None):
+def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, schwab_positions=None):
     try:
         with open(HTML_PATH) as f:
             html = f.read()
@@ -736,6 +987,33 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None):
                 new_chain, html, flags=re.DOTALL,
             )
 
+        # ── 8. Build SCHWAB_POSITIONS block ─────────────────────
+        if schwab_positions:
+            plines = [
+                "  // ── SCHWAB LIVE POSITIONS (updated by troy-monitor.py) ──────────────────────",
+                "  // Pulled from your Schwab account — auto-synced each run",
+                f"  // As of: {now_str}",
+                "  const SCHWAB_POSITIONS = {",
+            ]
+            for sym, pos in schwab_positions.items():
+                plines.append(
+                    f"    {json.dumps(sym)}: {json.dumps(pos)},"
+                )
+            plines.append("  };")
+            new_positions = "\n".join(plines)
+            if "const SCHWAB_POSITIONS" in html:
+                html = re.sub(
+                    r"  // ── SCHWAB LIVE POSITIONS.*?const SCHWAB_POSITIONS = \{.*?\};",
+                    new_positions, html, flags=re.DOTALL,
+                )
+            else:
+                # Insert before closing </script> of the data block
+                html = html.replace(
+                    "  const CONTRACT_DATA",
+                    new_positions + "\n\n  const CONTRACT_DATA",
+                    1,
+                )
+
         with open(HTML_PATH, "w") as f:
             f.write(html)
         print(f"  ✓ HTML updated ({now_str})")
@@ -743,6 +1021,81 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None):
     except Exception as e:
         print(f"  ⚠  HTML update failed: {e}")
         import traceback; traceback.print_exc()
+
+
+# ─── HOURLY STATUS PUSH ──────────────────────────────────────────────────────
+def send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
+                         buy_zone_hits, alert_hits, stop_loss_hits):
+    """
+    Always-on push sent every monitor run — quick snapshot of owned positions
+    and watchlist highlights. Not an alert; just a regular status update.
+    """
+    now = datetime.now()
+    time_str = now.strftime("%-I:%M %p")
+    lines = [f"📊 {time_str} War Room Update"]
+
+    # ── Owned positions ──────────────────────────────────────────
+    owned = [(t, i) for t, i in opt_contracts.items() if i.get("owned")]
+    if owned:
+        lines.append("")
+        lines.append("💼 Your Positions")
+        for t, info in owned:
+            stk    = all_data.get(t, {})
+            result = opt_data.get(t, {})
+            opt_mid = result.get("mid") if isinstance(result, dict) else None
+            stk_price = stk.get("price")
+            stk_chg   = stk.get("change")
+
+            # P&L vs alert entry
+            alert = info.get("alert")
+            pnl_str = ""
+            if opt_mid and alert:
+                pnl_pct = (opt_mid - alert) / alert * 100
+                pnl_str = f"  {pnl_pct:+.1f}% vs entry"
+
+            stk_str = f"${stk_price:.2f} ({stk_chg:+.1f}%)" if stk_price and stk_chg else "--"
+            opt_str = f"${opt_mid:.2f}" if opt_mid else "--"
+
+            # Status tag
+            if stop_loss_hits and any(x[0] == t for x in stop_loss_hits):
+                status = "⛔ STOP-LOSS"
+            elif alert_hits and any(x[0] == t for x in alert_hits):
+                status = "🚨 AT ALERT"
+            else:
+                status = "✓ Holding"
+
+            lines.append(f"  {t} {info['contract']}")
+            lines.append(f"  Stock: {stk_str} | Option: {opt_str}{pnl_str}")
+            lines.append(f"  {status}")
+
+    # ── Market pulse ──────────────────────────────────────────────
+    pulse_items = []
+    for t in MARKET_PULSE:
+        d = all_data.get(t)
+        if d:
+            sign = "+" if d["change"] >= 0 else ""
+            pulse_items.append(f"{t} {sign}{d['change']:.1f}%")
+    if pulse_items:
+        lines.append("")
+        lines.append("🌍 " + "  |  ".join(pulse_items))
+
+    # ── Buy zone hits ─────────────────────────────────────────────
+    if buy_zone_hits:
+        lines.append("")
+        lines.append(f"🟠 Buy Zone: {', '.join(t for t, _, _ in buy_zone_hits)}")
+
+    # ── Alert summary ─────────────────────────────────────────────
+    n_alerts = len(alert_hits) + len(stop_loss_hits)
+    if n_alerts == 0:
+        lines.append("")
+        lines.append("✓ No alerts triggered")
+
+    body = "\n".join(lines)
+    title = f"War Room {time_str}"
+
+    # Lower priority so hourly pings don't feel urgent
+    send_push(title, body, priority="low", tags=("chart_with_upwards_trend",))
+    print(f"  📱 Hourly snapshot sent ({time_str})")
 
 
 # ─── MAIN ────────────────────────────────────────────────────────────────────
@@ -758,20 +1111,40 @@ def main():
     buy_zone_hits   = []
     watch_zone_hits = []
 
-    # ── Fetch equity prices ──────────────────────────────────────
+    # ── Detect data source ───────────────────────────────────────
+    using_schwab = get_schwab_client() is not None
+    src_tag      = "🔴 Schwab live" if using_schwab else "⚠  yfinance (run schwab_auth.py for live data)"
+    print(f"\n  Data source: {src_tag}")
+
+    # ── Fetch equity prices (bulk Schwab call if available) ──────
     print("\n  Fetching stock prices...")
+    all_symbols = list(watchlist.keys()) + MARKET_PULSE
+    if using_schwab:
+        bulk = _schwab_quote(all_symbols)
+        for sym in all_symbols:
+            if sym in bulk:
+                all_data[sym] = bulk[sym]
+            else:
+                # fallback for any symbol Schwab didn't return
+                d = _yf_quote(sym)
+                if d:
+                    all_data[sym] = d
+    else:
+        for sym in all_symbols:
+            d = _yf_quote(sym)
+            if d:
+                all_data[sym] = d
+
     for ticker, info in watchlist.items():
-        print(f"  {ticker:<5}", end=" ")
-        d = fetch_ticker(ticker)
+        d = all_data.get(ticker)
         if not d:
-            print("— skip"); continue
-        all_data[ticker] = d
+            print(f"  {ticker:<5} — skip"); continue
         pct = d["pct_from_high"]
         if   pct < 10:  zone = "📈 near high"
         elif pct < 20:  zone = "👀 watch zone"
         elif pct <= 30: zone = "🟠 BUY ZONE ←"
         else:           zone = "❌ below zone"
-        print(f"${d['price']:>9.2f}  |  {pct:>5.1f}% off high  |  {zone}")
+        print(f"  {ticker:<5} ${d['price']:>9.2f}  |  {pct:>5.1f}% off high  |  {zone}")
 
         pf = pct / 100
         if BUY_ZONE_LOW <= pf <= BUY_ZONE_HIGH:
@@ -779,9 +1152,23 @@ def main():
         elif 0.10 <= pf < BUY_ZONE_LOW:
             watch_zone_hits.append((ticker, d, info))
 
-    for t in MARKET_PULSE:
-        d = fetch_ticker(t)
-        if d: all_data[t] = d
+    # ── Fetch & print Schwab positions ───────────────────────────
+    schwab_positions = {}
+    if using_schwab:
+        print("\n  Fetching Schwab account positions...")
+        schwab_positions = fetch_schwab_positions()
+        if schwab_positions:
+            option_pos = {k: v for k, v in schwab_positions.items() if v.get("asset_type") == "OPTION"}
+            equity_pos = {k: v for k, v in schwab_positions.items() if v.get("asset_type") == "EQUITY"}
+            if option_pos:
+                print(f"  📋 {len(option_pos)} option position(s):")
+                for sym, pos in option_pos.items():
+                    pnl_str = f"  P&L: ${pos['unrealized_pnl']:+.0f} ({pos['pnl_pct']:+.1f}%)" if pos.get("unrealized_pnl") is not None else ""
+                    print(f"    {sym}  qty:{pos['qty']}  avg:${pos['avg_cost']:.2f}  mktv:${pos['current_value']:.2f}{pnl_str}")
+            if equity_pos:
+                print(f"  📋 {len(equity_pos)} equity position(s)")
+        else:
+            print("  ℹ  No positions found (or empty account)")
 
     # ── Fetch option prices + IV ─────────────────────────────────
     print("\n  Fetching option prices + IV...")
@@ -972,7 +1359,12 @@ def main():
         print(f"{len(contracts)} contracts")
 
     # ── Update HTML ──────────────────────────────────────────────
-    update_html(all_data, opt_data, watchlist, opt_contracts, chain_data)
+    update_html(all_data, opt_data, watchlist, opt_contracts, chain_data, schwab_positions)
+
+    # ── Hourly status push (always fires) ────────────────────────
+    send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
+                         buy_zone_hits, alert_hits, stop_loss_hits)
+
     print("\n✅ Done.\n")
 
 

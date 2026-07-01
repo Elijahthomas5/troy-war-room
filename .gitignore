@@ -1,0 +1,21 @@
+# Schwab credentials — NEVER commit these
+.schwab_creds.json
+.schwab_token.json
+
+# Logs
+*.log
+troy-monitor.log
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Local scripts (not needed in cloud)
+Refresh\ Now.command
+Start\ Server.command
+schwab_auth.py
+troy-server.py

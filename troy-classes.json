@@ -2,6 +2,25 @@
   "_readme": "Troy's EYL University Option Classes — source of truth for all picks. Add a new class entry whenever Troy covers new names. troy-monitor.py reads this file and auto-injects new tickers into the dashboard.",
   "classes": [
     {
+      "id": "eli-positions-2026",
+      "date": "Jun 30, 2026",
+      "label": "Eli's Live Positions",
+      "notes": "Personal option positions held by Eli. These are real fills — stop-loss and take-profit alerts are active. MSFT $385C Sep '27: filled Jun 30, 2026 at $60.21 limit (GTC). Thesis: MSFT 20% off ATH, low IV (31%), OpenAI IPO catalyst expected within the Sep '27 window. Entry analysis confirmed by analyst consensus $561-577 avg target (78 Buy / 4 Hold / 0 Sell).",
+      "stocks": [
+        {
+          "ticker": "MSFT",
+          "name": "Microsoft Corp.",
+          "contract": "Sep '27 $385C",
+          "expiry": "2027-09-17",
+          "strike": 385.0,
+          "opt_type": "calls",
+          "alert": 60.21,
+          "owned": true,
+          "_note": "Filled Jun 30 2026 at $60.21. Stop-loss triggers at 30% below entry (~$42.15). Take-profit target at 100%+ (~$120+). OpenAI IPO expected 2027 — within expiry window."
+        }
+      ]
+    },
+    {
       "id": "2026-05-14",
       "date": "May 14, 2026",
       "label": "May '26 Options Masterclass",
@@ -210,8 +229,28 @@
       "id": "2024-03-06",
       "date": "Mar 6, 2024",
       "label": "Mar '24 Class Vol.1 — First Options Class",
-      "notes": "PENDING — Vol.1, the original EYL options masterclass. No subtitle file available. User will provide screenshots for content extraction.",
-      "stocks": []
+      "notes": "The original EYL University options masterclass. Full beginner-to-intermediate curriculum: what options are (future price prediction), calls vs puts, expiration dates (short-term/weekly vs LEAPs = 6mo–2yr), strike price selection, bid/ask spread mechanics (must multiply by 100 for real cost), reading an option chain, limit orders vs market orders. LIVE TRADE SHOWN: Troy's NVDA 4x $205C (Jun '21 2024) — bought ~2 years prior, now at +1200% ($5,000/contract → $67,000). Planning to exercise 1 contract (buy 100 shares at $205 vs market price $877 = $66,600 instant equity). STOCKS COVERED: MSFT (teaching example — $402.09, call $415 strike Dec '26), TSLA (watching for entry — fell from $400 peak to $176, RSI near oversold, option down ~50% from $7,600 peak; eyeing Jun '26 $250C but waiting for more pullback), CRM (Salesforce — used as research workflow demo; Argus buy rating, $290 target, 63% gain past year), NVDA (live trade shown), DKNG (DraftKings — affordable example, Apr 19 '24 $42C ~$252/contract). RESEARCH WORKFLOW (Troy's Claude AI method): (1) In brokerage (E-Trade), find Analyst Research tab for the stock — download Argus or Morgan Stanley PDF reports to desktop. (2) Open Claude AI (claude.ai), upload the PDF. (3) Prompt: 'Can you summarize this PDF of [Company]?' — Claude returns: rating, price target, options entry strikes, EPS guidance, AI/growth catalysts in ~5 seconds. (4) Copy summary to Notes app to compile. Repeat for multiple reports. ADDITIONAL TOOLS: Barchart.com (support/resistance — scroll to bottom-right 'Key Points' for pre-calculated levels), Estimize.com (consensus earnings estimates — Wall Street + 2,500+ crowd-sourced analysts, check 2-3 weeks before earnings), ETFdb.com (ETF holdings breakdown). ETF strategy: build 4-leg foundation (SMH semis + XLK tech + XLY consumer + one more) before buying single-stock options. Source: mar24-vol1.txt transcript (MacWhisper transcription of mar24-vol1.mp3).",
+      "stocks": [
+        { "ticker": "MSFT", "name": "Microsoft Corp.",      "contract": "Dec '26 $415C", "expiry": "2026-12-18", "strike": 415.0, "opt_type": "calls", "alert": null, "_note": "Teaching example — $402.09 at class time, 3% appreciation target. Not a formal pick, used to explain strike price/expiry concepts." },
+        { "ticker": "TSLA", "name": "Tesla Inc.",           "contract": "Jun '26 $250C", "expiry": "2026-06-19", "strike": 250.0, "opt_type": "calls", "alert": null, "_note": "Watching for entry — stock at $176, RSI near oversold, option ~50% off peak ($7,600→$3,600). Troy said 'I think there's some more falling, but I'm making a move in the very near future.'" },
+        { "ticker": "CRM",  "name": "Salesforce Inc.",     "contract": "Apr '24 $300C", "expiry": "2024-04-19", "strike": 300.0, "opt_type": "calls", "alert": null, "_note": "Research demo stock — used to demonstrate Claude AI PDF summarization workflow. Argus buy rating target $290 (stock already at $300). CRM Q4 '24: 32% gap operating margin, generative AI not yet in guidance (upside catalyst)." },
+        { "ticker": "DKNG", "name": "DraftKings Inc.",     "contract": "Apr '24 $42C",  "expiry": "2024-04-19", "strike": 42.0,  "opt_type": "calls", "alert": null, "_note": "Affordable contract example (~$252/contract). Troy said 'this might be one I gotta look into' while reviewing the chain. Analyst high target $60, low $28." }
+      ],
+      "research_workflow": {
+        "name": "Troy's Claude AI Research Method",
+        "steps": [
+          "Go to brokerage (E-Trade) → find the stock → Analyst Research tab → download PDF report (Argus or Morgan Stanley) to desktop",
+          "Open Claude AI at claude.ai → upload the PDF",
+          "Prompt: 'Can you summarize this PDF of [Company Name]?'",
+          "Claude returns: buy/sell rating, price target, options entry strikes & dates, EPS guidance, AI/growth catalysts (~5 seconds)",
+          "Copy summary to Notes. Repeat for multiple reports (Argus options analysis + Morgan Stanley earnings report)",
+          "Cross-reference with Estimize.com (consensus EPS + revenue estimates, check 2-3 weeks pre-earnings)",
+          "Cross-reference with Barchart.com (scroll to bottom-right 'Key Points' for support/resistance levels)",
+          "Check insider/institutional ownership in brokerage (Institutions = 80%+ is strong signal)"
+        ],
+        "prompt_template": "Can you summarize this PDF of [Company Name]?",
+        "tools": ["claude.ai", "estimize.com", "barchart.com", "etfdb.com", "E-Trade Analyst Research"]
+      }
     }
   ],
   "watchlist_only": {
