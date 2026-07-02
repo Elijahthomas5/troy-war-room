@@ -1014,6 +1014,30 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
                     1,
                 )
 
+        # ── 9. Build MY_OWNED_POSITIONS block ────────────────
+        owned_list = [(t, i) for t, i in opt_contracts.items() if i.get("owned")]
+        oplines = [
+            "  // ── MY OWNED POSITIONS (auto-synced from troy-classes.json) ──────────",
+            "  // Entries with owned:true — current prices come from OPT_PRICES above",
+            f"  // Updated: {now_str}",
+            "  const MY_OWNED_POSITIONS = [",
+        ]
+        for sym, info in owned_list:
+            entry_str = f"{info['alert']:.2f}" if info.get("alert") is not None else "null"
+            opt_type = "CALL" if info.get("opt_type", "calls").lower().startswith("c") else "PUT"
+            contract = info.get("contract", "").replace('"', '\\"')
+            expiry   = info.get("expiry", "")
+            strike   = info.get("strike", 0)
+            oplines.append(
+                f'    {{ticker:"{sym}",type:"{opt_type}",strike:{strike},exp:"{expiry}",entry:{entry_str},contract:"{contract}"}},'
+            )
+        oplines.append("  ];")
+        new_owned_block = "\n".join(oplines)
+        html = re.sub(
+            r"  // ── MY OWNED POSITIONS.*?const MY_OWNED_POSITIONS = \[.*?\];",
+            new_owned_block, html, flags=re.DOTALL,
+        )
+
         with open(HTML_PATH, "w") as f:
             f.write(html)
         print(f"  ✓ HTML updated ({now_str})")

@@ -1270,6 +1270,13 @@
   };
   const OPT_PRICES_AS_OF = 'Jul 01, 2026 ~1:24 PM EDT';
 
+  // ── MY OWNED POSITIONS (auto-synced from troy-classes.json) ──────────
+  // Entries with owned:true — current prices come from OPT_PRICES above
+  // Updated: (pending first monitor run)
+  const MY_OWNED_POSITIONS = [
+    {ticker:"MSFT",type:"CALL",strike:385,exp:"2027-09-17",entry:60.21,contract:"Sep '27 $385C"},
+  ];
+
   // ── IMPLIED VOLATILITY (updated by troy-monitor.py) ──────────────────────────
   // Troy's rule: IV < 35% = low risk / good entry. 35-50% = caution. >50% = avoid.
   const IV_DATA = {
@@ -1805,6 +1812,75 @@
   }
 
   // ── POSITIONS ─────────────────────────────────────────────────
+  function getAutoPositions() {
+    const hidden = new Set(JSON.parse(localStorage.getItem('eyl_hidden_auto') || '[]'));
+    const manualTickers = new Set(positions.map(p => p.ticker.toUpperCase()));
+    return (MY_OWNED_POSITIONS || []).filter(p => {
+      const tk = p.ticker.toUpperCase();
+      return !hidden.has(tk) && !manualTickers.has(tk);
+    });
+  }
+
+  function hideAutoPosition(ticker) {
+    const hidden = new Set(JSON.parse(localStorage.getItem('eyl_hidden_auto') || '[]'));
+    hidden.add(ticker);
+    localStorage.setItem('eyl_hidden_auto', JSON.stringify([...hidden]));
+    renderPositions();
+  }
+
+  function buildPositionRow(pos, currentPrice, index, isAuto) {
+    const entry = parseFloat(pos.entry);
+    const current = parseFloat(currentPrice);
+    const stopPrice = (entry * 0.70).toFixed(2);
+    let pnlPct = null, pnlClass = '', statusHTML = '';
+
+    if (!isNaN(entry) && !isNaN(current) && entry > 0) {
+      pnlPct = ((current - entry) / entry * 100).toFixed(1);
+      const pnlNum = parseFloat(pnlPct);
+
+      if (pnlNum <= -30) {
+        pnlClass = 'pnl-down';
+        statusHTML = `<span class="status-stop">🚨 STOP LOSS</span>`;
+      } else if (pnlNum <= -15) {
+        pnlClass = 'pnl-warn';
+        statusHTML = `<span class="status-warn">⚠️ Watch Zone</span>`;
+      } else {
+        pnlClass = 'pnl-up';
+        statusHTML = `<span class="status-safe">✅ Safe</span>`;
+      }
+    } else {
+      statusHTML = `<span style="color:var(--muted);font-size:11px">No price</span>`;
+    }
+
+    const expFormatted = pos.exp ? new Date(pos.exp + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '--';
+    const noteOrContract = isAuto ? (pos.contract || '') : (pos.notes || '');
+    const syncBadge = isAuto ? ' <span style="font-size:9px;background:rgba(74,222,128,0.15);color:#4ade80;padding:1px 5px;border-radius:3px;font-weight:700">LIVE</span>' : '';
+
+    const currentCell = isAuto
+      ? `<span style="color:var(--text)">${!isNaN(current) ? '$' + current.toFixed(2) : '--'}</span>`
+      : `<input type="number" value="${pos.current || ''}" step="0.01" min="0"
+            style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;color:var(--text);font-size:12px;width:70px;outline:none"
+            onchange="updateCurrent(${index}, this.value)" placeholder="--">`;
+
+    const actionBtn = isAuto
+      ? `<button class="del-btn" onclick="hideAutoPosition('${pos.ticker}')" title="Hide this position">×</button>`
+      : `<button class="del-btn" onclick="deletePosition(${index})">×</button>`;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><strong>${pos.ticker}</strong>${syncBadge}<br><span style="font-size:10px;color:var(--muted)">${noteOrContract}</span></td>
+      <td><span style="background:rgba(77,159,255,0.12);color:var(--blue);padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">${pos.type}</span></td>
+      <td>$${pos.strike}<br><span style="font-size:10px;color:var(--muted)">${expFormatted}</span></td>
+      <td>$${parseFloat(pos.entry).toFixed(2)}</td>
+      <td>${currentCell}</td>
+      <td class="${pnlClass}">${pnlPct !== null ? (pnlPct >= 0 ? '+' : '') + pnlPct + '%' : '--'}</td>
+      <td style="color:var(--red)">$${stopPrice}</td>
+      <td>${statusHTML}</td>
+      <td>${actionBtn}</td>
+    `;
+    return { row, pnlPct, pos, stopPrice };
+  }
+
   function renderPositions() {
     const tbody = document.getElementById('posTableBody');
     const empty = document.getElementById('emptyState');
@@ -1813,7 +1889,10 @@
 
     tbody.innerHTML = '';
 
-    if (positions.length === 0) {
+    const autoPositions = getAutoPositions();
+    const total = positions.length + autoPositions.length;
+
+    if (total === 0) {
       empty.style.display = 'block';
       table.style.display = 'none';
       document.getElementById('alertBanner').classList.remove('visible');
@@ -1823,53 +1902,24 @@
     empty.style.display = 'none';
     table.style.display = 'table';
 
-    positions.forEach((pos, i) => {
-      const entry = parseFloat(pos.entry);
-      const current = parseFloat(pos.current);
-      const stopPrice = (entry * 0.70).toFixed(2);
-      let pnlPct = null, pnlClass = '', statusHTML = '';
-
-      if (!isNaN(entry) && !isNaN(current) && entry > 0) {
-        pnlPct = ((current - entry) / entry * 100).toFixed(1);
-        const pnlNum = parseFloat(pnlPct);
-
-        if (pnlNum <= -30) {
-          pnlClass = 'pnl-down';
-          statusHTML = `<span class="status-stop">🚨 STOP LOSS</span>`;
-          alerts.push(`${pos.ticker} ${pos.type} $${pos.strike} — down ${Math.abs(pnlNum).toFixed(1)}% (stop at $${stopPrice})`);
-        } else if (pnlNum <= -15) {
-          pnlClass = 'pnl-warn';
-          statusHTML = `<span class="status-warn">⚠️ Watch Zone</span>`;
-        } else if (pnlNum >= 0) {
-          pnlClass = 'pnl-up';
-          statusHTML = `<span class="status-safe">✅ Safe</span>`;
-        } else {
-          pnlClass = 'pnl-up';
-          statusHTML = `<span class="status-safe">✅ Safe</span>`;
-        }
-      } else {
-        statusHTML = `<span style="color:var(--muted);font-size:11px">No price</span>`;
-      }
-
-      const expFormatted = pos.exp ? new Date(pos.exp + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '--';
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><strong>${pos.ticker}</strong><br><span style="font-size:10px;color:var(--muted)">${pos.notes || ''}</span></td>
-        <td><span style="background:rgba(77,159,255,0.12);color:var(--blue);padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">${pos.type}</span></td>
-        <td>$${pos.strike}<br><span style="font-size:10px;color:var(--muted)">${expFormatted}</span></td>
-        <td>$${parseFloat(pos.entry).toFixed(2)}</td>
-        <td>
-          <input type="number" value="${pos.current || ''}" step="0.01" min="0"
-            style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;color:var(--text);font-size:12px;width:70px;outline:none"
-            onchange="updateCurrent(${i}, this.value)" placeholder="--">
-        </td>
-        <td class="${pnlClass}">${pnlPct !== null ? (pnlPct >= 0 ? '+' : '') + pnlPct + '%' : '--'}</td>
-        <td style="color:var(--red)">$${stopPrice}</td>
-        <td>${statusHTML}</td>
-        <td><button class="del-btn" onclick="deletePosition(${i})">×</button></td>
-      `;
+    // Auto positions first (live-synced)
+    autoPositions.forEach(pos => {
+      const optData = OPT_PRICES[pos.ticker] || {};
+      const currentPrice = optData.current;
+      const { row, pnlPct, stopPrice } = buildPositionRow(pos, currentPrice, null, true);
       tbody.appendChild(row);
+      if (pnlPct !== null && parseFloat(pnlPct) <= -30) {
+        alerts.push(`${pos.ticker} ${pos.type} $${pos.strike} — down ${Math.abs(parseFloat(pnlPct)).toFixed(1)}% (stop at $${stopPrice})`);
+      }
+    });
+
+    // Manual positions
+    positions.forEach((pos, i) => {
+      const { row, pnlPct, stopPrice } = buildPositionRow(pos, pos.current, i, false);
+      tbody.appendChild(row);
+      if (pnlPct !== null && parseFloat(pnlPct) <= -30) {
+        alerts.push(`${pos.ticker} ${pos.type} $${pos.strike} — down ${Math.abs(parseFloat(pnlPct)).toFixed(1)}% (stop at $${stopPrice})`);
+      }
     });
 
     // Alerts
