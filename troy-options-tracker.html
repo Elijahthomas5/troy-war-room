@@ -2326,12 +2326,19 @@ Please act as a world-class investor and help me with the following:
     const btn = document.getElementById('refreshBtn');
     const lbl = document.getElementById('lastUpdated');
 
-    // Check if server is reachable first
+    // On GitHub Pages — data updates automatically via Actions, no local server needed
+    if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
+      lbl.textContent = '✓ Data auto-updates via GitHub Actions every 5 min — no refresh needed';
+      lbl.style.color = 'var(--green)';
+      setTimeout(() => { lbl.textContent = `✓ Prices as of ${PRICES_AS_OF}`; lbl.style.color = ''; }, 4000);
+      return;
+    }
+
+    // Check if local server is reachable
     try {
       await fetch(`${SERVER}/api/status`, { signal: AbortSignal.timeout(800) });
     } catch {
-      // Server not running — show instructions
-      lbl.textContent = '⚠ Start the server: double-click "Start Server.command", then open http://localhost:5001';
+      lbl.textContent = '⚠ Double-click "Start Server.command" → then open http://localhost:5001';
       lbl.style.color = 'var(--yellow)';
       return;
     }
