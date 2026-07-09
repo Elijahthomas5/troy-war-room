@@ -35,8 +35,44 @@ import subprocess
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import requests
+
+# All user-facing timestamps must be Eastern time, not the host clock.
+# GitHub Actions runners default to UTC — datetime.now() without a tz
+# silently produced UTC times mislabeled "EDT" (4hr off during DST).
+ET = ZoneInfo("America/New_York")
+
+# ─── SCHEDULED TOUCHPOINTS (self-correcting for DST) ─────────────────────────
+# monitor.yml's cron fires twice per touchpoint (once for EDT, once for EST)
+# since cron is UTC-only and can't shift for daylight saving on its own.
+# This list is the real source of truth: zoneinfo knows the actual US DST
+# transition dates, so whichever firing lands outside the tolerance window
+# below is skipped — no manual cron edits needed when clocks change.
+TOUCHPOINTS_ET = [
+    (9, 30),   # market open
+    (10, 30),
+    (11, 30),
+    (12, 30),
+    (13, 30),
+    (14, 30),
+    (15, 30),
+    (16, 0),   # market close
+]
+TOUCHPOINT_TOLERANCE_MIN = 12
+
+
+def is_scheduled_touchpoint(now_et=None):
+    """True if now_et (default: current time) falls within TOUCHPOINT_TOLERANCE_MIN
+    minutes of one of TOUCHPOINTS_ET. Used to no-op the "wrong season" cron
+    firing (see monitor.yml)."""
+    now_et = now_et or datetime.now(ET)
+    for h, m in TOUCHPOINTS_ET:
+        target = now_et.replace(hour=h, minute=m, second=0, microsecond=0)
+        if abs((now_et - target).total_seconds()) <= TOUCHPOINT_TOLERANCE_MIN * 60:
+            return True
+    return False
 
 # ─── SCHWAB CLIENT ───────────────────────────────────────────────────────────
 # schwab-py handles OAuth token refresh automatically once authenticated.
@@ -841,7 +877,7 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
         with open(HTML_PATH) as f:
             html = f.read()
 
-        now_str = datetime.now().strftime("%b %d, %Y ~%-I:%M %p EDT")
+        now_str = datetime.now(ET).strftime("%b %d, %Y ~%-I:%M %p %Z")
 
         # ── 1. Auto-inject any new stock cards ──────────────────
         injected = []
@@ -1054,7 +1090,7 @@ def send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
     Always-on push sent every monitor run — quick snapshot of owned positions
     and watchlist highlights. Not an alert; just a regular status update.
     """
-    now = datetime.now()
+    now = datetime.now(ET)
     time_str = now.strftime("%-I:%M %p")
     lines = [f"📊 {time_str} War Room Update"]
 
@@ -1124,7 +1160,16 @@ def send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
 
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 def main():
-    print(f"\n🔍 Troy's War Room Monitor — {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+    now_et = datetime.now(ET)
+    print(f"\n🔍 Troy's War Room Monitor — {now_et.strftime('%Y-%m-%d %H:%M %Z')}\n")
+
+    # ── Skip the "wrong season" cron firing (see TOUCHPOINTS_ET above) ───
+    # Manual runs (workflow_dispatch) always run in full; only scheduled
+    # firings get gated to the real touchpoint list.
+    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not is_scheduled_touchpoint(now_et):
+        print(f"  ⏭  {now_et.strftime('%-I:%M %p %Z')} isn't a scheduled touchpoint "
+              f"— this is the other DST offset's cron firing. Skipping.\n")
+        return
 
     # ── Load class config ────────────────────────────────────────
     watchlist, opt_contracts, classes_data = load_classes()
