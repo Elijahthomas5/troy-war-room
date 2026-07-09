@@ -1,6 +1,10 @@
 # Schwab credentials — NEVER commit these
 .schwab_creds.json
 .schwab_token.json
+schwab_token.json
+schwab_mba_token.json
+*token*.json
+*_creds.json
 
 # Logs
 *.log

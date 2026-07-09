@@ -22,6 +22,10 @@ on:
     - cron: '0  20 * * 1-5'   # 4:00 PM ET during EDT — market close
     - cron: '0  21 * * 1-5'   # 4:00 PM ET during EST — market close
   workflow_dispatch:   # lets you trigger manually from GitHub anytime — always runs in full, bypassing the touchpoint gate
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
 
 jobs:
   update-prices:
@@ -52,5 +56,5 @@ jobs:
           git config user.name  "Troy War Room Bot"
           git config user.email "bot@troy-war-room.local"
           git add troy-options-tracker.html troy-classes.json .troy-state.json || true
-          git diff --staged --quiet || git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git diff --staged --quiet || git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC') [skip ci]"
           git push
