@@ -55,12 +55,7 @@ jobs:
         run: |
           git config user.name  "Troy War Room Bot"
           git config user.email "bot@troy-war-room.local"
-          echo "=== PRICES_AS_OF in HTML ==="
-          grep -o "PRICES_AS_OF = '[^']*'" troy-options-tracker.html | head -1
-          echo "=== git status ==="
-          git status --short
-          git add troy-options-tracker.html troy-classes.json .troy-state.json || true
-          echo "=== git diff --stat ==="
-          git diff --staged --stat
+          git add troy-options-tracker.html troy-classes.json
+          git add .troy-state.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC') [skip ci]"
           git push
