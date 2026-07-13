@@ -667,7 +667,7 @@ def fetch_schwab_positions():
 # Sign up at developer.tradier.com → copy "API Access Token" → add as GitHub
 # secret TRADIER_TOKEN. Uses sandbox endpoint which provides real market data.
 
-TRADIER_BASE = "https://sandbox.tradier.com/v1"
+TRADIER_BASE = "https://api.tradier.com/v1"
 
 
 def _tradier_token():
