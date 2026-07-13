@@ -729,35 +729,100 @@ def _tradier_quote(symbols):
         return {}
 
 
+def _tradier_nearest_option(symbol, expiry, strike, opt_type="calls"):
+    """Fall back: find nearest available contract from the chain when exact OCC 404s.
+    Picks the closest expiry >= target, then the nearest strike on that chain."""
+    empty = {"mid": None, "iv": None, "delta": None, "theta": None}
+    try:
+        target_exp    = datetime.strptime(expiry, "%Y-%m-%d")
+        target_strike = float(strike)
+        c_or_p        = "call" if str(opt_type).lower().startswith("c") else "put"
+
+        # ── 1. Available expirations ─────────────────────────────
+        exp_resp = requests.get(
+            f"{TRADIER_BASE}/markets/options/expirations",
+            headers=_tradier_headers(),
+            params={"symbol": symbol, "includeAllRoots": "true", "strikes": "false"},
+            timeout=10,
+        )
+        exp_resp.raise_for_status()
+        expirations = exp_resp.json().get("expirations", {}).get("date", []) or []
+        if isinstance(expirations, str):
+            expirations = [expirations]
+        if not expirations:
+            return empty
+
+        # ── 2. Nearest expiry >= target (or latest available) ────
+        future = [e for e in expirations if datetime.strptime(e, "%Y-%m-%d") >= target_exp]
+        chosen_exp = future[0] if future else sorted(expirations)[-1]
+
+        # ── 3. Chain for that expiry ─────────────────────────────
+        chain_resp = requests.get(
+            f"{TRADIER_BASE}/markets/options/chains",
+            headers=_tradier_headers(),
+            params={"symbol": symbol, "expiration": chosen_exp, "greeks": "true"},
+            timeout=10,
+        )
+        chain_resp.raise_for_status()
+        options = chain_resp.json().get("options", {}).get("option", []) or []
+        if isinstance(options, dict):
+            options = [options]
+
+        # ── 4. Nearest strike of correct type ────────────────────
+        filtered = [o for o in options if o.get("option_type") == c_or_p]
+        if not filtered:
+            return empty
+        best = min(filtered, key=lambda o: abs(float(o.get("strike", 0)) - target_strike))
+
+        bid    = float(best.get("bid") or 0)
+        ask    = float(best.get("ask") or 0)
+        mid    = round((bid + ask) / 2, 2)
+        greeks = best.get("greeks") or {}
+        iv_raw = greeks.get("mid_iv") or best.get("implied_volatility")
+        iv_pct = round(float(iv_raw) * 100, 1) if iv_raw else None
+        delta  = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
+        theta  = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
+        print(f"    (nearest: {chosen_exp} ${best.get('strike')})", end=" ")
+        return {"mid": mid, "iv": iv_pct, "delta": delta, "theta": theta}
+    except Exception as e:
+        print(f"  ⚠  Tradier nearest option ({symbol}): {e}")
+        return empty
+
+
 def _tradier_option_price(symbol, expiry, strike, opt_type="calls"):
-    """Single option mark price from Tradier. Returns {"mid":…,"iv":…,"delta":…,"theta":…}"""
+    """Single option mark price from Tradier. Returns {"mid":…,"iv":…,"delta":…,"theta":…}
+    If the exact OCC contract 404s (expired or unlisted strike), falls back to nearest
+    available contract on the chain."""
     empty = {"mid": None, "iv": None, "delta": None, "theta": None}
     token = _tradier_token()
     if not token:
         return empty
     try:
-        occ = _to_occ(symbol, expiry, strike, opt_type)
+        occ  = _to_occ(symbol, expiry, strike, opt_type)
         resp = requests.get(
             f"{TRADIER_BASE}/markets/options/quotes",
             headers=_tradier_headers(),
             params={"symbols": occ, "greeks": "true"},
             timeout=10,
         )
+        if resp.status_code == 404:
+            # Contract not listed (expired or bad strike) — find nearest via chain
+            return _tradier_nearest_option(symbol, expiry, strike, opt_type)
         resp.raise_for_status()
         data = resp.json()
-        q = data.get("options", {}).get("option")
+        q    = data.get("options", {}).get("option")
         if q is None:
-            return empty
+            return _tradier_nearest_option(symbol, expiry, strike, opt_type)
         if isinstance(q, list):
             q = q[0]
-        bid = float(q.get("bid") or 0)
-        ask = float(q.get("ask") or 0)
-        mid = round((bid + ask) / 2, 2)
-        greeks  = q.get("greeks") or {}
-        iv_raw  = greeks.get("mid_iv") or q.get("implied_volatility")
-        iv_pct  = round(float(iv_raw) * 100, 1) if iv_raw else None
-        delta   = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
-        theta   = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
+        bid    = float(q.get("bid") or 0)
+        ask    = float(q.get("ask") or 0)
+        mid    = round((bid + ask) / 2, 2)
+        greeks = q.get("greeks") or {}
+        iv_raw = greeks.get("mid_iv") or q.get("implied_volatility")
+        iv_pct = round(float(iv_raw) * 100, 1) if iv_raw else None
+        delta  = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
+        theta  = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
         return {"mid": mid, "iv": iv_pct, "delta": delta, "theta": theta}
     except Exception as e:
         print(f"  ⚠  Tradier option price ({symbol}): {e}")
