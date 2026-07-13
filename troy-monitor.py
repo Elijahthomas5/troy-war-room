@@ -120,6 +120,7 @@ STATE_PATH   = os.path.join(BASE_DIR, '.troy-state.json')
 NTFY_TOPIC        = "troy-eyl-eli"
 NTFY_URL          = f"https://ntfy.sh/{NTFY_TOPIC}"   # kept for reference
 NTFY_BASE         = "https://ntfy.sh"                 # JSON API posts here, topic goes in body
+NTFY_CLICK        = "https://elijahthomas5.github.io/troy-war-room/troy-options-tracker.html"
 
 # Email — set as env vars or fill in directly
 EMAIL_TO          = os.environ.get("EMAIL_TO",           "elijahthomas1@gmail.com")
@@ -277,6 +278,7 @@ def send_push(title, body, priority="high", tags=("bell",)):
                 "message":  body,
                 "priority": _NTFY_PRIORITY.get(priority, 3),
                 "tags":     list(tags),
+                "click":    NTFY_CLICK,   # tap notification → opens dashboard
             },
             timeout=10,
         )
