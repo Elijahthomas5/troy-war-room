@@ -765,11 +765,13 @@ def _tradier_nearest_option(symbol, expiry, strike, opt_type="calls"):
         )
         chain_resp.raise_for_status()
         options = chain_resp.json().get("options", {}).get("option", []) or []
+        if options is None:
+            return empty
         if isinstance(options, dict):
             options = [options]
 
         # ── 4. Nearest strike of correct type ────────────────────
-        filtered = [o for o in options if o.get("option_type") == c_or_p]
+        filtered = [o for o in options if isinstance(o, dict) and o.get("option_type") == c_or_p]
         if not filtered:
             return empty
         best = min(filtered, key=lambda o: abs(float(o.get("strike", 0)) - target_strike))
