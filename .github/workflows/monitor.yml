@@ -58,5 +58,14 @@ jobs:
           git config user.email "bot@troy-war-room.local"
           git add troy-options-tracker.html troy-classes.json
           git add .troy-state.json 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC') [skip ci]"
-          git push
+          if git diff --staged --quiet; then
+            echo "No price changes to commit."
+          else
+            git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC') [skip ci]"
+            # Retry push up to 3x — a code push landing mid-run causes rejection
+            for i in 1 2 3; do
+              git push && break
+              echo "Push rejected (attempt $i/3) — rebasing onto latest remote..."
+              git pull --rebase
+            done
+          fi
