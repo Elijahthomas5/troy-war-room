@@ -60,7 +60,7 @@ TOUCHPOINTS_ET = [
     (15, 30),
     (16, 0),   # market close
 ]
-TOUCHPOINT_TOLERANCE_MIN = 12
+TOUCHPOINT_TOLERANCE_MIN = 25   # GitHub Actions can run up to ~20 min late; "wrong season" crons are 60 min off so 25 is still safe
 
 
 def is_scheduled_touchpoint(now_et=None):
