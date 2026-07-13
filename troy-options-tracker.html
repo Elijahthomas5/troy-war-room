@@ -1175,55 +1175,13 @@
   }
 
   // ── PRE-LOADED PRICES (updated by troy-monitor.py) ───
-  // Last refreshed: Jul 13, 2026 ~2:51 PM EDT
+  // Last refreshed: Jul 13, 2026 ~2:57 PM EDT
   // To update: run troy-monitor.py or trigger GitHub Action
   const PRICES = {
     // Market Pulse
-    SPY : { price: 749.41,  change: -0.73  },
-    QQQ : { price: 712.31,  change: -1.82  },
-    SMH : { price: 585.75,  change: -4.14  },
-    VIX : { price: 17.17,  change: +14.24  },
     // Watchlist
-    MSFT: { price: 392.58,  change: +1.94  },
-    TSLA: { price: 392.81,  change: -3.67  },
-    CRM : { price: 170.69,  change: +4.51  },
-    DKNG: { price: 26.41,  change: -0.26  },
-    V   : { price: 357.58,  change: +2.47  },
-    AAPL: { price: 316.91,  change: +0.50  },
-    NFLX: { price: 74.44,  change: +1.46  },
-    TMO : { price: 529.80,  change: +0.52  },
-    CDNS: { price: 380.82,  change: -0.87  },
-    AMD : { price: 535.90,  change: -3.94  },
-    AVGO: { price: 386.06,  change: -3.48  },
-    TSM : { price: 423.42,  change: -2.46  },
-    SMCI: { price: 27.39,  change: -3.25  },
-    SMH : { price: 585.75,  change: -4.14  },
-    VRT : { price: 304.38,  change: -4.54  },
-    VST : { price: 156.97,  change: -1.19  },
-    AMZN: { price: 248.79,  change: +1.41  },
-    CLS : { price: 342.08,  change: -4.94  },
-    GLW : { price: 182.76,  change: -4.26  },
-    WDC : { price: 545.52,  change: -6.36  },
-    CEG : { price: 256.12,  change: +1.89  },
-    SNPS: { price: 438.10,  change: -1.66  },
-    LITE: { price: 764.65,  change: -4.66  },
-    DRAM: { price: 56.74,  change: -9.99  },
-    MU  : { price: 926.25,  change: -5.42  },
-    NVDA: { price: 203.94,  change: -3.33  },
-    ANET: { price: 182.03,  change: -2.64  },
-    LLY : { price: 1187.05,  change: -0.13  },
-    ARM : { price: 297.48,  change: -8.01  },
-    AMKR: { price: 65.83,  change: -6.58  },
-    MRVL: { price: 215.90,  change: -8.44  },
-    DELL: { price: 421.16,  change: -3.17  },
-    ORCL: { price: 132.76,  change: -5.60  },
-    NOW : { price: 110.96,  change: +3.02  },
-    HOOD: { price: 109.65,  change: -2.07  },
-    UBER: { price: 74.58,  change: +0.05  },
-    COHR: { price: 308.33,  change: -4.98  },
-    IREN: { price: 38.39,  change: -6.68  },
   };
-  const PRICES_AS_OF = 'Jul 13, 2026 ~2:51 PM EDT';
+  const PRICES_AS_OF = 'Jul 13, 2026 ~2:57 PM EDT';
 
   // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────
   // alert  = Troy's entry price  |  current = live bid/ask mid
@@ -1269,11 +1227,11 @@
     COHR: { contract: "Jan '27 $395C", alert: null, current: 62.00  },
     IREN: { contract: "Jan '27 $60C", alert: null, current: 6.90  },
   };
-  const OPT_PRICES_AS_OF = 'Jul 13, 2026 ~2:51 PM EDT';
+  const OPT_PRICES_AS_OF = 'Jul 13, 2026 ~2:57 PM EDT';
 
   // ── MY OWNED POSITIONS (auto-synced from troy-classes.json) ──────────
   // Entries with owned:true — current prices come from OPT_PRICES above
-  // Updated: Jul 13, 2026 ~2:51 PM EDT
+  // Updated: Jul 13, 2026 ~2:57 PM EDT
   const MY_OWNED_POSITIONS = [
     {ticker:"MSFT",type:"CALL",strike:385.0,exp:"2027-09-17",entry:60.21,contract:"Sep '27 $385C"},
   ];
@@ -1412,44 +1370,6 @@
   // ── 52-WEEK HIGHS (updated by troy-monitor.py) ───────────────
   // Used to calculate buy zones: Troy buys when stock is 20–30% off its high
   const HIGHS_52W = {
-    MSFT: 555.45,
-    TSLA: 498.83,
-    CRM : 274.00,
-    DKNG: 48.78,
-    V   : 365.02,
-    AAPL: 317.40,
-    NFLX: 127.75,
-    TMO : 643.99,
-    CDNS: 416.69,
-    AMD : 584.73,
-    AVGO: 495.00,
-    TSM : 479.00,
-    SMCI: 62.36,
-    SMH : 671.83,
-    VRT : 379.94,
-    VST : 219.82,
-    AMZN: 278.56,
-    CLS : 474.02,
-    GLW : 271.78,
-    WDC : 799.87,
-    CEG : 412.70,
-    SNPS: 651.73,
-    LITE: 1085.68,
-    DRAM: 81.34,
-    MU  : 1255.00,
-    NVDA: 236.54,
-    ANET: 189.82,
-    LLY : 1249.45,
-    ARM : 452.70,
-    AMKR: 96.68,
-    MRVL: 329.88,
-    DELL: 469.47,
-    ORCL: 345.72,
-    NOW : 210.20,
-    HOOD: 153.86,
-    UBER: 101.99,
-    COHR: 440.00,
-    IREN: 76.87,
   };
 
   function getOptionInfo(ticker) {
