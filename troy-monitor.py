@@ -118,7 +118,8 @@ STATE_PATH   = os.path.join(BASE_DIR, '.troy-state.json')
 
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
 NTFY_TOPIC        = "troy-eyl-eli"
-NTFY_URL          = f"https://ntfy.sh/{NTFY_TOPIC}"
+NTFY_URL          = f"https://ntfy.sh/{NTFY_TOPIC}"   # kept for reference
+NTFY_BASE         = "https://ntfy.sh"                 # JSON API posts here, topic goes in body
 
 # Email — set as env vars or fill in directly
 EMAIL_TO          = os.environ.get("EMAIL_TO",           "elijahthomas1@gmail.com")
@@ -264,11 +265,14 @@ _NTFY_PRIORITY = {"urgent": 5, "high": 4, "default": 3, "low": 2, "min": 1}
 
 def send_push(title, body, priority="high", tags=("bell",)):
     """iPhone push via ntfy.sh — install the ntfy app and subscribe to NTFY_TOPIC.
-    Uses JSON body so UTF-8 titles (emoji, ①②③④⑤ etc.) come through correctly."""
+    Posts JSON to the base URL (https://ntfy.sh) with topic in the body — this is
+    the correct way to use ntfy's JSON API. Posting JSON to the topic URL doesn't
+    get parsed; only the base URL endpoint parses the structured JSON payload."""
     try:
         r = requests.post(
-            NTFY_URL,
+            NTFY_BASE,          # <-- base URL, NOT the topic URL
             json={
+                "topic":    NTFY_TOPIC,   # topic lives in the JSON body
                 "title":    title,
                 "message":  body,
                 "priority": _NTFY_PRIORITY.get(priority, 3),
