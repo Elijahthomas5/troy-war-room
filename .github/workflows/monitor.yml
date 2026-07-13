@@ -47,8 +47,9 @@ jobs:
 
       - name: Run price monitor + send alerts
         env:
-          EYL_EMAIL:    ${{ secrets.EYL_EMAIL }}
-          EYL_PASSWORD: ${{ secrets.EYL_PASSWORD }}
+          EYL_EMAIL:      ${{ secrets.EYL_EMAIL }}
+          EYL_PASSWORD:   ${{ secrets.EYL_PASSWORD }}
+          TRADIER_TOKEN:  ${{ secrets.TRADIER_TOKEN }}
         run: python troy-monitor.py
 
       - name: Commit updated prices + any new stock cards to repo

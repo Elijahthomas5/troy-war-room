@@ -11,7 +11,7 @@ KEY FEATURES:
 
 SETUP (one time):
   1. iPhone: download "ntfy" app → subscribe to topic: troy-eyl-eli
-  2. pip3 install yfinance requests beautifulsoup4 --break-system-packages
+  2. pip3 install requests beautifulsoup4 --break-system-packages
   3. Set env vars (or edit CONFIG below):
        EMAIL_TO            your@email.com
        EMAIL_FROM          your_gmail@gmail.com
@@ -260,19 +260,19 @@ def inject_new_stock_card(html, ticker, info, opt_info):
 
 
 # ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+_NTFY_PRIORITY = {"urgent": 5, "high": 4, "default": 3, "low": 2, "min": 1}
+
 def send_push(title, body, priority="high", tags=("bell",)):
-    """iPhone push via ntfy.sh — install the ntfy app and subscribe to NTFY_TOPIC."""
+    """iPhone push via ntfy.sh — install the ntfy app and subscribe to NTFY_TOPIC.
+    Uses JSON body so UTF-8 titles (emoji, ①②③④⑤ etc.) come through correctly."""
     try:
-        # HTTP headers must be latin-1 safe; strip/replace non-ASCII chars in title
-        safe_title = title.encode("ascii", errors="replace").decode("ascii")
         r = requests.post(
             NTFY_URL,
-            data=body.encode("utf-8"),
-            headers={
-                "Title": safe_title,
-                "Priority": priority,
-                "Tags": ",".join(tags),
-                "Content-Type": "text/plain; charset=utf-8",
+            json={
+                "title":    title,
+                "message":  body,
+                "priority": _NTFY_PRIORITY.get(priority, 3),
+                "tags":     list(tags),
             },
             timeout=10,
         )
@@ -654,189 +654,213 @@ def fetch_schwab_positions():
         return {}
 
 
-# ── yfinance fallbacks ────────────────────────────────────────────────────────
+# (yfinance removed — Tradier is the data source for all market data)
 
-def _yf_quote(symbol):
+
+# ── Tradier (free developer API — real-time bid/ask/mark, no brokerage needed) ──
+# Sign up at developer.tradier.com → copy "API Access Token" → add as GitHub
+# secret TRADIER_TOKEN. Uses sandbox endpoint which provides real market data.
+
+TRADIER_BASE = "https://sandbox.tradier.com/v1"
+
+
+def _tradier_token():
+    return os.environ.get("TRADIER_TOKEN", "")
+
+
+def _tradier_headers():
+    return {
+        "Authorization": f"Bearer {_tradier_token()}",
+        "Accept": "application/json",
+    }
+
+
+def _to_occ(symbol, expiry, strike, opt_type="calls"):
+    """Convert to OCC option symbol e.g. MSFT270917C00385000"""
+    dt = datetime.strptime(expiry, "%Y-%m-%d")
+    yymmdd = dt.strftime("%y%m%d")
+    c_or_p = "C" if str(opt_type).lower().startswith("c") else "P"
+    strike_int = int(round(float(strike) * 1000))
+    return f"{symbol.upper()}{yymmdd}{c_or_p}{strike_int:08d}"
+
+
+def _tradier_quote(symbols):
+    """Bulk stock quote — all symbols in ONE API call. Returns {sym: {...}} dict."""
+    token = _tradier_token()
+    if not token:
+        return {}
     try:
-        import yfinance as yf
-        hist = yf.Ticker(symbol).history(period="1y")
-        if hist.empty:
-            return None
-        current = round(float(hist["Close"].iloc[-1]), 2)
-        prev    = round(float(hist["Close"].iloc[-2]), 2)
-        high52  = round(float(hist["High"].max()), 2)
-        change  = round((current - prev) / prev * 100, 2)
-        pct_off = round((high52 - current) / high52 * 100, 1)
-        return {"price": current, "change": change, "high52": high52, "pct_from_high": pct_off}
+        resp = requests.get(
+            f"{TRADIER_BASE}/markets/quotes",
+            headers=_tradier_headers(),
+            params={"symbols": ",".join(symbols), "greeks": "false"},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        raw = resp.json().get("quotes", {}).get("quote", [])
+        if isinstance(raw, dict):
+            raw = [raw]
+        result = {}
+        for q in raw:
+            sym     = q.get("symbol", "")
+            price   = q.get("last") or q.get("close") or q.get("prevclose")
+            prev    = q.get("prevclose") or price
+            high52  = q.get("week_52_high") or q.get("high")
+            if price is None:
+                continue
+            price  = round(float(price), 2)
+            prev   = round(float(prev),  2) if prev  else price
+            high52 = round(float(high52),2) if high52 else price
+            change  = round((price - prev)  / prev   * 100, 2) if prev   else 0
+            pct_off = round((high52 - price) / high52 * 100, 1) if high52 else 0
+            result[sym] = {
+                "price": price, "change": change,
+                "high52": high52, "pct_from_high": pct_off,
+            }
+        return result
     except Exception as e:
-        print(f"  ⚠  yf {symbol}: {e}")
-        return None
+        print(f"  ⚠  Tradier quote error: {e}")
+        return {}
 
 
-def _yf_option_price(symbol, expiry, strike, opt_type="calls"):
-    empty = {"mid": None, "iv": None}
+def _tradier_option_price(symbol, expiry, strike, opt_type="calls"):
+    """Single option mark price from Tradier. Returns {"mid":…,"iv":…,"delta":…,"theta":…}"""
+    empty = {"mid": None, "iv": None, "delta": None, "theta": None}
+    token = _tradier_token()
+    if not token:
+        return empty
     try:
-        import yfinance as yf
-        tk        = yf.Ticker(symbol)
-        available = tk.options
-        if not available:
+        occ = _to_occ(symbol, expiry, strike, opt_type)
+        resp = requests.get(
+            f"{TRADIER_BASE}/markets/options/quotes",
+            headers=_tradier_headers(),
+            params={"symbols": occ, "greeks": "true"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        q = data.get("options", {}).get("option")
+        if q is None:
             return empty
-        target  = datetime.strptime(expiry, "%Y-%m-%d").date()
-        closest = min(available, key=lambda d: abs(
-            (datetime.strptime(d, "%Y-%m-%d").date() - target).days))
-        chain     = tk.option_chain(closest)
-        contracts = getattr(chain, opt_type, None)
-        if contracts is None or contracts.empty:
-            return empty
-        row = contracts[contracts["strike"] == float(strike)]
-        if row.empty:
-            row = contracts.iloc[(contracts["strike"] - float(strike)).abs().argsort()[:1]]
-        bid = float(row["bid"].iloc[0])
-        ask = float(row["ask"].iloc[0])
+        if isinstance(q, list):
+            q = q[0]
+        bid = float(q.get("bid") or 0)
+        ask = float(q.get("ask") or 0)
         mid = round((bid + ask) / 2, 2)
-        iv_pct = None
-        if "impliedVolatility" in row.columns:
-            try:
-                iv_raw = float(row["impliedVolatility"].iloc[0])
-                if iv_raw > 0:
-                    iv_pct = round(iv_raw * 100, 1)
-            except (ValueError, TypeError):
-                pass
-        delta = None
-        if "delta" in row.columns:
-            try:
-                delta = round(float(row["delta"].iloc[0]), 3)
-            except (ValueError, TypeError):
-                pass
-        theta = None
-        if "theta" in row.columns:
-            try:
-                theta = round(float(row["theta"].iloc[0]), 3)
-            except (ValueError, TypeError):
-                pass
+        greeks  = q.get("greeks") or {}
+        iv_raw  = greeks.get("mid_iv") or q.get("implied_volatility")
+        iv_pct  = round(float(iv_raw) * 100, 1) if iv_raw else None
+        delta   = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
+        theta   = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
         return {"mid": mid, "iv": iv_pct, "delta": delta, "theta": theta}
     except Exception as e:
-        print(f"    ⚠  yf {symbol} option: {e}")
+        print(f"  ⚠  Tradier option price ({symbol}): {e}")
         return empty
 
 
-def _yf_option_chain(symbol, current_price):
+def _tradier_option_chain(symbol, current_price):
+    """Full LEAP call chain from Tradier for all expirations > 12 months."""
+    token = _tradier_token()
+    if not token:
+        return []
     results = []
     try:
-        import yfinance as yf
-        tk = yf.Ticker(symbol)
-        available = tk.options
-        if not available:
-            return []
+        # Step 1: get available expirations
+        exp_resp = requests.get(
+            f"{TRADIER_BASE}/markets/options/expirations",
+            headers=_tradier_headers(),
+            params={"symbol": symbol, "includeAllRoots": "true", "strikes": "false"},
+            timeout=10,
+        )
+        exp_resp.raise_for_status()
+        expirations = exp_resp.json().get("expirations", {}).get("date", [])
+        if isinstance(expirations, str):
+            expirations = [expirations]
         min_expiry = datetime.now() + timedelta(days=365)
-        for expiry_str in available:
-            expiry_dt = datetime.strptime(expiry_str, "%Y-%m-%d")
-            if expiry_dt < min_expiry:
-                continue
+        leap_exps  = [e for e in (expirations or [])
+                      if datetime.strptime(e, "%Y-%m-%d") >= min_expiry]
+
+        # Step 2: fetch each LEAP expiration's chain
+        for expiry_str in leap_exps:
             try:
-                chain = tk.option_chain(expiry_str)
-                calls = chain.calls
-                if calls is None or calls.empty:
-                    continue
-                for _, row in calls.iterrows():
-                    strike = float(row.get("strike", 0))
-                    if strike < current_price * 0.50 or strike > current_price * 1.60:
+                chain_resp = requests.get(
+                    f"{TRADIER_BASE}/markets/options/chains",
+                    headers=_tradier_headers(),
+                    params={"symbol": symbol, "expiration": expiry_str, "greeks": "true"},
+                    timeout=10,
+                )
+                chain_resp.raise_for_status()
+                options = chain_resp.json().get("options", {}).get("option", []) or []
+                if isinstance(options, dict):
+                    options = [options]
+                for opt in options:
+                    if opt.get("option_type") != "call":
                         continue
-                    bid = float(row.get("bid", 0) or 0)
-                    ask = float(row.get("ask", 0) or 0)
+                    strike = float(opt.get("strike", 0))
+                    if not (current_price * 0.50 <= strike <= current_price * 1.60):
+                        continue
+                    bid = float(opt.get("bid") or 0)
+                    ask = float(opt.get("ask") or 0)
                     if bid == 0 and ask == 0:
                         continue
                     mid = round((bid + ask) / 2, 2)
                     if mid < 0.50:
                         continue
-                    iv_pct = None
-                    try:
-                        iv_raw = float(row.get("impliedVolatility") or 0)
-                        if iv_raw > 0:
-                            iv_pct = round(iv_raw * 100, 1)
-                    except (ValueError, TypeError):
-                        pass
-                    delta = None
-                    try:
-                        d = row.get("delta")
-                        if d is not None:
-                            delta = round(float(d), 3)
-                    except (ValueError, TypeError):
-                        pass
-                    theta = None
-                    try:
-                        th = row.get("theta")
-                        if th is not None:
-                            theta = round(float(th), 3)
-                    except (ValueError, TypeError):
-                        pass
-                    pct_diff = (strike - current_price) / current_price
-                    if pct_diff < -0.03:
-                        moneyness = "ITM"
-                    elif pct_diff <= 0.03:
-                        moneyness = "ATM"
-                    else:
-                        moneyness = "OTM"
-                    vol = None
-                    try:
-                        v = row.get("volume")
-                        if v is not None and str(v) not in ("nan", "None", ""):
-                            vol = int(float(v))
-                    except (ValueError, TypeError):
-                        pass
-                    oi = None
-                    try:
-                        o = row.get("openInterest")
-                        if o is not None and str(o) not in ("nan", "None", ""):
-                            oi = int(float(o))
-                    except (ValueError, TypeError):
-                        pass
+                    greeks  = opt.get("greeks") or {}
+                    iv_raw  = greeks.get("mid_iv") or opt.get("implied_volatility")
+                    iv_pct  = round(float(iv_raw) * 100, 1) if iv_raw else None
+                    delta   = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
+                    theta   = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
+                    try:   vol = int(float(opt["volume"]))      if opt.get("volume")        not in (None,"") else None
+                    except: vol = None
+                    try:   oi  = int(float(opt["open_interest"])) if opt.get("open_interest") not in (None,"") else None
+                    except: oi  = None
+                    pct_diff  = (strike - current_price) / current_price
+                    moneyness = "ITM" if pct_diff < -0.03 else ("ATM" if pct_diff <= 0.03 else "OTM")
                     results.append({
                         "strike": strike, "expiry": expiry_str,
-                        "bid": round(float(row.get("bid", 0) or 0), 2),
-                        "ask": round(float(row.get("ask", 0) or 0), 2),
+                        "bid": round(bid, 2), "ask": round(ask, 2),
                         "price": mid, "iv": iv_pct, "delta": delta, "theta": theta,
                         "volume": vol, "oi": oi, "moneyness": moneyness,
                     })
             except Exception as e:
-                print(f"    ⚠  yf {symbol} chain {expiry_str}: {e}")
-                continue
+                print(f"    ⚠  Tradier chain {symbol} {expiry_str}: {e}")
         results.sort(key=lambda x: (x["expiry"], x["strike"]))
     except Exception as e:
-        print(f"    ⚠  yf {symbol} option chain: {e}")
+        print(f"  ⚠  Tradier option chain ({symbol}): {e}")
     return results
 
 
-# ── Public fetch API — Schwab first, yfinance fallback ───────────────────────
+# ── Public fetch API — Schwab → Tradier ──────────────────────────────────────
 
 def fetch_ticker(symbol):
-    """Fetch stock price data. Uses Schwab live data if authenticated, else yfinance."""
+    """Fetch stock price. Schwab → Tradier."""
     client = get_schwab_client()
     if client is not None:
         result = _schwab_quote([symbol])
         if symbol in result:
             return result[symbol]
-    return _yf_quote(symbol)
+    result = _tradier_quote([symbol])
+    return result.get(symbol)
 
 
 def fetch_tickers_bulk(symbols):
-    """Fetch multiple tickers in one Schwab API call (much faster than one-by-one)."""
+    """Fetch multiple tickers in one API call. Schwab bulk → Tradier bulk."""
     client = get_schwab_client()
     if client is not None:
         result = _schwab_quote(symbols)
         if result:
             return result
-    # fallback: individual yfinance calls
-    return {s: _yf_quote(s) for s in symbols if _yf_quote(s)}
+    return _tradier_quote(symbols)
 
 
 def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
-    """Returns dict {"mid": price, "iv": iv_pct, "delta": delta, "theta": theta}."""
+    """Returns dict {"mid": price, "iv": iv_pct, "delta": delta, "theta": theta}.
+    Schwab → Tradier."""
     client = get_schwab_client()
     if client is not None:
         chain = _schwab_option_chain(symbol, expiry=expiry, strike=strike)
         if chain is not None and len(chain) > 0:
-            # Find closest strike
             target = float(strike)
             best   = min(chain, key=lambda c: abs(c["strike"] - target))
             return {
@@ -845,12 +869,12 @@ def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
                 "delta": best["delta"],
                 "theta": best["theta"],
             }
-    return _yf_option_price(symbol, expiry, strike, opt_type)
+    return _tradier_option_price(symbol, expiry, strike, opt_type)
 
 
 def fetch_option_chain(symbol, current_price):
     """
-    Fetch all LEAP calls with expiry > 12 months.
+    Fetch all LEAP calls with expiry > 12 months. Schwab → Tradier.
     Returns list of dicts sorted by expiry then strike, tagged ITM/ATM/OTM.
     Strike range: 50% below to 60% above current price.
     """
@@ -858,7 +882,6 @@ def fetch_option_chain(symbol, current_price):
     if client is not None:
         chain = _schwab_option_chain(symbol)
         if chain is not None:
-            # Filter to price range and add moneyness
             filtered = []
             for c in chain:
                 s = c["strike"]
@@ -868,7 +891,7 @@ def fetch_option_chain(symbol, current_price):
                 c["moneyness"] = "ITM" if pct_diff < -0.03 else ("ATM" if pct_diff <= 0.03 else "OTM")
                 filtered.append(c)
             return filtered
-    return _yf_option_chain(symbol, current_price)
+    return _tradier_option_chain(symbol, current_price)
 
 
 # ─── HTML UPDATE ─────────────────────────────────────────────────────────────
@@ -1181,11 +1204,16 @@ def main():
     watch_zone_hits = []
 
     # ── Detect data source ───────────────────────────────────────
-    using_schwab = get_schwab_client() is not None
-    src_tag      = "🔴 Schwab live" if using_schwab else "⚠  yfinance (run schwab_auth.py for live data)"
+    using_schwab  = get_schwab_client() is not None
+    using_tradier = bool(_tradier_token())
+    src_tag = (
+        "🔴 Schwab live" if using_schwab else
+        "📊 Tradier real-time" if using_tradier else
+        "⚠  no data source (add TRADIER_TOKEN secret)"
+    )
     print(f"\n  Data source: {src_tag}")
 
-    # ── Fetch equity prices (bulk Schwab call if available) ──────
+    # ── Fetch equity prices (bulk call — all symbols in one request) ──────
     print("\n  Fetching stock prices...")
     all_symbols = list(watchlist.keys()) + MARKET_PULSE
     if using_schwab:
@@ -1194,15 +1222,14 @@ def main():
             if sym in bulk:
                 all_data[sym] = bulk[sym]
             else:
-                # fallback for any symbol Schwab didn't return
-                d = _yf_quote(sym)
+                d = _tradier_quote([sym]).get(sym)
                 if d:
                     all_data[sym] = d
-    else:
+    elif using_tradier:
+        bulk = _tradier_quote(all_symbols)
         for sym in all_symbols:
-            d = _yf_quote(sym)
-            if d:
-                all_data[sym] = d
+            if sym in bulk:
+                all_data[sym] = bulk[sym]
 
     for ticker, info in watchlist.items():
         d = all_data.get(ticker)
