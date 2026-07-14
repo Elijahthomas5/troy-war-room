@@ -41,11 +41,15 @@ import requests
 
 # All user-facing timestamps must be Eastern time, not the host clock.
 # GitHub Actions runners default to UTC — datetime.now() without a tz silently
-# produces UTC. Using fixed EST (UTC-5) so times never shift for daylight saving.
-ET = ZoneInfo("EST")  # Fixed Eastern Standard Time (UTC-5), no DST
+# produces UTC. America/New_York auto-handles EDT/EST so times always match
+# the user's local clock year-round.
+ET = ZoneInfo("America/New_York")
 
 # ─── SCHEDULED TOUCHPOINTS ───────────────────────────────────────────────────
-# Fixed EST (UTC-5) — cron fires once per touchpoint, no dual-cron DST logic needed.
+# monitor.yml fires two crons per touchpoint — one for EDT (UTC-4) and one for
+# EST (UTC-5). The wrong-season firing is blocked by is_scheduled_touchpoint()
+# below, which checks real ET time. Closest "wrong" cron is 30 min off a real
+# touchpoint, so tolerance must stay ≤ 29 to keep it blocked.
 TOUCHPOINTS_ET = [
     (9, 30),   # market open
     (10, 30),
@@ -56,12 +60,12 @@ TOUCHPOINTS_ET = [
     (15, 30),
     (16, 0),   # market close
 ]
-TOUCHPOINT_TOLERANCE_MIN = 29   # GitHub Actions can run up to ~28 min late
+TOUCHPOINT_TOLERANCE_MIN = 29   # GH Actions can run up to ~28 min late; ceiling is 29 (wrong-season cron is 30 min off)
 
 
 def is_scheduled_touchpoint(now_et=None):
     """True if now_et (default: current time) falls within TOUCHPOINT_TOLERANCE_MIN
-    minutes of one of TOUCHPOINTS_ET."""
+    minutes of one of TOUCHPOINTS_ET. Blocks the wrong-season dual cron."""
     now_et = now_et or datetime.now(ET)
     for h, m in TOUCHPOINTS_ET:
         target = now_et.replace(hour=h, minute=m, second=0, microsecond=0)
@@ -1261,12 +1265,12 @@ def main():
     now_et = datetime.now(ET)
     print(f"\n🔍 Troy's War Room Monitor — {now_et.strftime('%Y-%m-%d %H:%M %Z')}\n")
 
-    # ── Gate: skip if cron fired too far from a real touchpoint ──────────────
+    # ── Gate: skip the wrong-season cron (or extreme lateness) ──────────────
     # Manual runs (workflow_dispatch) always run in full; only scheduled
-    # firings get gated (guards against extreme GH Actions lateness).
+    # firings get gated.
     if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not is_scheduled_touchpoint(now_et):
         print(f"  ⏭  {now_et.strftime('%-I:%M %p %Z')} isn't within {TOUCHPOINT_TOLERANCE_MIN} min "
-              f"of a scheduled touchpoint — skipping.\n")
+              f"of a scheduled touchpoint — wrong-season cron or late firing, skipping.\n")
         return
 
     # ── Load class config ────────────────────────────────────────
