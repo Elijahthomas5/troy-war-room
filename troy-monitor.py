@@ -60,7 +60,7 @@ TOUCHPOINTS_ET = [
     (15, 30),
     (16, 0),   # market close
 ]
-TOUCHPOINT_TOLERANCE_MIN = 25   # GitHub Actions can run up to ~20 min late; "wrong season" crons are 60 min off so 25 is still safe
+TOUCHPOINT_TOLERANCE_MIN = 29   # GitHub Actions can run up to ~28 min late; safe ceiling is 29 (wrong-season EDT cron is 30 min off, so it still gets blocked)
 
 
 def is_scheduled_touchpoint(now_et=None):
@@ -1187,7 +1187,14 @@ def send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
     and watchlist highlights. Not an alert; just a regular status update.
     """
     now = datetime.now(ET)
-    time_str = now.strftime("%-I:%M %p")
+    # Use the nearest scheduled touchpoint label so title shows "2:30 PM" not "2:39 PM"
+    best_diff, best_label = float('inf'), now.strftime("%-I:%M %p")
+    for h, m in TOUCHPOINTS_ET:
+        t = now.replace(hour=h, minute=m, second=0, microsecond=0)
+        diff = abs((now - t).total_seconds())
+        if diff < best_diff:
+            best_diff, best_label = diff, t.strftime("%-I:%M %p")
+    time_str = best_label
     lines = [f"📊 {time_str} War Room Update"]
 
     # ── Owned positions ──────────────────────────────────────────
