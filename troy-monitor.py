@@ -42,14 +42,10 @@ import requests
 # All user-facing timestamps must be Eastern time, not the host clock.
 # GitHub Actions runners default to UTC — datetime.now() without a tz
 # silently produced UTC times mislabeled "EDT" (4hr off during DST).
-ET = ZoneInfo("America/New_York")
+ET = ZoneInfo("EST")  # Fixed Eastern Standard Time (UTC-5), no DST
 
-# ─── SCHEDULED TOUCHPOINTS (self-correcting for DST) ─────────────────────────
-# monitor.yml's cron fires twice per touchpoint (once for EDT, once for EST)
-# since cron is UTC-only and can't shift for daylight saving on its own.
-# This list is the real source of truth: zoneinfo knows the actual US DST
-# transition dates, so whichever firing lands outside the tolerance window
-# below is skipped — no manual cron edits needed when clocks change.
+# ─── SCHEDULED TOUCHPOINTS ───────────────────────────────────────────────────
+# Fixed EST (UTC-5) — cron fires once per touchpoint, no dual-cron DST logic needed.
 TOUCHPOINTS_ET = [
     (9, 30),   # market open
     (10, 30),
@@ -60,13 +56,12 @@ TOUCHPOINTS_ET = [
     (15, 30),
     (16, 0),   # market close
 ]
-TOUCHPOINT_TOLERANCE_MIN = 29   # GitHub Actions can run up to ~28 min late; safe ceiling is 29 (wrong-season EDT cron is 30 min off, so it still gets blocked)
+TOUCHPOINT_TOLERANCE_MIN = 29   # GitHub Actions can run up to ~28 min late
 
 
 def is_scheduled_touchpoint(now_et=None):
     """True if now_et (default: current time) falls within TOUCHPOINT_TOLERANCE_MIN
-    minutes of one of TOUCHPOINTS_ET. Used to no-op the "wrong season" cron
-    firing (see monitor.yml)."""
+    minutes of one of TOUCHPOINTS_ET."""
     now_et = now_et or datetime.now(ET)
     for h, m in TOUCHPOINTS_ET:
         target = now_et.replace(hour=h, minute=m, second=0, microsecond=0)
