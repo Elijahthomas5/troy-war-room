@@ -40,8 +40,8 @@ from zoneinfo import ZoneInfo
 import requests
 
 # All user-facing timestamps must be Eastern time, not the host clock.
-# GitHub Actions runners default to UTC — datetime.now() without a tz
-# silently produced UTC times mislabeled "EDT" (4hr off during DST).
+# GitHub Actions runners default to UTC — datetime.now() without a tz silently
+# produces UTC. Using fixed EST (UTC-5) so times never shift for daylight saving.
 ET = ZoneInfo("EST")  # Fixed Eastern Standard Time (UTC-5), no DST
 
 # ─── SCHEDULED TOUCHPOINTS ───────────────────────────────────────────────────
@@ -1261,12 +1261,12 @@ def main():
     now_et = datetime.now(ET)
     print(f"\n🔍 Troy's War Room Monitor — {now_et.strftime('%Y-%m-%d %H:%M %Z')}\n")
 
-    # ── Skip the "wrong season" cron firing (see TOUCHPOINTS_ET above) ───
+    # ── Gate: skip if cron fired too far from a real touchpoint ──────────────
     # Manual runs (workflow_dispatch) always run in full; only scheduled
-    # firings get gated to the real touchpoint list.
+    # firings get gated (guards against extreme GH Actions lateness).
     if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not is_scheduled_touchpoint(now_et):
-        print(f"  ⏭  {now_et.strftime('%-I:%M %p %Z')} isn't a scheduled touchpoint "
-              f"— this is the other DST offset's cron firing. Skipping.\n")
+        print(f"  ⏭  {now_et.strftime('%-I:%M %p %Z')} isn't within {TOUCHPOINT_TOLERANCE_MIN} min "
+              f"of a scheduled touchpoint — skipping.\n")
         return
 
     # ── Load class config ────────────────────────────────────────
