@@ -1,21 +1,12 @@
 name: Troy War Room — Price Monitor
 
 on:
-  schedule:
-    # Dual crons per touchpoint (EDT=UTC-4 + EST=UTC-5), Mon–Fri.
-    # troy-monitor.py gates out whichever firing isn't a real touchpoint.
-    # Tolerance ceiling = 29 min (closest wrong-season cron is 30 min off).
-    - cron: '30 13 * * 1-5'   #  9:30 AM EDT
-    - cron: '30 14 * * 1-5'   #  9:30 AM EST / 10:30 AM EDT
-    - cron: '30 15 * * 1-5'   # 10:30 AM EST / 11:30 AM EDT
-    - cron: '30 16 * * 1-5'   # 11:30 AM EST / 12:30 PM EDT
-    - cron: '30 17 * * 1-5'   # 12:30 PM EST /  1:30 PM EDT
-    - cron: '30 18 * * 1-5'   #  1:30 PM EST /  2:30 PM EDT
-    - cron: '30 19 * * 1-5'   #  2:30 PM EST /  3:30 PM EDT
-    - cron: '30 20 * * 1-5'   #  3:30 PM EST
-    - cron: '0  20 * * 1-5'   #  4:00 PM EDT — market close
-    - cron: '0  21 * * 1-5'   #  4:00 PM EST — market close
-  workflow_dispatch:   # lets you trigger manually from GitHub anytime — always runs in full, bypassing the touchpoint gate
+  # ── Scheduled triggers removed ──────────────────────────────────────────────
+  # GitHub Actions cron scheduling delays runs by 30-90+ min on busy days —
+  # completely unusable for time-sensitive market notifications.
+  # Triggering is now handled by cron-job.org, which fires workflow_dispatch
+  # at exactly the right ET time via the GitHub API.
+  workflow_dispatch:   # triggered by cron-job.org at exact ET touchpoint times
   push:
     branches: [main]
     paths-ignore:
