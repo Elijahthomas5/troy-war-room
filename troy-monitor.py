@@ -46,10 +46,8 @@ import requests
 ET = ZoneInfo("America/New_York")
 
 # ─── SCHEDULED TOUCHPOINTS ───────────────────────────────────────────────────
-# monitor.yml fires two crons per touchpoint — one for EDT (UTC-4) and one for
-# EST (UTC-5). The wrong-season firing is blocked by is_scheduled_touchpoint()
-# below, which checks real ET time. Closest "wrong" cron is 30 min off a real
-# touchpoint, so tolerance must stay ≤ 29 to keep it blocked.
+# Scheduling is handled by cron-job.org, which triggers workflow_dispatch at
+# exactly these ET times (Mon–Fri).  No GH Actions cron, no dual-cron hacks.
 TOUCHPOINTS_ET = [
     (9, 30),   # market open
     (10, 30),
@@ -60,18 +58,14 @@ TOUCHPOINTS_ET = [
     (15, 30),
     (16, 0),   # market close
 ]
-TOUCHPOINT_TOLERANCE_MIN = 29   # GH Actions can run up to ~28 min late; ceiling is 29 (wrong-season cron is 30 min off)
-
-
-def is_scheduled_touchpoint(now_et=None):
-    """True if now_et (default: current time) falls within TOUCHPOINT_TOLERANCE_MIN
-    minutes of one of TOUCHPOINTS_ET. Blocks the wrong-season dual cron."""
+def is_market_hours(now_et=None):
+    """True if now_et is a weekday between 9 AM and 4:30 PM ET.
+    Used to suppress notifications on accidental off-hours triggers."""
     now_et = now_et or datetime.now(ET)
-    for h, m in TOUCHPOINTS_ET:
-        target = now_et.replace(hour=h, minute=m, second=0, microsecond=0)
-        if abs((now_et - target).total_seconds()) <= TOUCHPOINT_TOLERANCE_MIN * 60:
-            return True
-    return False
+    if now_et.weekday() >= 5:          # Saturday=5, Sunday=6
+        return False
+    h, m = now_et.hour, now_et.minute
+    return (9, 0) <= (h, m) <= (16, 30)
 
 # ─── SCHWAB CLIENT ───────────────────────────────────────────────────────────
 # schwab-py handles OAuth token refresh automatically once authenticated.
@@ -972,7 +966,7 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
         with open(HTML_PATH) as f:
             html = f.read()
 
-        now_str = datetime.now(ET).strftime("%b %d, %Y ~%-I:%M %p %Z")
+        now_str = datetime.now(ET).strftime("%b %d, %Y ~%-I:%M %p ET")
 
         # ── 1. Auto-inject any new stock cards ──────────────────
         injected = []
@@ -1186,14 +1180,7 @@ def send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
     and watchlist highlights. Not an alert; just a regular status update.
     """
     now = datetime.now(ET)
-    # Use the nearest scheduled touchpoint label so title shows "2:30 PM" not "2:39 PM"
-    best_diff, best_label = float('inf'), now.strftime("%-I:%M %p")
-    for h, m in TOUCHPOINTS_ET:
-        t = now.replace(hour=h, minute=m, second=0, microsecond=0)
-        diff = abs((now - t).total_seconds())
-        if diff < best_diff:
-            best_diff, best_label = diff, t.strftime("%-I:%M %p")
-    time_str = best_label
+    time_str = now.strftime("%-I:%M %p ET")
     lines = [f"📊 {time_str} War Room Update"]
 
     # ── Owned positions ──────────────────────────────────────────
@@ -1263,15 +1250,16 @@ def send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 def main():
     now_et = datetime.now(ET)
-    print(f"\n🔍 Troy's War Room Monitor — {now_et.strftime('%Y-%m-%d %H:%M %Z')}\n")
+    event  = os.environ.get("GITHUB_EVENT_NAME", "local")
+    print(f"\n🔍 Troy's War Room Monitor — {now_et.strftime('%Y-%m-%d %H:%M')} ET  [{event}]\n")
 
-    # ── Gate: skip the wrong-season cron (or extreme lateness) ──────────────
-    # Manual runs (workflow_dispatch) always run in full; only scheduled
-    # firings get gated.
-    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not is_scheduled_touchpoint(now_et):
-        print(f"  ⏭  {now_et.strftime('%-I:%M %p %Z')} isn't within {TOUCHPOINT_TOLERANCE_MIN} min "
-              f"of a scheduled touchpoint — wrong-season cron or late firing, skipping.\n")
-        return
+    # ── Skip notifications on off-hours push events (code deploys) ───────────
+    # workflow_dispatch = triggered by cron-job.org at exact touchpoint times → always run
+    # push              = code commit → update prices/HTML but skip notification
+    # Anything outside market hours on a weekday is also suppressed.
+    skip_notification = (event == "push") or not is_market_hours(now_et)
+    if skip_notification and event != "workflow_dispatch":
+        print(f"  ℹ  {now_et.strftime('%-I:%M %p')} ET — off-hours or push event, updating prices only.\n")
 
     # ── Load class config ────────────────────────────────────────
     watchlist, opt_contracts, classes_data = load_classes()
@@ -1536,9 +1524,13 @@ def main():
     # ── Update HTML ──────────────────────────────────────────────
     update_html(all_data, opt_data, watchlist, opt_contracts, chain_data, schwab_positions)
 
-    # ── Hourly status push (always fires) ────────────────────────
-    send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
-                         buy_zone_hits, alert_hits, stop_loss_hits)
+    # ── Hourly status push ────────────────────────────────────────
+    # Skipped for push (code deploy) events and outside market hours.
+    if not skip_notification:
+        send_hourly_snapshot(all_data, opt_data, opt_contracts, schwab_positions,
+                             buy_zone_hits, alert_hits, stop_loss_hits)
+    else:
+        print("  ℹ  Notification skipped (push event or off-hours).")
 
     print("\n✅ Done.\n")
 
