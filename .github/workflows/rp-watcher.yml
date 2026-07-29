@@ -1,0 +1,38 @@
+name: Red Panda Zone Watcher
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # 8 AM ET daily
+  workflow_dispatch:       # also runnable manually from GitHub
+
+jobs:
+  update-zones:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install playwright requests && playwright install chromium --with-deps
+
+      - name: Run Red Panda price scraper
+        env:
+          RP_EMAIL:    ${{ secrets.RP_EMAIL }}
+          RP_PASSWORD: ${{ secrets.RP_PASSWORD }}
+        run: python red-panda-watcher.py
+
+      - name: Commit updated zones
+        run: |
+          git config user.name "Red Panda Bot"
+          git config user.email "bot@troy-war-room.local"
+          git add red-panda-zones.json
+          git diff --staged --quiet && echo "No zone changes to commit." && exit 0
+          git pull --rebase origin main
+          git commit -m "zones: red panda update $(date -u '+%Y-%m-%d') [skip ci]"
+          git push
