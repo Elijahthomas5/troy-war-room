@@ -34,4 +34,5 @@ jobs:
           git add red-panda-zones.json
           git diff --staged --quiet && echo "No zone changes to commit." && exit 0
           git commit -m "zones: red panda update $(date -u '+%Y-%m-%d') [skip ci]"
+          git pull --rebase origin main
           git push
