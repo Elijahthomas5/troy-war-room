@@ -31,8 +31,8 @@ jobs:
         run: |
           git config user.name "Red Panda Bot"
           git config user.email "bot@troy-war-room.local"
+          git pull --rebase origin main
           git add red-panda-zones.json
           git diff --staged --quiet && echo "No zone changes to commit." && exit 0
-          git pull --rebase origin main
           git commit -m "zones: red panda update $(date -u '+%Y-%m-%d') [skip ci]"
           git push
