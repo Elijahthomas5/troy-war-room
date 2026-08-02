@@ -1,87 +1,647 @@
 {
-  "_updated": "2025-07-10",
-  "_label": "Ian Dunlap · Stock Club Monthly Prices · Jun 3 – Jul 10",
-  "_note": "Edit this file and push to update zone prices in the tracker. Format: [loadTheBoat, swingTrade, quickEntry] — use null if not provided.",
+  "_updated": "2026-08-02",
+  "_label": "Red Panda Academy Stock Club - Monthly Prices",
+  "_note": "Edit this file and push to update zone prices in the tracker. Format: [loadTheBoat, swingTrade, quickEntry] \u2014 use null if not provided.",
   "tickers": {
-    "VOO":   { "name": "Vanguard S&P 500",       "prices": [573.63, 651.21, 686.42] },
-    "AAPL":  { "name": "Apple",                   "prices": [229.67, 270.21, 302.87] },
-    "MSFT":  { "name": "Microsoft",               "prices": [319.38, 385.04, 396.62] },
-    "AMZN":  { "name": "Amazon",                  "prices": [187.33, 233.04, 244.47] },
-    "NVDA":  { "name": "NVIDIA",                  "prices": [122.86, 195.55, 210.22] },
-    "AMD":   { "name": "AMD",                     "prices": [242.93, 334.81, 464.79] },
-    "LLY":   { "name": "Eli Lilly",               "prices": [644.06, 870.69, 1025.94] },
-    "AMGN":  { "name": "Amgen",                   "prices": [258.63, 307.67, 318.31] },
-    "XOM":   { "name": "ExxonMobil",              "prices": [98.60,  125.43, 143.04] },
-    "IREN":  { "name": "Iren Ltd",                "prices": [22.11,  31.96,  null] },
-    "AXP":   { "name": "American Express",        "prices": [239.17, 284.01, 290.94] },
-    "V":     { "name": "Visa",                    "prices": [281.51, 296.50, 309.00] },
-    "TMUS":  { "name": "T-Mobile",                "prices": [88.56,  173.69, 182.68] },
-    "XLV":   { "name": "Health Care ETF",         "prices": [118.43, 137.31, 143.34] },
-    "HD":    { "name": "Home Depot",              "prices": [222.30, 277.93, 293.23] },
-    "CAT":   { "name": "Caterpillar",             "prices": [550.60, 792.81, 844.42] },
-    "PANW":  { "name": "Palo Alto Networks",      "prices": [217.93, 237.95, 259.45] },
-    "NBIS":  { "name": "Nebius Group",            "prices": [68.06,  139.65, 185.17] },
-    "JKHY":  { "name": "Jack Henry & Assoc",      "prices": [104.54, 123.12, 133.62] },
-    "WMT":   { "name": "Walmart",                 "prices": [79.82,  101.52, 107.94] },
-    "COST":  { "name": "Costco",                  "prices": [818.49, 886.55, 919.24] },
-    "GOOGL": { "name": "Alphabet (Google)",       "prices": [229.20, 305.75, 345.76] },
-    "AVGO":  { "name": "Broadcom",                "prices": [216.36, 362.66, 433.89] },
-    "TSLA":  { "name": "Tesla",                   "prices": [260.39, 371.21, 404.37] },
-    "SYK":   { "name": "Stryker",                 "prices": [188.48, 265.09, 286.20] },
-    "MU":    { "name": "Micron Technology",       "prices": [392.58, 816.03, 945.49] },
-    "NFLX":  { "name": "Netflix",                 "prices": [49.65,  75.86,  79.72] },
-    "MCD":   { "name": "McDonald's",              "prices": [203.19, 267.46, 273.05] },
-    "ULTA":  { "name": "Ulta Beauty",             "prices": [277.52, 466.72, 480.78] },
-    "META":  { "name": "Meta Platforms",          "prices": [433.70, 568.59, 575.29] },
-    "APLD":  { "name": "Applied Digital",         "prices": [11.49,  15.14,  null] },
-    "SCHD":  { "name": "Schwab Dividend ETF",     "prices": [22.36,  27.95,  null] },
-    "PLTR":  { "name": "Palantir",                "prices": [82.64,  124.99, 127.01] },
-    "LOW":   { "name": "Lowe's",                  "prices": [146.35, 197.50, 203.55] },
-    "MA":    { "name": "Mastercard",              "prices": [280.76, 438.93, 467.51] },
-    "QQQ":   { "name": "Nasdaq-100 ETF",          "prices": [532.81, 631.76, 711.20] },
-    "QQQM":  { "name": "Nasdaq-100 Mini ETF",     "prices": [219.34, 268.75, 295.84] },
-    "ADI":   { "name": "Analog Devices",          "prices": [275.54, 384.56, 391.64] },
-    "AEP":   { "name": "American Elec Power",     "prices": [60.27,  121.74, 123.89] },
-    "MPWR":  { "name": "Monolithic Power",        "prices": [769.10, 1417.45, 1519.07] },
-    "CME":   { "name": "CME Group",               "prices": [218.02, 232.96, 241.88] },
-    "MS":    { "name": "Morgan Stanley",          "prices": [149.97, 174.30, 193.52] },
-    "COF":   { "name": "Capital One",             "prices": [147.92, 176.16, 182.16] },
-    "TSM":   { "name": "Taiwan Semiconductor",    "prices": [271.02, 374.93, 403.03] },
-    "RKLB":  { "name": "Rocket Lab",              "prices": [32.14,  71.32,  103.14] },
-    "ASTS":  { "name": "AST SpaceMobile",         "prices": [61.64,  96.27,  102.38] },
-    "HOOD":  { "name": "Robinhood",               "prices": [29.44,  60.54,  80.91] },
-    "ECL":   { "name": "Ecolab",                  "prices": [234.48, 246.34, 249.54] },
-    "PHM":   { "name": "PulteGroup",              "prices": [87.29,  107.80, 115.26] },
-    "UBER":  { "name": "Uber",                    "prices": [59.69,  60.36,  null] },
-    "WM":    { "name": "Waste Management",        "prices": [185.26, 203.10, 208.65] },
-    "SNDK":  { "name": "Sandisk",                 "prices": [610.53, 1363.41, 1652.52] },
-    "SMH":   { "name": "Semiconductor ETF",       "prices": [381.42, 560.27, 568.91] },
-    "ASML":  { "name": "ASML Holding",            "prices": [1185.00, 1412.00, 1564.77] },
-    "ARM":   { "name": "Arm Holdings",            "prices": [133.69, 269.82, 350.23] },
-    "CLH":   { "name": "Clean Harbors",           "prices": [177.42, 263.47, 273.47] },
-    "AMAT":  { "name": "Applied Materials",       "prices": [247.00, 426.01, 446.92] },
-    "GILD":  { "name": "Gilead Sciences",         "prices": [89.18,  121.99, 125.97] },
-    "WDC":   { "name": "Western Digital",         "prices": [343.26, 485.40, 528.69] },
-    "COHR":  { "name": "Coherent Corp",           "prices": [152.29, 301.91, 354.17] },
-    "BMO":   { "name": "Bank of Montreal",        "prices": [124.25, 144.49, 161.07] },
-    "GLW":   { "name": "Corning",                 "prices": [115.97, 164.91, 170.32] },
-    "MRVL":  { "name": "Marvell Technology",      "prices": [106.89, 238.00, 251.82] },
-    "ETN":   { "name": "Eaton Corp",              "prices": [270.08, 373.92, 394.00] },
-    "CDNS":  { "name": "Cadence Design",          "prices": [229.83, 357.87, 381.48] },
-    "SNPS":  { "name": "Synopsys",                "prices": [377.95, 391.06, 479.04] },
-    "TXN":   { "name": "Texas Instruments",       "prices": [156.06, 267.66, 286.51] },
-    "STX":   { "name": "Seagate Technology",      "prices": [392.56, 851.43, 906.91] },
-    "VGT":   { "name": "Vanguard Info Tech ETF",  "prices": [84.93,  115.09, 119.56] },
-    "KLAC":  { "name": "KLA Corp (post-split)",   "prices": [102.41, 183.13, 205.72] },
-    "MELI":  { "name": "MercadoLibre",            "prices": [1342.38, 1456.38, 1576.21] },
-    "CMI":   { "name": "Cummins",                 "prices": [478.70, 591.76, 631.27] },
-    "XLU":   { "name": "Utilities Sector ETF",    "prices": [36.14,  42.58,  null] },
-    "VRT":   { "name": "Vertiv Holdings",         "prices": [153.81, 246.17, 259.67] },
-    "VTI":   { "name": "Vanguard Total Mkt ETF",  "prices": [313.42, 352.35, 358.14] },
-    "TQQQ":  { "name": "3x Nasdaq ETF",           "prices": [31.01,  58.45,  63.84] },
-    "TECL":  { "name": "3x Tech ETF",             "prices": [35.56,  141.32, 164.31] },
-    "SOXL":  { "name": "3x Semi ETF",             "prices": [74.30,  129.78, 145.07] },
-    "GEV":   { "name": "GE Vernova",              "prices": [636.05, 808.32, 811.55] },
-    "ANET":  { "name": "Arista Networks",         "prices": [74.78,  128.62, 137.20] }
+    "VOO": {
+      "name": "Vanguard S&P 500",
+      "prices": [
+        582.86,
+        668.32,
+        678.28
+      ]
+    },
+    "AAPL": {
+      "name": "Apple",
+      "prices": [
+        229.67,
+        270.21,
+        302.87
+      ]
+    },
+    "MSFT": {
+      "name": "Microsoft",
+      "prices": [
+        319.38,
+        385.04,
+        396.62
+      ]
+    },
+    "AMZN": {
+      "name": "Amazon",
+      "prices": [
+        187.33,
+        233.04,
+        244.47
+      ]
+    },
+    "NVDA": {
+      "name": "NVIDIA",
+      "prices": [
+        122.86,
+        195.55,
+        210.22
+      ]
+    },
+    "AMD": {
+      "name": "AMD",
+      "prices": [
+        242.93,
+        334.81,
+        464.79
+      ]
+    },
+    "LLY": {
+      "name": "Eli Lilly",
+      "prices": [
+        644.06,
+        870.69,
+        1025.94
+      ]
+    },
+    "AMGN": {
+      "name": "Amgen",
+      "prices": [
+        258.63,
+        307.67,
+        318.31
+      ]
+    },
+    "XOM": {
+      "name": "ExxonMobil",
+      "prices": [
+        92.6,
+        130.67,
+        141.15
+      ]
+    },
+    "IREN": {
+      "name": "Iren Ltd",
+      "prices": [
+        22.11,
+        31.96,
+        null
+      ]
+    },
+    "AXP": {
+      "name": "American Express",
+      "prices": [
+        239.17,
+        284.01,
+        290.94
+      ]
+    },
+    "V": {
+      "name": "Visa",
+      "prices": [
+        281.51,
+        296.5,
+        309.0
+      ]
+    },
+    "TMUS": {
+      "name": "T-Mobile",
+      "prices": [
+        88.56,
+        173.69,
+        182.68
+      ]
+    },
+    "XLV": {
+      "name": "Health Care ETF",
+      "prices": [
+        141.37,
+        150.03,
+        157.15
+      ]
+    },
+    "HD": {
+      "name": "Home Depot",
+      "prices": [
+        288.25,
+        320.66,
+        329.92
+      ]
+    },
+    "CAT": {
+      "name": "Caterpillar",
+      "prices": [
+        550.6,
+        792.81,
+        844.42
+      ]
+    },
+    "PANW": {
+      "name": "Palo Alto Networks",
+      "prices": [
+        239.05,
+        322.26,
+        326.44
+      ]
+    },
+    "NBIS": {
+      "name": "Nebius Group",
+      "prices": [
+        68.06,
+        139.65,
+        185.17
+      ]
+    },
+    "JKHY": {
+      "name": "Jack Henry & Assoc",
+      "prices": [
+        123.75,
+        140.69,
+        88.48
+      ]
+    },
+    "WMT": {
+      "name": "Walmart",
+      "prices": [
+        79.82,
+        101.52,
+        107.94
+      ]
+    },
+    "COST": {
+      "name": "Costco",
+      "prices": [
+        818.49,
+        886.55,
+        919.24
+      ]
+    },
+    "GOOGL": {
+      "name": "Alphabet (Google)",
+      "prices": [
+        229.2,
+        305.75,
+        345.76
+      ]
+    },
+    "AVGO": {
+      "name": "Broadcom",
+      "prices": [
+        212.64,
+        339.84,
+        347.21
+      ]
+    },
+    "TSLA": {
+      "name": "Tesla",
+      "prices": [
+        260.39,
+        371.21,
+        404.37
+      ]
+    },
+    "SYK": {
+      "name": "Stryker",
+      "prices": [
+        188.48,
+        265.09,
+        286.2
+      ]
+    },
+    "MU": {
+      "name": "Micron Technology",
+      "prices": [
+        392.58,
+        816.03,
+        945.49
+      ]
+    },
+    "NFLX": {
+      "name": "Netflix",
+      "prices": [
+        49.65,
+        75.86,
+        79.72
+      ]
+    },
+    "MCD": {
+      "name": "McDonald's",
+      "prices": [
+        203.19,
+        267.46,
+        273.05
+      ]
+    },
+    "ULTA": {
+      "name": "Ulta Beauty",
+      "prices": [
+        277.52,
+        466.72,
+        480.78
+      ]
+    },
+    "META": {
+      "name": "Meta Platforms",
+      "prices": [
+        433.7,
+        568.59,
+        575.29
+      ]
+    },
+    "APLD": {
+      "name": "Applied Digital",
+      "prices": [
+        9.9,
+        13.4,
+        null
+      ]
+    },
+    "SCHD": {
+      "name": "Schwab Dividend ETF",
+      "prices": [
+        24.07,
+        29.39,
+        72.59
+      ]
+    },
+    "PLTR": {
+      "name": "Palantir",
+      "prices": [
+        82.64,
+        124.99,
+        127.01
+      ]
+    },
+    "LOW": {
+      "name": "Lowe's",
+      "prices": [
+        146.35,
+        197.5,
+        203.55
+      ]
+    },
+    "MA": {
+      "name": "Mastercard",
+      "prices": [
+        280.76,
+        438.93,
+        467.51
+      ]
+    },
+    "QQQ": {
+      "name": "Nasdaq-100 ETF",
+      "prices": [
+        530.49,
+        649.85,
+        677.28
+      ]
+    },
+    "QQQM": {
+      "name": "Nasdaq-100 Mini ETF",
+      "prices": [
+        223.4,
+        272.59,
+        283.93
+      ]
+    },
+    "ADI": {
+      "name": "Analog Devices",
+      "prices": [
+        293.95,
+        336.75,
+        344.92
+      ]
+    },
+    "AEP": {
+      "name": "American Elec Power",
+      "prices": [
+        119.3,
+        124.87,
+        129.71
+      ]
+    },
+    "MPWR": {
+      "name": "Monolithic Power",
+      "prices": [
+        955.11,
+        1124.63,
+        71.7
+      ]
+    },
+    "CME": {
+      "name": "CME Group",
+      "prices": [
+        217.59,
+        225.0,
+        238.03
+      ]
+    },
+    "MS": {
+      "name": "Morgan Stanley",
+      "prices": [
+        145.33,
+        201.95,
+        205.92
+      ]
+    },
+    "COF": {
+      "name": "Capital One",
+      "prices": [
+        162.19,
+        188.35,
+        198.55
+      ]
+    },
+    "TSM": {
+      "name": "Taiwan Semiconductor",
+      "prices": [
+        302.81,
+        377.47,
+        380.88
+      ]
+    },
+    "RKLB": {
+      "name": "Rocket Lab",
+      "prices": [
+        32.14,
+        71.32,
+        103.14
+      ]
+    },
+    "ASTS": {
+      "name": "AST SpaceMobile",
+      "prices": [
+        25.91,
+        44.68,
+        47.22
+      ]
+    },
+    "HOOD": {
+      "name": "Robinhood",
+      "prices": [
+        53.47,
+        85.83,
+        93.74
+      ]
+    },
+    "ECL": {
+      "name": "Ecolab",
+      "prices": [
+        234.48,
+        246.34,
+        249.54
+      ]
+    },
+    "PHM": {
+      "name": "PulteGroup",
+      "prices": [
+        94.08,
+        114.45,
+        120.23
+      ]
+    },
+    "UBER": {
+      "name": "Uber",
+      "prices": [
+        59.69,
+        60.36,
+        null
+      ]
+    },
+    "WM": {
+      "name": "Waste Management",
+      "prices": [
+        192.68,
+        204.98,
+        224.29
+      ]
+    },
+    "SNDK": {
+      "name": "Sandisk",
+      "prices": [
+        610.53,
+        1363.41,
+        1652.52
+      ]
+    },
+    "SMH": {
+      "name": "Semiconductor ETF",
+      "prices": [
+        294.95,
+        470.83,
+        504.15
+      ]
+    },
+    "ASML": {
+      "name": "ASML Holding",
+      "prices": [
+        1038.84,
+        1653.27,
+        null
+      ]
+    },
+    "ARM": {
+      "name": "Arm Holdings",
+      "prices": [
+        133.69,
+        269.82,
+        350.23
+      ]
+    },
+    "CLH": {
+      "name": "Clean Harbors",
+      "prices": [
+        179.58,
+        265.87,
+        290.08
+      ]
+    },
+    "AMAT": {
+      "name": "Applied Materials",
+      "prices": [
+        349.48,
+        458.66,
+        477.26
+      ]
+    },
+    "GILD": {
+      "name": "Gilead Sciences",
+      "prices": [
+        89.18,
+        121.99,
+        125.97
+      ]
+    },
+    "WDC": {
+      "name": "Western Digital",
+      "prices": [
+        290.69,
+        441.02,
+        458.31
+      ]
+    },
+    "COHR": {
+      "name": "Coherent Corp",
+      "prices": [
+        155.85,
+        225.05,
+        233.05
+      ]
+    },
+    "BMO": {
+      "name": "Bank of Montreal",
+      "prices": [
+        122.23,
+        159.89,
+        172.01
+      ]
+    },
+    "GLW": {
+      "name": "Corning",
+      "prices": [
+        90.18,
+        128.39,
+        145.66
+      ]
+    },
+    "MRVL": {
+      "name": "Marvell Technology",
+      "prices": [
+        106.89,
+        238.0,
+        251.82
+      ]
+    },
+    "ETN": {
+      "name": "Eaton Corp",
+      "prices": [
+        270.08,
+        373.92,
+        394.0
+      ]
+    },
+    "CDNS": {
+      "name": "Cadence Design",
+      "prices": [
+        229.83,
+        357.87,
+        381.48
+      ]
+    },
+    "SNPS": {
+      "name": "Synopsys",
+      "prices": [
+        377.95,
+        391.06,
+        479.04
+      ]
+    },
+    "TXN": {
+      "name": "Texas Instruments",
+      "prices": [
+        177.59,
+        233.59,
+        257.9
+      ]
+    },
+    "STX": {
+      "name": "Seagate Technology",
+      "prices": [
+        538.72,
+        643.39,
+        null
+      ]
+    },
+    "VGT": {
+      "name": "Vanguard Info Tech ETF",
+      "prices": [
+        90.63,
+        101.78,
+        105.84
+      ]
+    },
+    "KLAC": {
+      "name": "KLA Corp (post-split)",
+      "prices": [
+        145.59,
+        175.28,
+        192.38
+      ]
+    },
+    "MELI": {
+      "name": "MercadoLibre",
+      "prices": [
+        1342.38,
+        1456.38,
+        1576.21
+      ]
+    },
+    "CMI": {
+      "name": "Cummins",
+      "prices": [
+        471.85,
+        572.23,
+        606.89
+      ]
+    },
+    "XLU": {
+      "name": "Utilities Sector ETF",
+      "prices": [
+        38.43,
+        44.23,
+        null
+      ]
+    },
+    "VRT": {
+      "name": "Vertiv Holdings",
+      "prices": [
+        153.81,
+        246.17,
+        259.67
+      ]
+    },
+    "VTI": {
+      "name": "Vanguard Total Mkt ETF",
+      "prices": [
+        313.42,
+        352.35,
+        358.14
+      ]
+    },
+    "TQQQ": {
+      "name": "3x Nasdaq ETF",
+      "prices": [
+        24.86,
+        53.6,
+        59.36
+      ]
+    },
+    "TECL": {
+      "name": "3x Tech ETF",
+      "prices": [
+        104.75,
+        145.75,
+        161.25
+      ]
+    },
+    "SOXL": {
+      "name": "3x Semi ETF",
+      "prices": [
+        74.3,
+        129.78,
+        145.07
+      ]
+    },
+    "GEV": {
+      "name": "GE Vernova",
+      "prices": [
+        676.63,
+        918.97,
+        975.59
+      ]
+    },
+    "ANET": {
+      "name": "Arista Networks",
+      "prices": [
+        74.78,
+        128.62,
+        137.2
+      ]
+    }
   }
 }
