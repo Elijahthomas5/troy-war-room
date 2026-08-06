@@ -1,5 +1,5 @@
 {
-  "_updated": "2026-08-02",
+  "_updated": "2026-08-06",
   "_label": "Red Panda Academy Stock Club - Monthly Prices",
   "_note": "Edit this file and push to update zone prices in the tracker. Format: [loadTheBoat, swingTrade, quickEntry] \u2014 use null if not provided.",
   "tickers": {
@@ -14,9 +14,9 @@
     "AAPL": {
       "name": "Apple",
       "prices": [
-        229.67,
-        270.21,
-        302.87
+        2.0,
+        58.0,
+        1406.0
       ]
     },
     "MSFT": {
