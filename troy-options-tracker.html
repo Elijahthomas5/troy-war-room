@@ -1185,14 +1185,14 @@
   }
 
   // ── PRE-LOADED PRICES (updated by troy-monitor.py) ───
-  // Last refreshed: Sep 07, 2026 ~10:30 AM ET
+  // Last refreshed: Sep 07, 2026 ~11:31 AM ET
   // To update: run troy-monitor.py or trigger GitHub Action
   const PRICES = {
     // Market Pulse
     SPY : { price: 770.19,  change: -0.39  },
     QQQ : { price: 718.96,  change: +0.18  },
     SMH : { price: 567.01,  change: +2.61  },
-    VIX : { price: 15.21,  change: +4.68  },
+    VIX : { price: 15.30,  change: +5.30  },
     // Watchlist
     MSFT: { price: 499.70,  change: -2.04  },
     TSLA: { price: 354.08,  change: -5.92  },
@@ -1234,7 +1234,7 @@
     COHR: { price: 281.86,  change: +6.60  },
     IREN: { price: 44.68,  change: +7.27  },
   };
-  const PRICES_AS_OF = 'Sep 07, 2026 ~10:30 AM ET';
+  const PRICES_AS_OF = 'Sep 07, 2026 ~11:31 AM ET';
 
   // ── OPTION CONTRACT REFERENCE PRICES ────────────────────────────────────────
   // alert  = Troy's entry price  |  current = live bid/ask mid
@@ -1281,11 +1281,11 @@
     COHR: { contract: "Jan '27 $395C", alert: null, current: 21.55  },
     IREN: { contract: "Jan '27 $60C", alert: null, current: 5.75  },
   };
-  const OPT_PRICES_AS_OF = 'Sep 07, 2026 ~10:30 AM ET';
+  const OPT_PRICES_AS_OF = 'Sep 07, 2026 ~11:31 AM ET';
 
   // ── MY OWNED POSITIONS (auto-synced from troy-classes.json) ──────────
   // Entries with owned:true — current prices come from OPT_PRICES above
-  // Updated: Sep 07, 2026 ~10:30 AM ET
+  // Updated: Sep 07, 2026 ~11:31 AM ET
   const MY_OWNED_POSITIONS = [
     {ticker:"MSFT",type:"CALL",strike:385.0,exp:"2027-09-17",entry:60.21,contract:"Sep '27 $385C"},
   ];
