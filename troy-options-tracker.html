@@ -2792,13 +2792,17 @@ Please act as a world-class investor and help me with the following:
     const btn = document.getElementById('refreshBtn');
     const lbl = document.getElementById('lastUpdated');
 
-    // Get or prompt for Tradier API key
+    // Prices are now kept fresh automatically in the background (GitHub
+    // Actions runs the monitor on a schedule and bakes updated prices into
+    // this page). We no longer prompt visitors for a Tradier API token here
+    // -- that only ever leads to a dead end while the Tradier account is
+    // inactive. If a key was already saved from before, keep using it (so
+    // this still works once Tradier access is restored); otherwise just
+    // reload to pick up the latest auto-updated prices.
     let key = localStorage.getItem('tradier_key');
     if (!key) {
-      key = prompt('Enter your Tradier API token to enable live prices:');
-      if (!key) return;
-      key = key.trim();
-      localStorage.setItem('tradier_key', key);
+      location.reload();
+      return;
     }
 
     btn.disabled  = true;
