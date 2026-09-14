@@ -1292,10 +1292,31 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
         olines.append(f"  const OPT_PRICES_AS_OF = '{now_str}';")
         new_opt = "\n".join(olines)
 
-        html = re.sub(
-            r"  // ── OPTION CONTRACT REFERENCE PRICES.*?const OPT_PRICES_AS_OF = '[^']*';",
-            new_opt, html, flags=re.DOTALL,
-        )
+        # Same root cause as the PRICES bug above, for the same reason: this
+        # regex used to require its own leading comment ("// -- OPTION
+        # CONTRACT REFERENCE PRICES...") as part of the match. That comment
+        # had gone missing from the HTML (independently of the data -- git
+        # history shows "const OPT_PRICES = {" itself hasn't existed in any
+        # commit since the very first deploy), so this has been a silent
+        # no-op on every single run since day one. The JS elsewhere reads
+        # OPT_PRICES[...] unconditionally, so the missing declaration threw
+        # an uncaught ReferenceError on page load and froze EVERY price on
+        # the page (not just options) -- this was likely the real root cause
+        # of "frozen prices" all along, with the PRICES_AS_OF bug layered on
+        # top of it. Fix: never anchor on the comment. Strip any existing
+        # OPT_PRICES block (wherever it is) and any OPT_PRICES_AS_OF line,
+        # then always reinsert both, anchored on PRICES_AS_OF -- which is
+        # guaranteed present since it's written unconditionally just above.
+        html = re.sub(r"  // ── OPTION CONTRACT REFERENCE PRICES.*?\n  \};\n?", "", html, flags=re.DOTALL)
+        html = re.sub(r"  const OPT_PRICES = \{.*?\n  \};\n?", "", html, flags=re.DOTALL)
+        html = re.sub(r"\n?  const OPT_PRICES_AS_OF = '[^']*';", "", html)
+
+        prices_as_of_re = re.compile(r"(  const PRICES_AS_OF = '[^']*';\n)")
+        if prices_as_of_re.search(html):
+            html = prices_as_of_re.sub(lambda _m: _m.group(1) + new_opt + "\n", html, count=1)
+        else:
+            print("  ⚠  Could not find PRICES_AS_OF anchor to insert OPT_PRICES block "
+                  "-- OPT_PRICES was NOT written this run. Check the file structure.")
 
         # ── 5. Build IV_DATA block ───────────────────────────────
         ivlines = ["  // ── IMPLIED VOLATILITY (updated by troy-monitor.py) ──────────────────────────",
