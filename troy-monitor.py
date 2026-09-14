@@ -170,6 +170,12 @@ OPT_TAKE_PROFIT    = 1.00   # option 100% above alert = ④ TAKE PROFIT
 
 MARKET_PULSE = ["SPY", "QQQ", "SMH", "VIX"]
 
+# Tickers manually removed from the dashboard -- still tracked in
+# troy-classes.json (so class history/notes stay intact), but excluded from
+# auto-inject so the bot doesn't keep re-adding a card you deleted on
+# purpose. Add a ticker here any time you delete its card from the HTML.
+REMOVED_CARDS = {"WDC"}
+
 # Colour palette for auto-injected cards (cycles by ticker hash)
 CARD_COLORS = [
     "#4d9fff", "#00d4a0", "#f5c842", "#a78bfa", "#f97316",
@@ -704,30 +710,68 @@ def _fast_info_get(fi, *names):
     return None
 
 
+def _yfinance_history_quote(sym):
+    """Fallback price source when fast_info comes back empty: pulls daily
+    bars from the chart endpoint instead (a different, more reliable Yahoo
+    API than fast_info/.info -- this is the one .options/.option_chain()
+    also use under the hood, which is why chain data can keep working even
+    when fast_info silently breaks)."""
+    try:
+        hist = yf.Ticker(sym).history(period="1y", auto_adjust=False)
+        if hist is None or hist.empty:
+            return None
+        closes = hist["Close"].dropna()
+        if closes.empty:
+            return None
+        price  = float(closes.iloc[-1])
+        prev   = float(closes.iloc[-2]) if len(closes) > 1 else price
+        high52 = float(closes.max())
+        return {"price": price, "prev": prev, "high52": high52}
+    except Exception as e:
+        print(f"    history() fallback failed ({sym}): {e}")
+        return None
+
+
 def _yfinance_quote(symbols):
-    """Bulk-ish stock quote via yfinance. Returns {sym: {...}} dict."""
+    """Bulk-ish stock quote via yfinance. Returns {sym: {...}} dict.
+    Tries fast_info first (cheap, one request); if Yahoo's fast_info/quote
+    endpoint is having a bad day (this is what was silently failing for
+    every symbol -- see _yfinance_history_quote), falls back to pulling
+    daily history bars instead before giving up on that symbol."""
     if yf is None or not symbols:
         return {}
     result = {}
     for sym in symbols:
+        price = prev = high52 = None
         try:
             fi = yf.Ticker(sym).fast_info
             price  = _fast_info_get(fi, "last_price", "lastPrice", "regular_market_price")
-            prev   = _fast_info_get(fi, "previous_close", "previousClose") or price
-            high52 = _fast_info_get(fi, "year_high", "yearHigh", "fiftyTwoWeekHigh") or price
-            if price is None:
-                continue
-            price  = round(float(price), 2)
-            prev   = round(float(prev),  2) if prev  else price
-            high52 = round(float(high52),2) if high52 else price
-            change  = round((price - prev)  / prev   * 100, 2) if prev   else 0
-            pct_off = round((high52 - price) / high52 * 100, 1) if high52 else 0
-            result[sym] = {
-                "price": price, "change": change,
-                "high52": high52, "pct_from_high": pct_off,
-            }
+            prev   = _fast_info_get(fi, "previous_close", "previousClose")
+            high52 = _fast_info_get(fi, "year_high", "yearHigh", "fiftyTwoWeekHigh")
         except Exception as e:
-            print(f"  ⚠  yfinance quote error ({sym}): {e}")
+            print(f"  ⚠  yfinance fast_info error ({sym}): {e}")
+
+        if price is None:
+            print(f"    fast_info empty for {sym} -- trying history() fallback...")
+            hq = _yfinance_history_quote(sym)
+            if hq is not None:
+                price, prev, high52 = hq["price"], hq["prev"], hq["high52"]
+
+        if price is None:
+            print(f"  ⚠  yfinance quote unavailable for {sym} (both fast_info and history() failed)")
+            continue
+
+        prev   = prev   if prev   else price
+        high52 = high52 if high52 else price
+        price  = round(float(price), 2)
+        prev   = round(float(prev),  2)
+        high52 = round(float(high52),2)
+        change  = round((price - prev)  / prev   * 100, 2) if prev   else 0
+        pct_off = round((high52 - price) / high52 * 100, 1) if high52 else 0
+        result[sym] = {
+            "price": price, "change": change,
+            "high52": high52, "pct_from_high": pct_off,
+        }
     return result
 
 
@@ -743,6 +787,10 @@ def _yfinance_option_price(symbol, expiry, strike, opt_type="calls"):
         if not expirations:
             return empty
         target_exp = datetime.strptime(expiry, "%Y-%m-%d")
+        if target_exp < datetime.now():
+            print(f"  ⚠  {symbol} tracked contract ({expiry}) already expired -- "
+                  f"skipping price/IV until troy-classes.json is updated with a current contract")
+            return empty
         future = [e for e in expirations if datetime.strptime(e, "%Y-%m-%d") >= target_exp]
         chosen_exp = future[0] if future else sorted(expirations)[-1]
         chain = tk.option_chain(chosen_exp)
@@ -1055,39 +1103,42 @@ def _tradier_option_chain(symbol, current_price):
     return results
 
 
-# ── Public fetch API — Schwab → yfinance → Tradier ────────────────────────────
+# ── Public fetch API — Schwab → Tradier → yfinance (backup) ──────────────────
+# yfinance only gets used when Tradier doesn't answer (no token, inactive/
+# unfunded account, network hiccup, etc.) -- so once Tradier is funded and
+# working again, it's used automatically with no code change needed.
 
 def fetch_ticker(symbol):
-    """Fetch stock price. Schwab → yfinance → Tradier."""
+    """Fetch stock price. Schwab → Tradier → yfinance (backup)."""
     client = get_schwab_client()
     if client is not None:
         result = _schwab_quote([symbol])
         if symbol in result:
             return result[symbol]
-    result = _yfinance_quote([symbol])
+    result = _tradier_quote([symbol])
     if symbol in result:
         return result[symbol]
-    result = _tradier_quote([symbol])
+    result = _yfinance_quote([symbol])
     return result.get(symbol)
 
 
 def fetch_tickers_bulk(symbols):
-    """Fetch multiple tickers. Schwab bulk → yfinance → Tradier bulk."""
+    """Fetch multiple tickers. Schwab bulk → Tradier bulk → yfinance (backup)."""
     client = get_schwab_client()
     if client is not None:
         result = _schwab_quote(symbols)
         if result:
             return result
-    result = _yfinance_quote(symbols)
+    result = _tradier_quote(symbols)
     if result:
         return result
-    return _tradier_quote(symbols)
+    return _yfinance_quote(symbols)
 
 
 def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
     """Returns dict {"mid": price, "iv": iv_pct, "delta": delta, "theta": theta}.
-    Schwab → yfinance → Tradier. yfinance doesn't provide delta/theta — those
-    come back None when yfinance is the source that answered."""
+    Schwab → Tradier → yfinance (backup). yfinance doesn't provide delta/theta
+    — those come back None when yfinance is the source that answered."""
     client = get_schwab_client()
     if client is not None:
         chain = _schwab_option_chain(symbol, expiry=expiry, strike=strike)
@@ -1100,17 +1151,17 @@ def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
                 "delta": best["delta"],
                 "theta": best["theta"],
             }
-    result = _yfinance_option_price(symbol, expiry, strike, opt_type)
+    result = _tradier_option_price(symbol, expiry, strike, opt_type)
     if result.get("mid") is not None:
         return result
-    return _tradier_option_price(symbol, expiry, strike, opt_type)
+    return _yfinance_option_price(symbol, expiry, strike, opt_type)
 
 
 def fetch_option_chain(symbol, current_price):
     """
-    Fetch all LEAP calls with expiry > 12 months. Schwab → yfinance → Tradier.
-    Returns list of dicts sorted by expiry then strike, tagged ITM/ATM/OTM.
-    Strike range: 50% below to 60% above current price.
+    Fetch all LEAP calls with expiry > 12 months. Schwab → Tradier → yfinance
+    (backup). Returns list of dicts sorted by expiry then strike, tagged
+    ITM/ATM/OTM. Strike range: 50% below to 60% above current price.
     """
     client = get_schwab_client()
     if client is not None:
@@ -1125,10 +1176,10 @@ def fetch_option_chain(symbol, current_price):
                 c["moneyness"] = "ITM" if pct_diff < -0.03 else ("ATM" if pct_diff <= 0.03 else "OTM")
                 filtered.append(c)
             return filtered
-    chain = _yfinance_option_chain(symbol, current_price)
+    chain = _tradier_option_chain(symbol, current_price)
     if chain:
         return chain
-    return _tradier_option_chain(symbol, current_price)
+    return _yfinance_option_chain(symbol, current_price)
 
 
 # ─── HTML UPDATE ─────────────────────────────────────────────────────────────
@@ -1142,6 +1193,8 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
         # ── 1. Auto-inject any new stock cards ──────────────────
         injected = []
         for ticker, info in watchlist.items():
+            if ticker in REMOVED_CARDS:
+                continue
             opt_info = opt_contracts.get(ticker, {})
             html, was_new = inject_new_stock_card(html, ticker, info, opt_info)
             if was_new:
@@ -1442,13 +1495,19 @@ def main():
     watch_zone_hits = []
 
     # ── Detect data source ───────────────────────────────────────
+    # Schwab → Tradier → yfinance (backup). This is attempt-based, not just
+    # "is a token/library present": Tradier is actually called first, and
+    # yfinance only fills in symbols Tradier didn't return -- so the moment
+    # the Tradier account is funded/active again, it resumes being the real
+    # source automatically, no code change needed.
     using_schwab   = get_schwab_client() is not None
-    using_yfinance = yf is not None
     using_tradier  = bool(_tradier_token())
+    using_yfinance = yf is not None
     src_tag = (
         "🔴 Schwab live" if using_schwab else
-        "🟡 yfinance (free, ~15-20 min delayed)" if using_yfinance else
+        "📊 Tradier real-time (yfinance backup on failure)" if using_tradier and using_yfinance else
         "📊 Tradier real-time" if using_tradier else
+        "🟡 yfinance (free, ~15-20 min delayed)" if using_yfinance else
         "⚠  no data source (pip install yfinance, or add TRADIER_TOKEN secret)"
     )
     print(f"\n  Data source: {src_tag}")
@@ -1456,29 +1515,18 @@ def main():
     # ── Fetch equity prices (bulk call — all symbols in one request) ──────
     print("\n  Fetching stock prices...")
     all_symbols = list(watchlist.keys()) + MARKET_PULSE
+    bulk = {}
     if using_schwab:
         bulk = _schwab_quote(all_symbols)
-        for sym in all_symbols:
-            if sym in bulk:
-                all_data[sym] = bulk[sym]
-            elif using_yfinance:
-                d = _yfinance_quote([sym]).get(sym)
-                if d:
-                    all_data[sym] = d
-            else:
-                d = _tradier_quote([sym]).get(sym)
-                if d:
-                    all_data[sym] = d
-    elif using_yfinance:
-        bulk = _yfinance_quote(all_symbols)
-        for sym in all_symbols:
-            if sym in bulk:
-                all_data[sym] = bulk[sym]
-    elif using_tradier:
-        bulk = _tradier_quote(all_symbols)
-        for sym in all_symbols:
-            if sym in bulk:
-                all_data[sym] = bulk[sym]
+    missing = [s for s in all_symbols if s not in bulk]
+    if missing and using_tradier:
+        bulk.update(_tradier_quote(missing))
+        missing = [s for s in all_symbols if s not in bulk]
+    if missing and using_yfinance:
+        bulk.update(_yfinance_quote(missing))
+    for sym in all_symbols:
+        if sym in bulk:
+            all_data[sym] = bulk[sym]
 
     for ticker, info in watchlist.items():
         d = all_data.get(ticker)
