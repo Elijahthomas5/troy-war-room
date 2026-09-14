@@ -12,6 +12,16 @@ on:
     paths-ignore:
       - '**.md'
 
+# Only one run of this workflow at a time. Without this, a manual trigger
+# (or a push, which also fires this workflow) can land at the same moment
+# as a cron-job.org-triggered run, and both try to commit/push the same
+# HTML file at once -- one wins, the other hits a real merge conflict on
+# the giant PRICES/IV_DATA blocks and fails outright. Queuing runs instead
+# of racing them fixes that.
+concurrency:
+  group: troy-price-monitor
+  cancel-in-progress: false
+
 jobs:
   update-prices:
     runs-on: ubuntu-latest
