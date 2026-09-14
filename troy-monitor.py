@@ -1234,10 +1234,23 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
         lines.append(f"  const PRICES_AS_OF = '{now_str}';")
         new_prices = "\n".join(lines)
 
-        html = re.sub(
-            r"  // ── PRE-LOADED PRICES.*?const PRICES_AS_OF = '[^']*';",
-            new_prices, html, flags=re.DOTALL,
-        )
+        # Root cause of prices never updating: this regex used to require an
+        # existing "const PRICES_AS_OF = '...';" line as its end anchor. That
+        # line had gone missing from the HTML at some point (likely lost in
+        # an old merge), so the match silently failed every run -- the fetch
+        # always worked, but the write to disk was a no-op with no error.
+        # The JS also references PRICES_AS_OF elsewhere in the page, so its
+        # absence threw a ReferenceError in the browser on every render too.
+        # Fix: anchor only on the PRICES dict itself (guaranteed present),
+        # and always strip+reinsert exactly one PRICES_AS_OF line so it can
+        # never go missing OR get duplicated.
+        html = re.sub(r"\n?  const PRICES_AS_OF = '[^']*';", "", html)
+        price_block_re = re.compile(r"  // ── PRE-LOADED PRICES.*?\n  \};", re.DOTALL)
+        if price_block_re.search(html):
+            html = price_block_re.sub(lambda _m: new_prices, html, count=1)
+        else:
+            print("  ⚠  Could not find PRICES block anchor in troy-options-tracker.html "
+                  "-- stock prices were NOT written this run. Check the file structure.")
 
         # ── 3. Build HIGHS_52W block ─────────────────────────────
         hlines = ["  const HIGHS_52W = {"]
