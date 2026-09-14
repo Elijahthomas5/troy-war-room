@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Troy War Room">
   <meta name="theme-color" content="#0d0f14">
-  <meta http-equiv="refresh" content="300">
   <title>Troy's Options War Room | EYL University</title>
   <style>
     :root {
@@ -62,7 +61,10 @@
 
     /* WATCHLIST */
     .watchlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-    .watch-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color 0.2s; }
+    .watch-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color 0.2s; position: relative; }
+    .card-remove-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #3a4560; cursor: pointer; font-size: 13px; line-height: 1; padding: 2px 4px; border-radius: 3px; opacity: 0; transition: opacity 0.15s, color 0.15s; z-index: 2; }
+    .watch-card:hover .card-remove-btn { opacity: 1; }
+    .card-remove-btn:hover { color: var(--red) !important; }
     .watch-card:hover { border-color: var(--eyl-gold); }
     .watch-ticker { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
     .watch-name { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
@@ -439,6 +441,30 @@
   </div>
 </div>
 
+<!-- ADD TICKER MODAL -->
+<div id="add-ticker-overlay" onclick="closeAddTickerModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:950;backdrop-filter:blur(4px)"></div>
+<div id="add-ticker-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:951;background:#161b24;border:1px solid #2a3347;border-radius:14px;padding:28px;width:360px;max-width:92vw">
+  <div style="font-size:15px;font-weight:800;color:var(--eyl-gold);margin-bottom:18px">+ Add Ticker to Watchlist</div>
+  <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:5px">Search by name or ticker</label>
+  <div style="position:relative;margin-bottom:6px">
+    <input id="atm-search" placeholder="e.g. Apple, Meta, NVDA..." autocomplete="off"
+      style="width:100%;background:#0d0f14;border:1px solid #2a3347;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:14px;outline:none">
+    <div id="atm-results" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:#0d0f14;border:1px solid #2a3347;border-radius:8px;max-height:200px;overflow-y:auto;z-index:10"></div>
+  </div>
+  <div id="atm-selected" style="display:none;background:rgba(201,162,39,0.1);border:1px solid rgba(201,162,39,0.3);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px">
+    <span id="atm-sel-sym" style="font-weight:800;color:var(--eyl-gold)"></span>
+    <span id="atm-sel-name" style="color:var(--muted);margin-left:8px"></span>
+    <button onclick="clearAtmSelection()" style="float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
+  </div>
+  <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:5px">Badge Label (optional)</label>
+  <input id="atm-badge" placeholder="e.g. JAN '27 $600C" style="width:100%;background:#0d0f14;border:1px solid #2a3347;border-radius:8px;padding:9px 12px;color:#e8eaf0;font-size:13px;margin-bottom:18px;outline:none">
+  <div id="atm-status" style="font-size:12px;color:var(--muted);min-height:18px;margin-bottom:14px"></div>
+  <div style="display:flex;gap:10px">
+    <button onclick="closeAddTickerModal()" style="flex:1;background:transparent;border:1px solid #2a3347;color:var(--muted);padding:9px;border-radius:8px;cursor:pointer;font-size:13px">Cancel</button>
+    <button id="atm-submit" onclick="submitAddTicker()" style="flex:2;background:var(--eyl-gold);color:#000;border:none;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">Add to Watchlist</button>
+  </div>
+</div>
+
 <!-- CONTRACT CHAIN DRAWER -->
 <div id="chain-overlay" onclick="closeChainDrawer()"></div>
 <div id="chain-drawer">
@@ -537,7 +563,10 @@
 
     <!-- WATCHLIST -->
     <div class="section">
-      <div class="section-title"><span>📡</span> Troy's Watch List</div>
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span><span>📡</span> Troy's Watch List</span>
+        <button onclick="openAddTickerModal()" style="background:rgba(201,162,39,0.15);color:var(--eyl-gold);border:1px solid rgba(201,162,39,0.4);padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.5px">+ Add Ticker</button>
+      </div>
       <div class="watchlist" id="watchlistGrid">
         <div class="watch-card" data-ticker="AMKR">
           <div class="watch-ticker" style="color:#4d9fff">AMKR</div>
@@ -807,15 +836,6 @@
           <div class="bz-section" id="bz-CLS"></div>
         </div>
 
-        <div class="watch-card" data-ticker="WDC">
-          <div class="watch-ticker" style="color:#4d9fff">WDC</div>
-          <div class="watch-name">Western Digital / SanDisk</div>
-          <div class="watch-price" id="wp-WDC">--</div>
-          <div class="watch-change" id="wc-WDC">--</div>
-          <div class="watch-badge">Jan '27 $65C ✓</div>
-          <div class="class-date">📅 Nov '25 Class</div>
-          <div class="bz-section" id="bz-WDC"></div>
-        </div>
 
         <div class="watch-card" data-ticker="CEG">
           <div class="watch-ticker" style="color:#00d4a0">CEG</div>
@@ -876,6 +896,36 @@
           <div class="class-date">📅 Nov '24 Class</div>
           <div class="bz-section" id="bz-KAVA"></div>
         </div>
+
+        <div class="watch-card" data-ticker="TSLA">
+          <div class="watch-ticker" style="color:#38bdf8">TSLA</div>
+          <div class="watch-name">Tesla Inc.</div>
+          <div class="watch-price" id="wp-TSLA">--</div>
+          <div class="watch-change" id="wc-TSLA">--</div>
+          <div class="watch-badge">Jun '26 $250C ✓</div>
+          <div class="class-date">📅 Mar '24 Class Vol.1 — First Options Class</div>
+          <div class="bz-section" id="bz-TSLA"></div>
+        </div>
+
+        <div class="watch-card" data-ticker="DKNG">
+          <div class="watch-ticker" style="color:#f5c842">DKNG</div>
+          <div class="watch-name">DraftKings Inc.</div>
+          <div class="watch-price" id="wp-DKNG">--</div>
+          <div class="watch-change" id="wc-DKNG">--</div>
+          <div class="watch-badge">Apr '24 $42C ✓</div>
+          <div class="class-date">📅 Mar '24 Class Vol.1 — First Options Class</div>
+          <div class="bz-section" id="bz-DKNG"></div>
+        </div>
+
+        <div class="watch-card" data-ticker="SNDK">
+          <div class="watch-ticker" style="color:#34d399">SNDK</div>
+          <div class="watch-name">SanDisk Corporation</div>
+          <div class="watch-price" id="wp-SNDK">--</div>
+          <div class="watch-change" id="wc-SNDK">--</div>
+          <div class="watch-badge">Jan '27 $65C ✓</div>
+          <div class="class-date">📅 Nov '25 Class</div>
+          <div class="bz-section" id="bz-SNDK"></div>
+        </div>
       </div>
     </div>
 
@@ -919,36 +969,6 @@
         <span style="color:var(--green)">⚡ ENTER</span> = buy zone + IV&lt;35% + reachable break-even &nbsp;·&nbsp;
         <span style="color:var(--yellow)">👀 WATCH</span> = partially met &nbsp;·&nbsp;
         <span style="color:var(--red)">⏳ WAIT</span> = criteria not met
-
-        <div class="watch-card" data-ticker="TSLA">
-          <div class="watch-ticker" style="color:#38bdf8">TSLA</div>
-          <div class="watch-name">Tesla Inc.</div>
-          <div class="watch-price" id="wp-TSLA">--</div>
-          <div class="watch-change" id="wc-TSLA">--</div>
-          <div class="watch-badge">Jun '26 $250C ✓</div>
-          <div class="class-date">📅 Mar '24 Class Vol.1 — First Options Class</div>
-          <div class="bz-section" id="bz-TSLA"></div>
-        </div>
-
-        <div class="watch-card" data-ticker="DKNG">
-          <div class="watch-ticker" style="color:#f5c842">DKNG</div>
-          <div class="watch-name">DraftKings Inc.</div>
-          <div class="watch-price" id="wp-DKNG">--</div>
-          <div class="watch-change" id="wc-DKNG">--</div>
-          <div class="watch-badge">Apr '24 $42C ✓</div>
-          <div class="class-date">📅 Mar '24 Class Vol.1 — First Options Class</div>
-          <div class="bz-section" id="bz-DKNG"></div>
-        </div>
-
-        <div class="watch-card" data-ticker="SNDK">
-          <div class="watch-ticker" style="color:#34d399">SNDK</div>
-          <div class="watch-name">SanDisk Corporation</div>
-          <div class="watch-price" id="wp-SNDK">--</div>
-          <div class="watch-change" id="wc-SNDK">--</div>
-          <div class="watch-badge">Jan '27 $65C ✓</div>
-          <div class="class-date">📅 Nov '25 Class</div>
-          <div class="bz-section" id="bz-SNDK"></div>
-        </div>
       </div>
     </div>
 
@@ -1213,7 +1233,6 @@
     AMZN: { price: 230.86,  change: -0.23  },
     CLS : { price: 350.20,  change: +10.04  },
     GLW : { price: 126.03,  change: -12.09  },
-    WDC : { price: 463.51,  change: -6.91  },
     SNDK: { price: 1096.10,  change: -14.25  },
     CEG : { price: 259.82,  change: -3.77  },
     SNPS: { price: 383.82,  change: -1.33  },
@@ -1260,7 +1279,6 @@
     AMZN: { contract: "Jan '27 $220C", alert: null, current: 30.95  },
     CLS : { contract: "Jan '27 $90C", alert: null, current: 263.50  },
     GLW : { contract: "Jan '27 $195C", alert: null, current: 12.05  },
-    WDC : { contract: "Jan '27 $65C", alert: null, current: 761.95  },
     SNDK: { contract: "Jan '27 $65C", alert: null, current: 1033.70  },
     CEG : { contract: "Jan '27 $260C", alert: null, current: 36.55  },
     SNPS: { contract: "Jun '26 $440C", alert: 30.00, current: 2.40  },
@@ -1313,7 +1331,6 @@
     AMZN: 36.3,
     CLS : 139.5,
     GLW : 77.8,
-    WDC : null,
     SNDK: 241.1,
     CEG : 48.4,
     SNPS: 145.9,
@@ -1358,7 +1375,6 @@
     AMZN: { delta: 0.662, theta: -0.077 },
     CLS : { delta: 0.989, theta: -0.033 },
     GLW : { delta: 0.320, theta: -0.065 },
-    WDC : { delta: null, theta: null },
     SNDK: { delta: 1.000, theta: -0.010 },
     CEG : { delta: 0.589, theta: -0.107 },
     SNPS: { delta: 0.010, theta: -0.081 },
@@ -1446,7 +1462,6 @@
     AMZN: 278.56,
     CLS : 474.02,
     GLW : 271.78,
-    WDC : 799.87,
     SNDK: 2354.39,
     CEG : 412.70,
     SNPS: 651.73,
@@ -2049,14 +2064,30 @@
   const savedBrief = localStorage.getItem('eyl_brief');
   if (savedBrief) document.getElementById('briefContent').innerText = savedBrief;
 
-  // Dynamically inject buy-zone-bar placeholder into every watch card
-  document.querySelectorAll('.watch-card').forEach(card => {
+  // ── Storage keys (declared here so init code below can reference them) ──
+  const CUSTOM_KEY  = 'eyl_custom_tickers';
+  const HIDDEN_KEY  = 'eyl_hidden_tickers';
+
+  // Apply hidden built-in tickers + inject remove buttons
+  const hiddenTickers = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]');
+
+  document.querySelectorAll('.watch-card:not([data-custom])').forEach(card => {
     const tickerEl = card.querySelector('.watch-ticker');
     if (!tickerEl) return;
     const ticker = tickerEl.textContent.trim();
-    if (!card.querySelector('.buy-zone-bar')) {
+
+    if (hiddenTickers.includes(ticker)) { card.style.display = 'none'; return; }
+
+    // Inject ✕ button (absolutely positioned, shows on hover via CSS)
+    const btn = document.createElement('button');
+    btn.className = 'card-remove-btn';
+    btn.innerHTML = '✕';
+    btn.title = 'Remove from watchlist';
+    card.prepend(btn);
+
+    if (!card.querySelector('.bz-section')) {
       const bz = document.createElement('div');
-      bz.className = 'buy-zone-bar';
+      bz.className = 'bz-section';
       bz.id = `bz-${ticker}`;
       card.appendChild(bz);
     }
@@ -2374,8 +2405,9 @@ Please act as a world-class investor and help me with the following:
     window.renderMBAAnalytics=renderMBAAnalytics;
   })();
 
-  // Inject research button into every watch card
-  document.querySelectorAll('.watch-card').forEach(card => {
+  // Inject research button — call this for any card (built-in or custom)
+  function injectResearchBtn(card) {
+    if (card.querySelector('.research-btn')) return; // already has one
     const ticker = card.dataset.ticker;
     if (!ticker) return;
     const name = card.querySelector('.watch-name')?.textContent || ticker;
@@ -2384,64 +2416,478 @@ Please act as a world-class investor and help me with the following:
     btn.textContent = '🔬 AI Research Prompt';
     btn.addEventListener('click', e => openResearchModal(ticker, name, e));
     card.appendChild(btn);
+  }
+
+  document.querySelectorAll('.watch-card').forEach(injectResearchBtn);
+
+  // ── CUSTOM TICKERS (persisted in localStorage) ────────────────────────────
+  let atmSelected = null; // { sym, name }
+  let atmSearchTimer = null;
+
+  function openAddTickerModal() {
+    document.getElementById('add-ticker-overlay').style.display = 'block';
+    document.getElementById('add-ticker-modal').style.display   = 'block';
+    document.getElementById('atm-search').value  = '';
+    document.getElementById('atm-badge').value   = '';
+    document.getElementById('atm-status').textContent = '';
+    document.getElementById('atm-results').style.display = 'none';
+    document.getElementById('atm-selected').style.display = 'none';
+    atmSelected = null;
+    document.getElementById('atm-search').focus();
+  }
+
+  function closeAddTickerModal() {
+    document.getElementById('add-ticker-overlay').style.display = 'none';
+    document.getElementById('add-ticker-modal').style.display   = 'none';
+    document.getElementById('atm-results').style.display = 'none';
+  }
+
+  function clearAtmSelection() {
+    atmSelected = null;
+    document.getElementById('atm-selected').style.display = 'none';
+    document.getElementById('atm-search').value = '';
+    document.getElementById('atm-search').focus();
+  }
+
+  function selectAtmResult(sym, name) {
+    atmSelected = { sym, name };
+    document.getElementById('atm-sel-sym').textContent  = sym;
+    document.getElementById('atm-sel-name').textContent = name;
+    document.getElementById('atm-selected').style.display = 'block';
+    document.getElementById('atm-results').style.display  = 'none';
+    document.getElementById('atm-search').value = '';
+    document.getElementById('atm-status').textContent = '';
+    document.getElementById('atm-badge').focus();
+  }
+
+  document.getElementById('atm-search').addEventListener('input', function() {
+    clearTimeout(atmSearchTimer);
+    const q = this.value.trim();
+    if (q.length < 1) { document.getElementById('atm-results').style.display = 'none'; return; }
+    atmSearchTimer = setTimeout(() => runAtmSearch(q), 280);
   });
 
-  // ── LIVE REFRESH (requires troy-server.py running at localhost:5001) ─────────
-  const SERVER = 'http://localhost:5001';
+  document.getElementById('atm-search').addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeAddTickerModal();
+  });
 
+  // ── Tradier host fallback ───────────────────────────────────────────
+  // Tradier issues two kinds of tokens: production tokens (funded brokerage
+  // account) only work against api.tradier.com; sandbox/developer tokens
+  // only work against sandbox.tradier.com. A valid key hitting the wrong
+  // host returns 401, which used to wipe the saved key immediately. This
+  // tries the remembered host first, falls back to the other host on a
+  // 401, and only gives up (letting the caller clear the key) if BOTH
+  // hosts reject it.
+  function tradierBaseUrl() {
+    return localStorage.getItem('tradier_base') || 'https://api.tradier.com';
+  }
+  async function tradierFetch(path, key) {
+    const headers  = { 'Authorization': `Bearer ${key}`, 'Accept': 'application/json' };
+    const primary  = tradierBaseUrl();
+    const fallback = primary === 'https://api.tradier.com' ? 'https://sandbox.tradier.com' : 'https://api.tradier.com';
+
+    let resp = await fetch(primary + path, { headers });
+    if (resp.status === 401) {
+      const resp2 = await fetch(fallback + path, { headers });
+      if (resp2.status !== 401) {
+        localStorage.setItem('tradier_base', fallback);
+        return resp2;
+      }
+      return resp2; // both hosts rejected -- let the caller's 401 handling clear the key
+    }
+    return resp;
+  }
+
+  async function runAtmSearch(query) {
+    let key = localStorage.getItem('tradier_key');
+    if (!key) {
+      key = prompt('Enter your Tradier API token to enable search:');
+      if (!key) return;
+      key = key.trim();
+      localStorage.setItem('tradier_key', key);
+    }
+
+    const results = document.getElementById('atm-results');
+    results.innerHTML = '<div style="padding:10px 12px;color:var(--muted);font-size:12px">Searching...</div>';
+    results.style.display = 'block';
+
+    try {
+      const sym = query.trim().toUpperCase();
+
+      // Run name search + direct ticker lookup in parallel
+      const [searchResp, quoteResp] = await Promise.allSettled([
+        tradierFetch(`/v1/markets/search?q=${encodeURIComponent(query)}&indexes=false`, key),
+        tradierFetch(`/v1/markets/quotes?symbols=${encodeURIComponent(sym)}&greeks=false`, key)
+      ]);
+
+      const seen = new Set();
+      const hits = [];
+
+      // Direct ticker hit (exact match goes first)
+      if (quoteResp.status === 'fulfilled' && quoteResp.value.ok) {
+        const qdata = await quoteResp.value.json();
+        let q = qdata?.quotes?.quote;
+        if (q && !Array.isArray(q)) q = [q];
+        (q || []).forEach(s => {
+          if (s.last != null && !seen.has(s.symbol)) {
+            seen.add(s.symbol);
+            hits.push({ symbol: s.symbol, description: s.description || s.symbol });
+          }
+        });
+      }
+
+      // Name/search results
+      if (searchResp.status === 'fulfilled' && searchResp.value.ok) {
+        const sdata = await searchResp.value.json();
+        let securities = sdata?.securities?.security || [];
+        if (!Array.isArray(securities)) securities = [securities];
+        securities
+          .filter(s => (s.type === 'stock' || s.type === 'etf') && !seen.has(s.symbol))
+          .slice(0, 8)
+          .forEach(s => { seen.add(s.symbol); hits.push(s); });
+      }
+
+      if (!hits.length) {
+        results.innerHTML = '<div style="padding:10px 12px;color:var(--muted);font-size:12px">No results found</div>';
+        return;
+      }
+
+      results.innerHTML = hits.slice(0, 8).map(s => `
+        <div onclick="selectAtmResult('${s.symbol}','${(s.description||s.symbol).replace(/'/g,"&#39;")}')"
+          style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a2030"
+          onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background=''">
+          <span style="font-weight:800;font-size:13px;color:var(--eyl-gold);min-width:52px">${s.symbol}</span>
+          <span style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.description || ''}</span>
+        </div>
+      `).join('');
+
+    } catch {
+      results.innerHTML = '<div style="padding:10px 12px;color:var(--red);font-size:12px">Search failed</div>';
+    }
+  }
+
+  // Fetch full LEAP option data for a symbol and populate all data maps
+  async function fetchAndPopulateOptions(sym, price, key) {
+    const minExp  = new Date(Date.now() + 365 * 86400000);
+
+    // 1. Get expirations
+    const expResp = await tradierFetch(
+      `/v1/markets/options/expirations?symbol=${encodeURIComponent(sym)}&includeAllRoots=true&strikes=false`,
+      key
+    );
+    const expData = await expResp.json();
+    let dates = expData?.expirations?.date || [];
+    if (!Array.isArray(dates)) dates = [dates];
+    const leapExp = dates.find(d => new Date(d + 'T00:00:00') >= minExp);
+    if (!leapExp) return null;
+
+    // 2. Get option chain with greeks
+    const chainResp = await tradierFetch(
+      `/v1/markets/options/chains?symbol=${encodeURIComponent(sym)}&expiration=${leapExp}&greeks=true`,
+      key
+    );
+    const chainData = await chainResp.json();
+    let options = chainData?.options?.option || [];
+    if (!Array.isArray(options)) options = [options];
+
+    const calls = options
+      .filter(o => o.option_type === 'call' && (o.bid > 0 || o.last > 0))
+      .sort((a, b) => a.strike - b.strike);
+    if (!calls.length) return null;
+
+    // ATM call = strike closest to current price
+    const atm = calls.reduce((best, c) =>
+      Math.abs(c.strike - price) < Math.abs(best.strike - price) ? c : best
+    );
+
+    // Build CONTRACT_DATA array (same shape as existing data)
+    const contracts = calls.map(o => ({
+      strike:    o.strike,
+      expiry:    leapExp,
+      bid:       o.bid   ?? 0,
+      ask:       o.ask   ?? 0,
+      price:     o.bid && o.ask ? (o.bid + o.ask) / 2 : (o.last ?? 0),
+      iv:        o.greeks?.mid_iv != null ? +(o.greeks.mid_iv * 100).toFixed(1) : null,
+      delta:     o.greeks?.delta  ?? null,
+      theta:     o.greeks?.theta  ?? null,
+      volume:    o.volume        ?? 0,
+      oi:        o.open_interest ?? 0,
+      moneyness: o.strike <= price ? 'ITM' : 'OTM'
+    }));
+
+    const atmIV    = atm.greeks?.mid_iv != null ? +(atm.greeks.mid_iv * 100).toFixed(1) : null;
+    const atmDelta = atm.greeks?.delta  ?? null;
+    const atmTheta = atm.greeks?.theta  ?? null;
+    const atmMid   = atm.bid && atm.ask ? (atm.bid + atm.ask) / 2 : (atm.last ?? null);
+
+    // Format label: "Jan '27 $200C"
+    const expDate = new Date(leapExp + 'T00:00:00');
+    const mo = expDate.toLocaleString('en-US', { month: 'short' });
+    const yr = String(expDate.getFullYear()).slice(2);
+    const contractLabel = `${mo} '${yr} $${Math.round(atm.strike)}C`;
+
+    return { contracts, atmIV, atmDelta, atmTheta, atmMid, contractLabel };
+  }
+
+  async function submitAddTicker() {
+    const badge  = document.getElementById('atm-badge').value.trim();
+    const status = document.getElementById('atm-status');
+    const btn    = document.getElementById('atm-submit');
+
+    if (!atmSelected) {
+      status.style.color = 'var(--red)';
+      status.textContent = 'Search and select a stock first.';
+      return;
+    }
+    const { sym, name } = atmSelected;
+    if (PRICES[sym]) { status.style.color = 'var(--red)'; status.textContent = `${sym} is already on the watchlist.`; return; }
+
+    let key = localStorage.getItem('tradier_key');
+    if (!key) {
+      key = prompt('Enter your Tradier API token to fetch live data:');
+      if (!key) return;
+      key = key.trim();
+      localStorage.setItem('tradier_key', key);
+    }
+
+    btn.disabled = true;
+
+    try {
+      // Step 1: quote
+      status.style.color = 'var(--yellow)';
+      status.textContent = `Fetching quote for ${sym}...`;
+      const qResp = await tradierFetch(
+        `/v1/markets/quotes?symbols=${encodeURIComponent(sym)}&greeks=false`,
+        key
+      );
+      if (qResp.status === 401) { localStorage.removeItem('tradier_key'); throw new Error('Invalid API key — cleared. Try again.'); }
+      if (!qResp.ok) throw new Error(`HTTP ${qResp.status}`);
+      const qData = await qResp.json();
+      let q = qData?.quotes?.quote;
+      if (Array.isArray(q)) q = q[0];
+      if (!q || q.last == null) throw new Error(`No price data for ${sym}`);
+
+      const price = q.last;
+      const chg   = q.change_percentage ?? 0;
+      const hi52  = q.week_52_high ?? price;
+
+      PRICES[sym]    = { price, change: chg };
+      HIGHS_52W[sym] = hi52;
+
+      // Step 2: options (expirations + chain + greeks)
+      status.textContent = `Fetching LEAP options for ${sym}...`;
+      const opts = await fetchAndPopulateOptions(sym, price, key);
+
+      if (opts) {
+        CONTRACT_DATA[sym] = opts.contracts;
+        if (opts.atmIV    != null) IV_DATA[sym]     = opts.atmIV;
+        if (opts.atmDelta != null || opts.atmTheta != null) {
+          GREEKS_DATA[sym] = { delta: opts.atmDelta, theta: opts.atmTheta };
+        }
+        OPT_PRICES[sym] = {
+          contract: badge || opts.contractLabel,
+          alert:    null,
+          current:  opts.atmMid
+        };
+      }
+
+      // Persist
+      const saved = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]');
+      saved.push({ sym, name, badge });
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(saved));
+
+      appendCustomCard(sym, name, badge || (opts?.contractLabel ?? ''));
+      refreshPrices();
+      sortAndCountCards();
+
+      const ivNote = opts?.atmIV != null ? `  ·  IV ${opts.atmIV.toFixed(1)}%` : '';
+      status.style.color = 'var(--green)';
+      status.textContent = `✓ ${sym} added — $${price.toFixed(2)}${ivNote}`;
+      setTimeout(closeAddTickerModal, 1200);
+
+    } catch (e) {
+      status.style.color = 'var(--red)';
+      status.textContent = `⚠ ${e.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function appendCustomCard(sym, name, badge) {
+    if (document.querySelector(`.watch-card[data-ticker="${sym}"]`)) return;
+    const grid = document.getElementById('watchlistGrid');
+    const card = document.createElement('div');
+    card.className = 'watch-card';
+    card.dataset.ticker = sym;
+    card.dataset.custom = 'true';
+    card.innerHTML = `
+      <button class="card-remove-btn" title="Remove from watchlist">✕</button>
+      <div class="watch-ticker" style="color:#c084fc">${sym}</div>
+      <div class="watch-name">${name}</div>
+      <div class="watch-price" id="wp-${sym}">--</div>
+      <div class="watch-change" id="wc-${sym}">--</div>
+      ${badge ? `<div class="watch-badge">${badge}</div>` : ''}
+      <div class="bz-section" id="bz-${sym}"></div>
+    `;
+    card.querySelector('.card-remove-btn').dataset.sym    = sym;
+    card.querySelector('.card-remove-btn').dataset.custom = 'true';
+    card.addEventListener('click', e => {
+      if (e.target.closest('button, input, a')) return;
+      openChainDrawer(sym);
+    });
+    grid.appendChild(card);
+    injectResearchBtn(card);
+  }
+
+  function removeTicker(sym, isCustom) {
+    // Remove card from DOM
+    const card = document.querySelector(`.watch-card[data-ticker="${sym}"]`);
+    if (card) card.remove();
+    // Clean up data
+    delete PRICES[sym];
+    delete HIGHS_52W[sym];
+    if (isCustom) {
+      // Remove from custom list
+      const saved = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]');
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(saved.filter(t => t.sym !== sym)));
+    } else {
+      // Hide built-in card
+      const hidden = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]');
+      if (!hidden.includes(sym)) hidden.push(sym);
+      localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
+    }
+    sortAndCountCards();
+  }
+
+  async function loadCustomTickers() {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]');
+    if (!saved.length) return;
+
+    const key = localStorage.getItem('tradier_key');
+
+    // Add cards to DOM immediately (prices show -- until fetched)
+    saved.forEach(t => appendCustomCard(t.sym, t.name, t.badge));
+
+    if (!key) return;
+
+    const syms = saved.map(t => t.sym);
+
+    // 1. Fetch all quotes in one call
+    try {
+      const qData = await tradierFetch(
+        `/v1/markets/quotes?symbols=${encodeURIComponent(syms.join(','))}&greeks=false`,
+        key
+      ).then(r => r.json());
+
+      let quotes = qData?.quotes?.quote || [];
+      if (!Array.isArray(quotes)) quotes = [quotes];
+      quotes.forEach(q => {
+        if (q.last != null) {
+          PRICES[q.symbol]    = { price: q.last, change: q.change_percentage ?? 0 };
+          HIGHS_52W[q.symbol] = q.week_52_high ?? q.last;
+        }
+      });
+      refreshPrices();
+      sortAndCountCards();
+    } catch { /* silent fail — cards show stale */ }
+
+    // 2. Fetch full options data for each ticker (sequential to avoid rate limits)
+    for (const { sym } of saved) {
+      const price = PRICES[sym]?.price;
+      if (!price) continue;
+      try {
+        const opts = await fetchAndPopulateOptions(sym, price, key);
+        if (opts) {
+          CONTRACT_DATA[sym] = opts.contracts;
+          if (opts.atmIV    != null) IV_DATA[sym]     = opts.atmIV;
+          if (opts.atmDelta != null || opts.atmTheta != null)
+            GREEKS_DATA[sym] = { delta: opts.atmDelta, theta: opts.atmTheta };
+          if (!OPT_PRICES[sym])
+            OPT_PRICES[sym] = { contract: opts.contractLabel, alert: null, current: opts.atmMid };
+        }
+      } catch { /* skip if options fail for this ticker */ }
+    }
+
+    // Re-render now that options data is populated
+    refreshPrices();
+    sortAndCountCards();
+  }
+
+  // Single delegated remove handler — survives card re-ordering
+  document.getElementById('watchlistGrid').addEventListener('click', e => {
+    const btn = e.target.closest('.card-remove-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    const card   = btn.closest('.watch-card');
+    const sym    = card?.dataset.ticker;
+    const custom = card?.dataset.custom === 'true';
+    if (sym) removeTicker(sym, custom);
+  });
+
+  loadCustomTickers();
+
+  // Auto-refresh all built-in prices on load if key is saved
+  if (localStorage.getItem('tradier_key')) {
+    liveRefresh();
+  }
+
+  // ── LIVE REFRESH (calls Tradier API directly from browser) ──────────────────
   async function liveRefresh() {
     const btn = document.getElementById('refreshBtn');
     const lbl = document.getElementById('lastUpdated');
 
-    // On GitHub Pages — data updates automatically via Actions, no local server needed
-    if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
-      lbl.textContent = '✓ Data auto-updates via GitHub Actions every 5 min — no refresh needed';
-      lbl.style.color = 'var(--green)';
-      setTimeout(() => { lbl.textContent = `✓ Prices as of ${PRICES_AS_OF}`; lbl.style.color = ''; }, 4000);
-      return;
-    }
-
-    // Check if local server is reachable
-    try {
-      await fetch(`${SERVER}/api/status`, { signal: AbortSignal.timeout(800) });
-    } catch {
-      lbl.textContent = '⚠ Double-click "Start Server.command" → then open http://localhost:5001';
-      lbl.style.color = 'var(--yellow)';
-      return;
+    // Get or prompt for Tradier API key
+    let key = localStorage.getItem('tradier_key');
+    if (!key) {
+      key = prompt('Enter your Tradier API token to enable live prices:');
+      if (!key) return;
+      key = key.trim();
+      localStorage.setItem('tradier_key', key);
     }
 
     btn.disabled  = true;
     btn.innerHTML = '<span class="refresh-spin">↻</span> Fetching...';
-    lbl.textContent = '⏳ Pulling live Schwab data...';
+    lbl.textContent = '⏳ Pulling live prices...';
     lbl.style.color = 'var(--yellow)';
 
-    try {
-      // Kick off the refresh
-      await fetch(`${SERVER}/api/refresh`, { method: 'POST' });
+    const symbols = Object.keys(PRICES);
 
-      // Poll until done
-      let done = false;
-      for (let i = 0; i < 120 && !done; i++) {
-        await new Promise(r => setTimeout(r, 1000));
-        const s = await fetch(`${SERVER}/api/status`).then(r => r.json());
-        if (!s.running) {
-          done   = true;
-          if (s.last_ok) {
-            lbl.textContent = `✓ Live data as of ${s.last_run}`;
-            lbl.style.color = 'var(--green)';
-            // Reload the page content from server (fresh HTML)
-            setTimeout(() => window.location.reload(), 600);
-          } else {
-            lbl.textContent = `⚠ Refresh failed — check terminal for errors`;
-            lbl.style.color = 'var(--red)';
-          }
+    try {
+      const resp = await tradierFetch(
+        `/v1/markets/quotes?symbols=${encodeURIComponent(symbols.join(','))}&greeks=false`,
+        key
+      );
+
+      if (resp.status === 401) {
+        localStorage.removeItem('tradier_key');
+        throw new Error('Invalid API key — cleared. Click Refresh Live to re-enter.');
+      }
+      if (!resp.ok) throw new Error(`Tradier returned HTTP ${resp.status}`);
+
+      const data = await resp.json();
+      let quotes = data?.quotes?.quote;
+      if (!quotes) throw new Error('No data returned from Tradier');
+      if (!Array.isArray(quotes)) quotes = [quotes];
+
+      quotes.forEach(q => {
+        if (PRICES[q.symbol] && q.last != null) {
+          PRICES[q.symbol].price  = q.last;
+          PRICES[q.symbol].change = q.change_percentage ?? 0;
         }
-      }
-      if (!done) {
-        lbl.textContent = '⏳ Still running — will reload shortly';
-      }
+      });
+
+      const ts = new Date().toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short'
+      });
+
+      refreshPrices();
+      lbl.textContent = `✓ Prices as of ${ts}`;
+      lbl.style.color = '';
+
     } catch (e) {
-      lbl.textContent = `⚠ Error: ${e.message}`;
+      lbl.textContent = `⚠ ${e.message}`;
       lbl.style.color = 'var(--red)';
     } finally {
       btn.disabled  = false;

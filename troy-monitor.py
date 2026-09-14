@@ -39,6 +39,16 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+try:
+    import yfinance as yf
+except ImportError:
+    yf = None
+
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
 # All user-facing timestamps must be Eastern time, not the host clock.
 # GitHub Actions runners default to UTC — datetime.now() without a tz silently
 # produces UTC. America/New_York auto-handles EDT/EST so times always match
@@ -675,7 +685,133 @@ def fetch_schwab_positions():
         return {}
 
 
-# (yfinance removed — Tradier is the data source for all market data)
+# ── yfinance (free, no API key, no brokerage account — ~15-20 min delayed) ────
+# Reinstated as the default free data source while the Tradier account is
+# unfunded/inactive. No Greeks (delta/theta) are available from yfinance —
+# those come back as None when this is the active source.
+
+def _fast_info_get(fi, *names):
+    """yfinance's fast_info field names have changed across versions
+    (last_price vs lastPrice, etc.) — try each spelling."""
+    for n in names:
+        for accessor in (lambda: fi[n], lambda: getattr(fi, n)):
+            try:
+                v = accessor()
+                if v is not None:
+                    return v
+            except Exception:
+                pass
+    return None
+
+
+def _yfinance_quote(symbols):
+    """Bulk-ish stock quote via yfinance. Returns {sym: {...}} dict."""
+    if yf is None or not symbols:
+        return {}
+    result = {}
+    for sym in symbols:
+        try:
+            fi = yf.Ticker(sym).fast_info
+            price  = _fast_info_get(fi, "last_price", "lastPrice", "regular_market_price")
+            prev   = _fast_info_get(fi, "previous_close", "previousClose") or price
+            high52 = _fast_info_get(fi, "year_high", "yearHigh", "fiftyTwoWeekHigh") or price
+            if price is None:
+                continue
+            price  = round(float(price), 2)
+            prev   = round(float(prev),  2) if prev  else price
+            high52 = round(float(high52),2) if high52 else price
+            change  = round((price - prev)  / prev   * 100, 2) if prev   else 0
+            pct_off = round((high52 - price) / high52 * 100, 1) if high52 else 0
+            result[sym] = {
+                "price": price, "change": change,
+                "high52": high52, "pct_from_high": pct_off,
+            }
+        except Exception as e:
+            print(f"  ⚠  yfinance quote error ({sym}): {e}")
+    return result
+
+
+def _yfinance_option_price(symbol, expiry, strike, opt_type="calls"):
+    """Single option mark price via yfinance (nearest expiry/strike if the
+    exact one isn't listed). delta/theta always come back None."""
+    empty = {"mid": None, "iv": None, "delta": None, "theta": None}
+    if yf is None:
+        return empty
+    try:
+        tk = yf.Ticker(symbol)
+        expirations = tk.options or []
+        if not expirations:
+            return empty
+        target_exp = datetime.strptime(expiry, "%Y-%m-%d")
+        future = [e for e in expirations if datetime.strptime(e, "%Y-%m-%d") >= target_exp]
+        chosen_exp = future[0] if future else sorted(expirations)[-1]
+        chain = tk.option_chain(chosen_exp)
+        df = chain.calls if str(opt_type).lower().startswith("c") else chain.puts
+        if df is None or df.empty:
+            return empty
+        target_strike = float(strike)
+        idx  = (df["strike"] - target_strike).abs().idxmin()
+        best = df.loc[idx]
+        bid  = float(best.get("bid") or 0)
+        ask  = float(best.get("ask") or 0)
+        mid  = round((bid + ask) / 2, 2) if (bid or ask) else round(float(best.get("lastPrice") or 0), 2)
+        iv_raw = best.get("impliedVolatility")
+        iv_pct = round(float(iv_raw) * 100, 1) if iv_raw not in (None, 0) else None
+        if chosen_exp != expiry:
+            print(f"    (nearest: {chosen_exp} ${best.get('strike')})", end=" ")
+        return {"mid": mid, "iv": iv_pct, "delta": None, "theta": None}
+    except Exception as e:
+        print(f"  ⚠  yfinance option price ({symbol}): {e}")
+        return empty
+
+
+def _yfinance_option_chain(symbol, current_price):
+    """Full LEAP call chain via yfinance for all expirations > 12 months.
+    delta/theta always come back None (yfinance doesn't provide Greeks)."""
+    if yf is None:
+        return []
+    results = []
+    try:
+        tk = yf.Ticker(symbol)
+        expirations = tk.options or []
+        min_expiry = datetime.now() + timedelta(days=365)
+        leap_exps  = [e for e in expirations
+                      if datetime.strptime(e, "%Y-%m-%d") >= min_expiry]
+        for expiry_str in leap_exps:
+            try:
+                calls = tk.option_chain(expiry_str).calls
+                for _, opt in calls.iterrows():
+                    strike = float(opt.get("strike", 0))
+                    if not (current_price * 0.50 <= strike <= current_price * 1.60):
+                        continue
+                    bid = float(opt.get("bid") or 0)
+                    ask = float(opt.get("ask") or 0)
+                    if bid == 0 and ask == 0:
+                        continue
+                    mid = round((bid + ask) / 2, 2) if (bid or ask) else round(float(opt.get("lastPrice") or 0), 2)
+                    if mid < 0.50:
+                        continue
+                    iv_raw = opt.get("impliedVolatility")
+                    iv_pct = round(float(iv_raw) * 100, 1) if iv_raw not in (None, 0) else None
+                    vol_raw = opt.get("volume")
+                    oi_raw  = opt.get("openInterest")
+                    vol = int(vol_raw) if (pd is not None and not pd.isna(vol_raw)) else None
+                    oi  = int(oi_raw)  if (pd is not None and not pd.isna(oi_raw))  else None
+                    pct_diff  = (strike - current_price) / current_price
+                    moneyness = "ITM" if pct_diff < -0.03 else ("ATM" if pct_diff <= 0.03 else "OTM")
+                    results.append({
+                        "strike": strike, "expiry": expiry_str,
+                        "bid": round(bid, 2), "ask": round(ask, 2),
+                        "price": mid, "iv": iv_pct, "delta": None, "theta": None,
+                        "volume": vol, "oi": oi, "moneyness": moneyness,
+                    })
+            except Exception as e:
+                print(f"    ⚠  yfinance chain {symbol} {expiry_str}: {e}")
+        results.sort(key=lambda x: (x["expiry"], x["strike"]))
+    except Exception as e:
+        print(f"  ⚠  yfinance option chain ({symbol}): {e}")
+    return results
+
 
 
 # ── Tradier (free developer API — real-time bid/ask/mark, no brokerage needed) ──
@@ -919,32 +1055,39 @@ def _tradier_option_chain(symbol, current_price):
     return results
 
 
-# ── Public fetch API — Schwab → Tradier ──────────────────────────────────────
+# ── Public fetch API — Schwab → yfinance → Tradier ────────────────────────────
 
 def fetch_ticker(symbol):
-    """Fetch stock price. Schwab → Tradier."""
+    """Fetch stock price. Schwab → yfinance → Tradier."""
     client = get_schwab_client()
     if client is not None:
         result = _schwab_quote([symbol])
         if symbol in result:
             return result[symbol]
+    result = _yfinance_quote([symbol])
+    if symbol in result:
+        return result[symbol]
     result = _tradier_quote([symbol])
     return result.get(symbol)
 
 
 def fetch_tickers_bulk(symbols):
-    """Fetch multiple tickers in one API call. Schwab bulk → Tradier bulk."""
+    """Fetch multiple tickers. Schwab bulk → yfinance → Tradier bulk."""
     client = get_schwab_client()
     if client is not None:
         result = _schwab_quote(symbols)
         if result:
             return result
+    result = _yfinance_quote(symbols)
+    if result:
+        return result
     return _tradier_quote(symbols)
 
 
 def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
     """Returns dict {"mid": price, "iv": iv_pct, "delta": delta, "theta": theta}.
-    Schwab → Tradier."""
+    Schwab → yfinance → Tradier. yfinance doesn't provide delta/theta — those
+    come back None when yfinance is the source that answered."""
     client = get_schwab_client()
     if client is not None:
         chain = _schwab_option_chain(symbol, expiry=expiry, strike=strike)
@@ -957,12 +1100,15 @@ def fetch_option_price(symbol, expiry, strike, opt_type="calls"):
                 "delta": best["delta"],
                 "theta": best["theta"],
             }
+    result = _yfinance_option_price(symbol, expiry, strike, opt_type)
+    if result.get("mid") is not None:
+        return result
     return _tradier_option_price(symbol, expiry, strike, opt_type)
 
 
 def fetch_option_chain(symbol, current_price):
     """
-    Fetch all LEAP calls with expiry > 12 months. Schwab → Tradier.
+    Fetch all LEAP calls with expiry > 12 months. Schwab → yfinance → Tradier.
     Returns list of dicts sorted by expiry then strike, tagged ITM/ATM/OTM.
     Strike range: 50% below to 60% above current price.
     """
@@ -979,6 +1125,9 @@ def fetch_option_chain(symbol, current_price):
                 c["moneyness"] = "ITM" if pct_diff < -0.03 else ("ATM" if pct_diff <= 0.03 else "OTM")
                 filtered.append(c)
             return filtered
+    chain = _yfinance_option_chain(symbol, current_price)
+    if chain:
+        return chain
     return _tradier_option_chain(symbol, current_price)
 
 
@@ -1293,12 +1442,14 @@ def main():
     watch_zone_hits = []
 
     # ── Detect data source ───────────────────────────────────────
-    using_schwab  = get_schwab_client() is not None
-    using_tradier = bool(_tradier_token())
+    using_schwab   = get_schwab_client() is not None
+    using_yfinance = yf is not None
+    using_tradier  = bool(_tradier_token())
     src_tag = (
         "🔴 Schwab live" if using_schwab else
+        "🟡 yfinance (free, ~15-20 min delayed)" if using_yfinance else
         "📊 Tradier real-time" if using_tradier else
-        "⚠  no data source (add TRADIER_TOKEN secret)"
+        "⚠  no data source (pip install yfinance, or add TRADIER_TOKEN secret)"
     )
     print(f"\n  Data source: {src_tag}")
 
@@ -1310,10 +1461,19 @@ def main():
         for sym in all_symbols:
             if sym in bulk:
                 all_data[sym] = bulk[sym]
+            elif using_yfinance:
+                d = _yfinance_quote([sym]).get(sym)
+                if d:
+                    all_data[sym] = d
             else:
                 d = _tradier_quote([sym]).get(sym)
                 if d:
                     all_data[sym] = d
+    elif using_yfinance:
+        bulk = _yfinance_quote(all_symbols)
+        for sym in all_symbols:
+            if sym in bulk:
+                all_data[sym] = bulk[sym]
     elif using_tradier:
         bulk = _tradier_quote(all_symbols)
         for sym in all_symbols:
