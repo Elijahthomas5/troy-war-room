@@ -56,7 +56,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No price changes to commit."
           else
-            git commit -m "prices: $(date -u '+%Y-%m-%d %H:%M UTC') [skip ci]"
+            git commit -m "prices: $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z') [skip ci]"
             # Retry push up to 3x — a code push landing mid-run causes rejection
             for i in 1 2 3; do
               git push && break

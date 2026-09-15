@@ -586,8 +586,9 @@ def _schwab_option_chain(symbol, expiry=None, strike=None, opt_type="CALL"):
             kwargs["from_date"] = from_dt
             kwargs["to_date"]   = from_dt
         else:
-            # LEAP chains: >12 months out
-            kwargs["from_date"] = datetime.now() + timedelta(days=365)
+            # LEAP chains: >12 months out (ET, not the runner's UTC clock --
+            # see the ET note near the top of this file)
+            kwargs["from_date"] = datetime.now(ET).replace(tzinfo=None) + timedelta(days=365)
 
         if strike is not None:
             s = float(strike)
@@ -787,7 +788,7 @@ def _yfinance_option_price(symbol, expiry, strike, opt_type="calls"):
         if not expirations:
             return empty
         target_exp = datetime.strptime(expiry, "%Y-%m-%d")
-        if target_exp < datetime.now():
+        if target_exp < datetime.now(ET).replace(tzinfo=None):
             print(f"  ⚠  {symbol} tracked contract ({expiry}) already expired -- "
                   f"skipping price/IV until troy-classes.json is updated with a current contract")
             return empty
@@ -822,7 +823,7 @@ def _yfinance_option_chain(symbol, current_price):
     try:
         tk = yf.Ticker(symbol)
         expirations = tk.options or []
-        min_expiry = datetime.now() + timedelta(days=365)
+        min_expiry = datetime.now(ET).replace(tzinfo=None) + timedelta(days=365)
         leap_exps  = [e for e in expirations
                       if datetime.strptime(e, "%Y-%m-%d") >= min_expiry]
         for expiry_str in leap_exps:
@@ -1048,7 +1049,7 @@ def _tradier_option_chain(symbol, current_price):
         expirations = exp_resp.json().get("expirations", {}).get("date", [])
         if isinstance(expirations, str):
             expirations = [expirations]
-        min_expiry = datetime.now() + timedelta(days=365)
+        min_expiry = datetime.now(ET).replace(tzinfo=None) + timedelta(days=365)
         leap_exps  = [e for e in (expirations or [])
                       if datetime.strptime(e, "%Y-%m-%d") >= min_expiry]
 
@@ -1769,8 +1770,8 @@ def main():
                priority="urgent", tags=("green_circle", "chart_with_upwards_trend"))
 
     # ── EYL community board check (once per day, ~market close) ──
-    hour = datetime.now().hour
-    if 20 <= hour <= 21:   # ~4-5 PM ET in UTC
+    hour = datetime.now(ET).hour   # ET directly -- DST-safe, no UTC-offset math
+    if 16 <= hour <= 17:   # ~4-5 PM ET
         check_eyl_board(watchlist, opt_contracts, classes_data)
 
     # ── Fetch full option chains for drawer ──────────────────────
