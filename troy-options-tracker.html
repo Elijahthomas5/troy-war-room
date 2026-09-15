@@ -98,6 +98,12 @@
     .add-btn:hover { opacity: 0.85; }
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    /* Sortable column headers — click to sort ascending, click again for descending. */
+    th:not(:empty) { cursor: pointer; user-select: none; }
+    th:not(:empty):hover { color: var(--eyl-gold); }
+    th.sort-asc, th.sort-desc { color: var(--eyl-gold); }
+    th.sort-asc::after  { content: ' \25B2'; font-size: 8px; vertical-align: middle; }
+    th.sort-desc::after { content: ' \25BC'; font-size: 8px; vertical-align: middle; }
     td { padding: 12px 10px; border-bottom: 1px solid rgba(42,51,71,0.5); font-size: 13px; white-space: nowrap; }
     tr:last-child td { border-bottom: none; }
     .status-safe { display: inline-flex; align-items: center; gap: 4px; background: rgba(0,212,160,0.1); color: var(--green); padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
@@ -324,6 +330,9 @@
       border-bottom:1px solid rgba(255,255,255,0.05);
     }
     .chain-table thead th:first-child { text-align:left; padding-left:18px; }
+    .chain-table thead th:not(:empty):hover,
+    .chain-table thead th.sort-asc,
+    .chain-table thead th.sort-desc { color: var(--eyl-gold); }
     .chain-table tbody td {
       padding:8px 16px; text-align:right; white-space:nowrap;
       font-size:12px; font-variant-numeric:tabular-nums;
@@ -2827,6 +2836,57 @@ Please act as a world-class investor and help me with the following:
     const sym    = card?.dataset.ticker;
     const custom = card?.dataset.custom === 'true';
     if (sym) removeTicker(sym, custom);
+  });
+
+  // ── SORTABLE TABLE HEADERS ────────────────────────────────────────────────
+  // Click any column header to sort that table by it (ascending), click the
+  // same header again to reverse (descending). Works on every table on the
+  // page -- including ones whose rows get rebuilt later (MBA Analytics, My
+  // Option Positions, the option-chain drawer) -- because this is delegated
+  // on document rather than bound per-header at setup time.
+  document.addEventListener('click', e => {
+    const th = e.target.closest('th');
+    if (!th || !th.textContent.trim()) return;
+    const headerRow = th.parentElement;
+    const thead     = th.closest('thead');
+    const table     = th.closest('table');
+    if (!headerRow || !thead || !table) return;
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+
+    const colIndex = [...headerRow.children].indexOf(th);
+    const rows = [...tbody.querySelectorAll(':scope > tr')];
+    // A single placeholder/empty-state row (e.g. "Computing...") -- nothing
+    // meaningful to sort.
+    if (rows.length < 2) return;
+
+    const newDir = th.classList.contains('sort-asc') ? 'desc' : 'asc';
+    thead.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+    th.classList.add(newDir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+    const cellText = row => {
+      const cell = row.children[colIndex];
+      return cell ? cell.textContent.trim() : '';
+    };
+    // Pulls the first number out of a cell's text so formatted values sort
+    // correctly: "$150.38", "44.3%", "+107.55%", "(12.5%)", "3.2x", "1,234".
+    const numericValue = text => {
+      if (!text || text === '—' || text === '--') return NaN;
+      const negParens = /^\((.*)\)$/.test(text);
+      const m = text.replace(/^\((.*)\)$/, '$1').match(/-?\d[\d,]*\.?\d*/);
+      if (!m) return NaN;
+      const n = parseFloat(m[0].replace(/,/g, ''));
+      return negParens ? -Math.abs(n) : n;
+    };
+
+    const dir = newDir === 'asc' ? 1 : -1;
+    rows.sort((a, b) => {
+      const ta = cellText(a), tb = cellText(b);
+      const na = numericValue(ta), nb = numericValue(tb);
+      if (!isNaN(na) && !isNaN(nb)) return (na - nb) * dir;
+      return ta.localeCompare(tb) * dir;
+    });
+    rows.forEach(r => tbody.appendChild(r));
   });
 
   loadCustomTickers();
