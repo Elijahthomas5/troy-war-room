@@ -2,6 +2,47 @@
   "_readme": "Troy's EYL University Option Classes — source of truth for all picks. Add a new class entry whenever Troy covers new names. troy-monitor.py reads this file and auto-injects new tickers into the dashboard.",
   "classes": [
     {
+      "id": "2026-09-18",
+      "date": "Sep 18, 2026",
+      "label": "Sep '26 EYL Class — Semiconductor Testing & Memory (referenced on Market Mondays 9/22, exact contracts UNDISCLOSED)",
+      "notes": "Eli does not have EYL University access, so these were NOT sourced from the live class. Troy referenced them verbally on the Sep 22, 2026 Market Mondays episode while recapping Thursday 9/18's EYL class: 'The call on ASML posted a 41% gain in just two days from Friday through Monday' / 'The Pterodine [Teradyne] call is up 38%' / 'We added a double leverage MU call that's up 47%.' Underlying moves Fri 9/18 close -> Mon 9/21 close (verified via stockanalysis.com): ASML $1,679.92 -> $1,711.32 (+1.9%), TER $371.47 -> $381.54 (+2.7%), MU $1,015.80 -> $1,043.96 (+2.8%). Those stock moves vs the 38-47% option gains imply roughly 14-22x leverage -- consistent with a short-dated (weeks, not Troy's usual 12mo+ LEAP), near-the-money call, NOT the long-dated LEAP style used elsewhere in this file. Strike/expiry below are Claude's ESTIMATE (nearest round strike to the 9/18 close, next standard monthly expiry) so the tracker has something to monitor -- NOT the actual EYL-disclosed contract. Replace with the real contract the moment Eli can get it (EYL post, community screenshot, etc.).",
+      "stocks": [
+        {
+          "ticker": "ASML",
+          "name": "ASML Holding N.V.",
+          "contract": "Oct '26 $1680C (EST.)",
+          "expiry": "2026-10-16",
+          "strike": 1680.0,
+          "opt_type": "calls",
+          "alert": null,
+          "owned": false,
+          "_note": "UNCONFIRMED contract -- Troy said this call was 'up 41% in just two days from Friday through Monday' (9/18->9/21) on MM 9/22 ep, but gave no strike/expiry on air. Estimated near-ATM monthly call from the 9/18 close ($1,679.92)."
+        },
+        {
+          "ticker": "TER",
+          "name": "Teradyne Inc.",
+          "contract": "Oct '26 $370C (EST.)",
+          "expiry": "2026-10-16",
+          "strike": 370.0,
+          "opt_type": "calls",
+          "alert": null,
+          "owned": false,
+          "_note": "UNCONFIRMED contract -- Troy said 'the Teradyne call is up 38%' (9/18->9/21) on MM 9/22 ep, no strike/expiry given on air. Estimated near-ATM monthly call from the 9/18 close ($371.47)."
+        },
+        {
+          "ticker": "MU",
+          "name": "Micron Technology, Inc.",
+          "contract": "Oct '26 $1020C (EST., 'double leverage')",
+          "expiry": "2026-10-16",
+          "strike": 1020.0,
+          "opt_type": "calls",
+          "alert": null,
+          "owned": false,
+          "_note": "UNCONFIRMED contract -- Troy said 'we added a double leverage MU call that's up 47%' (9/18->9/21) on MM 9/22 ep, no strike/expiry given on air. 'Double leverage' may mean 2x contract size, not a leveraged product. Estimated near-ATM monthly call from the 9/18 close ($1,015.80)."
+        }
+      ]
+    },
+    {
       "id": "eli-positions-2026",
       "date": "Jun 30, 2026",
       "label": "Eli's Live Positions",
@@ -26,13 +67,69 @@
       "label": "May '26 Options Masterclass",
       "notes": "Semiconductor + AI infrastructure deep dive. PDF available.",
       "stocks": [
-        { "ticker": "NVDA", "name": "NVIDIA Corporation",    "contract": "Mar '27 $180C", "expiry": "2027-03-19", "strike": 180.0, "opt_type": "calls", "alert": 36.67 },
-        { "ticker": "DRAM", "name": "Roundhill Memory ETF",  "contract": "Jun '27 $33C",  "expiry": "2027-06-18", "strike": 33.0,  "opt_type": "calls", "alert": 12.61 },
-        { "ticker": "CDNS", "name": "Cadence Design Systems","contract": "Jun '26 $310C", "expiry": "2026-06-20", "strike": 310.0, "opt_type": "calls", "alert": 23.01 },
-        { "ticker": "ANET", "name": "Arista Networks",       "contract": "Jan '27 $110C", "expiry": "2027-01-15", "strike": 110.0, "opt_type": "calls", "alert": 27.67 },
-        { "ticker": "LLY",  "name": "Eli Lilly",             "contract": "Mar '27 $860C", "expiry": "2027-03-19", "strike": 860.0, "opt_type": "calls", "alert": 130.98 },
-        { "ticker": "ARM",  "name": "ARM Holdings",          "contract": "Dec '26 $270C", "expiry": "2026-12-18", "strike": 270.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMKR", "name": "Amkor Technology",      "contract": "Jan '27 $90C",  "expiry": "2027-01-15", "strike": 90.0,  "opt_type": "calls", "alert": null }
+        {
+          "ticker": "NVDA",
+          "name": "NVIDIA Corporation",
+          "contract": "Mar '27 $180C",
+          "expiry": "2027-03-19",
+          "strike": 180.0,
+          "opt_type": "calls",
+          "alert": 36.67
+        },
+        {
+          "ticker": "DRAM",
+          "name": "Roundhill Memory ETF",
+          "contract": "Jun '27 $33C",
+          "expiry": "2027-06-18",
+          "strike": 33.0,
+          "opt_type": "calls",
+          "alert": 12.61
+        },
+        {
+          "ticker": "CDNS",
+          "name": "Cadence Design Systems",
+          "contract": "Jun '26 $310C",
+          "expiry": "2026-06-20",
+          "strike": 310.0,
+          "opt_type": "calls",
+          "alert": 23.01
+        },
+        {
+          "ticker": "ANET",
+          "name": "Arista Networks",
+          "contract": "Jan '27 $110C",
+          "expiry": "2027-01-15",
+          "strike": 110.0,
+          "opt_type": "calls",
+          "alert": 27.67
+        },
+        {
+          "ticker": "LLY",
+          "name": "Eli Lilly",
+          "contract": "Mar '27 $860C",
+          "expiry": "2027-03-19",
+          "strike": 860.0,
+          "opt_type": "calls",
+          "alert": 130.98
+        },
+        {
+          "ticker": "ARM",
+          "name": "ARM Holdings",
+          "contract": "Dec '26 $270C",
+          "expiry": "2026-12-18",
+          "strike": 270.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMKR",
+          "name": "Amkor Technology",
+          "contract": "Jan '27 $90C",
+          "expiry": "2027-01-15",
+          "strike": 90.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -41,8 +138,24 @@
       "label": "Apr '26 Class",
       "notes": "Memory super-cycle deep dive — DRAM ETF as SK Hynix/Samsung proxy. Troy placed LIVE DRAM order during class: Jan '27 $33C, 20 contracts, $9.70 limit, stop trigger at $30 stock price. DRAM ran to $35.12 before filling. MU referenced as prior community board pick (up 60% since Apr 1 call). No PDF — reconstructed from transcript.",
       "stocks": [
-        { "ticker": "DRAM", "name": "Roundhill Memory ETF",  "contract": "Jan '27 $33C",  "expiry": "2027-01-17", "strike": 33.0,  "opt_type": "calls", "alert": 9.70 },
-        { "ticker": "MU",   "name": "Micron Technology",     "contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "DRAM",
+          "name": "Roundhill Memory ETF",
+          "contract": "Jan '27 $33C",
+          "expiry": "2027-01-17",
+          "strike": 33.0,
+          "opt_type": "calls",
+          "alert": 9.7
+        },
+        {
+          "ticker": "MU",
+          "name": "Micron Technology",
+          "contract": "Jan '27 $120C",
+          "expiry": "2027-01-15",
+          "strike": 120.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -51,8 +164,24 @@
       "label": "Mar '26 Class",
       "notes": "Micron earnings review (beat but stock sold off). Photonics deep-dive — GLW (Corning) + LITE (Lumentum) earnings blowout. Fiber optics as AI data center infrastructure play. No new contracts given; reinforcement of existing thesis. No PDF.",
       "stocks": [
-        { "ticker": "GLW",  "name": "Corning Inc.",      "contract": "Jan '27 $195C", "expiry": "2027-01-17", "strike": 195.0, "opt_type": "calls", "alert": null },
-        { "ticker": "LITE", "name": "Lumentum Holdings", "contract": "Jan '27 $845C", "expiry": "2027-01-17", "strike": 845.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "GLW",
+          "name": "Corning Inc.",
+          "contract": "Jan '27 $195C",
+          "expiry": "2027-01-17",
+          "strike": 195.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "LITE",
+          "name": "Lumentum Holdings",
+          "contract": "Jan '27 $845C",
+          "expiry": "2027-01-17",
+          "strike": 845.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -61,8 +190,24 @@
       "label": "Feb '26 Class (feat. Illio)",
       "notes": "EDA (Electronic Design Automation) thesis: NVDA $2B investment in Synopsys signals AI chip design software boom. SNPS 52-week high $651, pulled back 30% to $442. Troy bought Jun '26 $440C at ~$30/contract ($3,000 ea). CDNS already in portfolio up 13%. Illio options income demo in second half. No PDF.",
       "stocks": [
-        { "ticker": "SNPS", "name": "Synopsys Inc.",          "contract": "Jun '26 $440C", "expiry": "2026-06-19", "strike": 440.0, "opt_type": "calls", "alert": 30.00 },
-        { "ticker": "CDNS", "name": "Cadence Design Systems", "contract": "Jun '26 $310C", "expiry": "2026-06-20", "strike": 310.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "SNPS",
+          "name": "Synopsys Inc.",
+          "contract": "Jun '26 $440C",
+          "expiry": "2026-06-19",
+          "strike": 440.0,
+          "opt_type": "calls",
+          "alert": 30.0
+        },
+        {
+          "ticker": "CDNS",
+          "name": "Cadence Design Systems",
+          "contract": "Jun '26 $310C",
+          "expiry": "2026-06-20",
+          "strike": 310.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -71,9 +216,33 @@
       "label": "Dec '25 Class",
       "notes": "Energy sector deep-dive. CEG (Constellation Energy) — nuclear power + AI data center thesis. Morning star pattern off support; prior bull run to $413. VST (Vistra) — 20-year nuclear power purchase agreement with hyperscaler (Comanche Park plant). AMD recap: reviewed the journey from the April 2025 class entry through the bounce. No specific entry prices given. No PDF.",
       "stocks": [
-        { "ticker": "CEG", "name": "Constellation Energy", "contract": "Jan '27 $260C", "expiry": "2027-01-15", "strike": 260.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VST", "name": "Vistra Energy",        "contract": "Jan '27 $220C", "expiry": "2027-01-15", "strike": 220.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD", "name": "Advanced Micro Devices","contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "CEG",
+          "name": "Constellation Energy",
+          "contract": "Jan '27 $260C",
+          "expiry": "2027-01-15",
+          "strike": 260.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "VST",
+          "name": "Vistra Energy",
+          "contract": "Jan '27 $220C",
+          "expiry": "2027-01-15",
+          "strike": 220.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -82,9 +251,34 @@
       "label": "Nov '25 Class",
       "notes": "Portfolio returns review: NVDA $115C +92%, NVDA $120C +134%, TSM +168%, AMD +176%, LLY +240%, CLS +240%, CRWD +150%, AVGO +276%, April SMH call +281%. WDC (Western Digital) and SNDK (SanDisk — spun off from WDC in 2024) introduced as separate plays: AI data center SSD/flash memory play for LLM training model storage. GLW ongoing thesis. No PDF.",
       "stocks": [
-        { "ticker": "WDC",  "name": "Western Digital",  "contract": "Jan '27 $65C",  "expiry": "2027-01-15", "strike": 65.0,  "opt_type": "calls", "alert": null },
-        { "ticker": "SNDK", "name": "SanDisk Corporation", "contract": "Jan '27 $65C", "expiry": "2027-01-15", "strike": 65.0,  "opt_type": "calls", "alert": null, "_note": "SanDisk spun off from WDC in 2024. Flash/SSD AI data center storage play — original Troy thesis. Contract/strike TBD based on current SNDK pricing." },
-        { "ticker": "GLW",  "name": "Corning Inc.",               "contract": "Jan '27 $195C", "expiry": "2027-01-17", "strike": 195.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "WDC",
+          "name": "Western Digital",
+          "contract": "Jan '27 $65C",
+          "expiry": "2027-01-15",
+          "strike": 65.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "SNDK",
+          "name": "SanDisk Corporation",
+          "contract": "Jan '27 $65C",
+          "expiry": "2027-01-15",
+          "strike": 65.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "SanDisk spun off from WDC in 2024. Flash/SSD AI data center storage play — original Troy thesis. Contract/strike TBD based on current SNDK pricing."
+        },
+        {
+          "ticker": "GLW",
+          "name": "Corning Inc.",
+          "contract": "Jan '27 $195C",
+          "expiry": "2027-01-17",
+          "strike": 195.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -93,7 +287,15 @@
       "label": "Oct '25 Class",
       "notes": "Portfolio rotation class — rotating Dec 2025 expiries into Jan 2026/2027 LEAPS. Corning (GLW) introduced: Apple iPhone 17 glass + AI data center fiber optics thesis, up 83% over prior 12 months. Broadcom-Corning partnership highlight. No specific contract prices given for GLW. No PDF.",
       "stocks": [
-        { "ticker": "GLW", "name": "Corning Inc.", "contract": "Jan '27 $195C", "expiry": "2027-01-17", "strike": 195.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "GLW",
+          "name": "Corning Inc.",
+          "contract": "Jan '27 $195C",
+          "expiry": "2027-01-17",
+          "strike": 195.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -102,9 +304,33 @@
       "label": "Jul '25 Class",
       "notes": "TSM and AMD continuing thesis. CLS (Celestica Inc.) briefly mentioned as a new position ('call number three') — AI server and data center hardware play. No specific contracts given. No PDF.",
       "stocks": [
-        { "ticker": "TSM", "name": "Taiwan Semiconductor", "contract": "Jan '27 $200C", "expiry": "2027-01-15", "strike": 200.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD", "name": "Advanced Micro Devices","contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "CLS", "name": "Celestica Inc.",        "contract": "Jan '27 $90C",  "expiry": "2027-01-15", "strike": 90.0,  "opt_type": "calls", "alert": null }
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $200C",
+          "expiry": "2027-01-15",
+          "strike": 200.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "CLS",
+          "name": "Celestica Inc.",
+          "contract": "Jan '27 $90C",
+          "expiry": "2027-01-15",
+          "strike": 90.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -120,8 +346,24 @@
       "label": "Apr '25 Class — Tariff Pullback",
       "notes": "Tariff 'Liberation Day' (April 2) reaction class. SMH (VanEck Semiconductor ETF) used as live teaching example — options fell from $6,107/contract peak on March 28 to ~$3,000 post-tariff. Taught deep-in-the-money strategy (Nancy Pelosi approach: buy $120C when stock at $193). AMD heavily discussed as buy on the tariff-driven pullback. No specific entry alert given. No PDF.",
       "stocks": [
-        { "ticker": "SMH", "name": "VanEck Semiconductor ETF", "contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD", "name": "Advanced Micro Devices",   "contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "SMH",
+          "name": "VanEck Semiconductor ETF",
+          "contract": "Jan '27 $120C",
+          "expiry": "2027-01-15",
+          "strike": 120.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $120C",
+          "expiry": "2027-01-15",
+          "strike": 120.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -130,8 +372,24 @@
       "label": "Mar '25 Class",
       "notes": "TSM and AMD continuing thesis reinforcement. No new picks or contracts introduced. Market context: early 2025 consolidation after strong 2024. No PDF.",
       "stocks": [
-        { "ticker": "TSM", "name": "Taiwan Semiconductor", "contract": "Jan '27 $200C", "expiry": "2027-01-15", "strike": 200.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD", "name": "Advanced Micro Devices","contract": "Jan '27 $140C", "expiry": "2027-01-15", "strike": 140.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $200C",
+          "expiry": "2027-01-15",
+          "strike": 200.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $140C",
+          "expiry": "2027-01-15",
+          "strike": 140.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -140,9 +398,33 @@
       "label": "Jan '25 Class",
       "notes": "Deep option mechanics class using TSM as the live example. Troy revealed his TSM $105C LEAP position — sold 14 contracts on Jan 3, kept 1 for the earnings catalyst (Jan 15 earnings, Jan 17 expiry). VST at $198 — noted Nancy Pelosi bought Dec '26 calls (deep-in-the-money LEAP). VRT — moved from $118 to $153. Reinforced LEAP strategy using in-the-money calls. No PDF.",
       "stocks": [
-        { "ticker": "TSM", "name": "Taiwan Semiconductor", "contract": "Jan '27 $105C", "expiry": "2027-01-15", "strike": 105.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VST", "name": "Vistra Energy",        "contract": "Dec '26 $150C", "expiry": "2026-12-18", "strike": 150.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VRT", "name": "Vertiv Holdings",      "contract": "Jan '27 $120C", "expiry": "2027-01-15", "strike": 120.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $105C",
+          "expiry": "2027-01-15",
+          "strike": 105.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "VST",
+          "name": "Vistra Energy",
+          "contract": "Dec '26 $150C",
+          "expiry": "2026-12-18",
+          "strike": 150.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "VRT",
+          "name": "Vertiv Holdings",
+          "contract": "Jan '27 $120C",
+          "expiry": "2027-01-15",
+          "strike": 120.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -151,9 +433,33 @@
       "label": "Dec '24 — Top Stocks for 2025",
       "notes": "Annual top stocks class — Troy named 10 picks for 2025. TSM as stock of the year ('slap calls the day it breaks above $203/$340'). AMZN as co-stock of the year ('one A, one B' with TSM). AMD heavily discussed. TSM Arizona fab update — expected production late 2026. No specific contract prices given. No PDF.",
       "stocks": [
-        { "ticker": "TSM",  "name": "Taiwan Semiconductor", "contract": "Jan '27 $200C", "expiry": "2027-01-15", "strike": 200.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD",  "name": "Advanced Micro Devices","contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMZN", "name": "Amazon.com",            "contract": "Jan '27 $220C", "expiry": "2027-01-15", "strike": 220.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $200C",
+          "expiry": "2027-01-15",
+          "strike": 200.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMZN",
+          "name": "Amazon.com",
+          "contract": "Jan '27 $220C",
+          "expiry": "2027-01-15",
+          "strike": 220.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -162,11 +468,52 @@
       "label": "Nov '24 Class",
       "notes": "Major energy thesis class. VST (Vistra) INTRODUCED: #1 stock in 2024 (+210%), nuclear power for AI data centers, 20-yr deal with Microsoft. Troy put on watch list, entry at 20% off ATH (~$133 given $166 ATH). VRT (Vertiv) INTRODUCED: liquid cooling for Blackwell data centers, trading at $141 with analyst consensus $142, high target $155. Troy entry criteria: 20% off ATH. Active portfolio recap: TSM leading at 900%+, to be closed 'at top of year'; AMD at ~50% down (testing stop-loss patience), still believes due to NVDA demand overflow thesis; LLY pulled back from high but holding; KAVA 2027 LEAP was +30%, pulled back to -3% at class time, still holding. Short-term trade showcased: DELL Nov 29th call (close to money) played NVDA partnership + liquid cooling catalyst — plan to exit at +50% profit. TOAST (TOST) Jan '25 $33C success story: bought at $2/contract (~$200), up 284% by class time; took initial out at 100%, rest riding. Troy also bought new NVDA May '25 $170C the day before class on pullback. Education: implied volatility (stay under ~30-35%), theta/time decay (counts weekends), rules — take profit early on short-term, set stop-losses, never hold into expiration week, never average down on options. Source: 'Stock options set up.txt' transcript.",
       "stocks": [
-        { "ticker": "TSM",  "name": "Taiwan Semiconductor",   "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VRT",  "name": "Vertiv Holdings",        "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD",  "name": "Advanced Micro Devices", "contract": "Jan '27 $140C", "expiry": "2027-01-15", "strike": 140.0, "opt_type": "calls", "alert": null },
-        { "ticker": "VST",  "name": "Vistra Energy",          "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
-        { "ticker": "KAVA", "name": "Kava Group Inc.",        "contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": null, "_note": "2027 LEAP; Troy's thesis: next Chipotle, debt-free expansion, strong gross margins" }
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "VRT",
+          "name": "Vertiv Holdings",
+          "contract": "Jan '27 $100C",
+          "expiry": "2027-01-15",
+          "strike": 100.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $140C",
+          "expiry": "2027-01-15",
+          "strike": 140.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "VST",
+          "name": "Vistra Energy",
+          "contract": "Jan '27 $100C",
+          "expiry": "2027-01-15",
+          "strike": 100.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "KAVA",
+          "name": "Kava Group Inc.",
+          "contract": "Jan '27 $60C",
+          "expiry": "2027-01-15",
+          "strike": 60.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "2027 LEAP; Troy's thesis: next Chipotle, debt-free expansion, strong gross margins"
+        }
       ]
     },
     {
@@ -175,9 +522,33 @@
       "label": "Oct '24 Class",
       "notes": "AMD buy-the-pullback thesis: 52-week high was $229, pulled back to $154.74 at class time. Troy said 'I really like this AMD call' ahead of upcoming earnings. TSM ongoing. Microsoft/MSFT discussed as stock + option combo strategy (own shares to justify option position). No specific contracts given. No PDF.",
       "stocks": [
-        { "ticker": "AMD",  "name": "Advanced Micro Devices","contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "TSM",  "name": "Taiwan Semiconductor", "contract": "Jan '27 $140C", "expiry": "2027-01-15", "strike": 140.0, "opt_type": "calls", "alert": null },
-        { "ticker": "MSFT", "name": "Microsoft Corp.",      "contract": "Jan '27 $420C", "expiry": "2027-01-15", "strike": 420.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $140C",
+          "expiry": "2027-01-15",
+          "strike": 140.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "MSFT",
+          "name": "Microsoft Corp.",
+          "contract": "Jan '27 $420C",
+          "expiry": "2027-01-15",
+          "strike": 420.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -186,9 +557,33 @@
       "label": "Sep '24 Class",
       "notes": "Early portfolio-building class. TSM, AMD, and SMH ETF as semiconductor ecosystem plays. Portfolio strategy education — LEAPS, time value, theta decay. Referenced introducing WDC (Western Digital + Seagate) as memory/storage plays in this era. No specific contracts given. No PDF.",
       "stocks": [
-        { "ticker": "TSM", "name": "Taiwan Semiconductor",   "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD", "name": "Advanced Micro Devices", "contract": "Jan '27 $130C", "expiry": "2027-01-15", "strike": 130.0, "opt_type": "calls", "alert": null },
-        { "ticker": "SMH", "name": "VanEck Semiconductor ETF","contract": "Jan '27 $200C", "expiry": "2027-01-15", "strike": 200.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $100C",
+          "expiry": "2027-01-15",
+          "strike": 100.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $130C",
+          "expiry": "2027-01-15",
+          "strike": 130.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "SMH",
+          "name": "VanEck Semiconductor ETF",
+          "contract": "Jan '27 $200C",
+          "expiry": "2027-01-15",
+          "strike": 200.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -197,9 +592,33 @@
       "label": "Jul '24 Class (feat. Caleb Silver)",
       "notes": "Guest class with Caleb Silver (Investopedia). AMD and TSM as core semiconductor thesis. SMCI (Super Micro Computer) briefly discussed — AI server hardware. Educational format covering option greeks and LEAP strategy basics. No specific contracts given. No PDF.",
       "stocks": [
-        { "ticker": "AMD",  "name": "Advanced Micro Devices",    "contract": "Jan '27 $130C", "expiry": "2027-01-15", "strike": 130.0, "opt_type": "calls", "alert": null },
-        { "ticker": "TSM",  "name": "Taiwan Semiconductor",      "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
-        { "ticker": "SMCI", "name": "Super Micro Computer",      "contract": "Jan '27 $600C", "expiry": "2027-01-15", "strike": 600.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $130C",
+          "expiry": "2027-01-15",
+          "strike": 130.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "TSM",
+          "name": "Taiwan Semiconductor",
+          "contract": "Jan '27 $100C",
+          "expiry": "2027-01-15",
+          "strike": 100.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "SMCI",
+          "name": "Super Micro Computer",
+          "contract": "Jan '27 $600C",
+          "expiry": "2027-01-15",
+          "strike": 600.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -208,10 +627,42 @@
       "label": "Jun '24 Class Vol.4",
       "notes": "Vol.4 of the master class series. CDNS (Cadence Design Systems) appears — early EDA thesis before the NVDA/Synopsys announcement. AMD, AVGO (Broadcom), and CRM (Salesforce) discussed as AI software/hardware plays. No specific contracts given. No PDF.",
       "stocks": [
-        { "ticker": "CDNS", "name": "Cadence Design Systems", "contract": "Jan '27 $240C", "expiry": "2027-01-15", "strike": 240.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AMD",  "name": "Advanced Micro Devices", "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "AVGO", "name": "Broadcom Inc.",           "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-        { "ticker": "CRM",  "name": "Salesforce Inc.",         "contract": "Jan '27 $250C", "expiry": "2027-01-15", "strike": 250.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "CDNS",
+          "name": "Cadence Design Systems",
+          "contract": "Jan '27 $240C",
+          "expiry": "2027-01-15",
+          "strike": 240.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AMD",
+          "name": "Advanced Micro Devices",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "AVGO",
+          "name": "Broadcom Inc.",
+          "contract": "Jan '27 $160C",
+          "expiry": "2027-01-15",
+          "strike": 160.0,
+          "opt_type": "calls",
+          "alert": null
+        },
+        {
+          "ticker": "CRM",
+          "name": "Salesforce Inc.",
+          "contract": "Jan '27 $250C",
+          "expiry": "2027-01-15",
+          "strike": 250.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     },
     {
@@ -220,10 +671,46 @@
       "label": "May '24 Class Vol.3 — Options Fundamentals",
       "notes": "Foundational options education class (PowerPoint format). Covered: what options are, calls vs puts, contracts (1 contract = 100 shares), strike price, expiration dates, bid/ask spread, reading an option chain, contract multiplier, and Troy's core buy strategy (find calls 40% below alert price — 'finding undervalued contracts'). Key quote: 'If META stock grows 5%, the option can grow 50% — the stock grew $15, the option grew $350.' Next targets given as stock price alerts: VISA $267-270, AAPL 'soon', NFLX $535-540, TMO $552-558. Source: uploaded PowerPoint eyl-options-may-9th.pptx.",
       "stocks": [
-        { "ticker": "V",    "name": "Visa Inc.",              "contract": "Jan '27 $280C", "expiry": "2027-01-15", "strike": 280.0, "opt_type": "calls", "alert": null, "_note": "Stock alert $267-270 given in class" },
-        { "ticker": "AAPL", "name": "Apple Inc.",             "contract": "Jan '27 $220C", "expiry": "2027-01-15", "strike": 220.0, "opt_type": "calls", "alert": null, "_note": "Troy said 'soon' — no specific price given" },
-        { "ticker": "NFLX", "name": "Netflix Inc.",           "contract": "Jan '27 $650C", "expiry": "2027-01-15", "strike": 650.0, "opt_type": "calls", "alert": null, "_note": "Stock alert $535-540 given in class (2024 prices)" },
-        { "ticker": "TMO",  "name": "Thermo Fisher Scientific","contract": "Jan '27 $600C","expiry": "2027-01-15", "strike": 600.0, "opt_type": "calls", "alert": null, "_note": "Stock alert $552-558 given in class (2024 prices)" }
+        {
+          "ticker": "V",
+          "name": "Visa Inc.",
+          "contract": "Jan '27 $280C",
+          "expiry": "2027-01-15",
+          "strike": 280.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Stock alert $267-270 given in class"
+        },
+        {
+          "ticker": "AAPL",
+          "name": "Apple Inc.",
+          "contract": "Jan '27 $220C",
+          "expiry": "2027-01-15",
+          "strike": 220.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Troy said 'soon' — no specific price given"
+        },
+        {
+          "ticker": "NFLX",
+          "name": "Netflix Inc.",
+          "contract": "Jan '27 $650C",
+          "expiry": "2027-01-15",
+          "strike": 650.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Stock alert $535-540 given in class (2024 prices)"
+        },
+        {
+          "ticker": "TMO",
+          "name": "Thermo Fisher Scientific",
+          "contract": "Jan '27 $600C",
+          "expiry": "2027-01-15",
+          "strike": 600.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Stock alert $552-558 given in class (2024 prices)"
+        }
       ]
     },
     {
@@ -232,10 +719,46 @@
       "label": "Mar '24 Class Vol.1 — First Options Class",
       "notes": "The original EYL University options masterclass. Full beginner-to-intermediate curriculum: what options are (future price prediction), calls vs puts, expiration dates (short-term/weekly vs LEAPs = 6mo–2yr), strike price selection, bid/ask spread mechanics (must multiply by 100 for real cost), reading an option chain, limit orders vs market orders. LIVE TRADE SHOWN: Troy's NVDA 4x $205C (Jun '21 2024) — bought ~2 years prior, now at +1200% ($5,000/contract → $67,000). Planning to exercise 1 contract (buy 100 shares at $205 vs market price $877 = $66,600 instant equity). STOCKS COVERED: MSFT (teaching example — $402.09, call $415 strike Dec '26), TSLA (watching for entry — fell from $400 peak to $176, RSI near oversold, option down ~50% from $7,600 peak; eyeing Jun '26 $250C but waiting for more pullback), CRM (Salesforce — used as research workflow demo; Argus buy rating, $290 target, 63% gain past year), NVDA (live trade shown), DKNG (DraftKings — affordable example, Apr 19 '24 $42C ~$252/contract). RESEARCH WORKFLOW (Troy's Claude AI method): (1) In brokerage (E-Trade), find Analyst Research tab for the stock — download Argus or Morgan Stanley PDF reports to desktop. (2) Open Claude AI (claude.ai), upload the PDF. (3) Prompt: 'Can you summarize this PDF of [Company]?' — Claude returns: rating, price target, options entry strikes, EPS guidance, AI/growth catalysts in ~5 seconds. (4) Copy summary to Notes app to compile. Repeat for multiple reports. ADDITIONAL TOOLS: Barchart.com (support/resistance — scroll to bottom-right 'Key Points' for pre-calculated levels), Estimize.com (consensus earnings estimates — Wall Street + 2,500+ crowd-sourced analysts, check 2-3 weeks before earnings), ETFdb.com (ETF holdings breakdown). ETF strategy: build 4-leg foundation (SMH semis + XLK tech + XLY consumer + one more) before buying single-stock options. Source: mar24-vol1.txt transcript (MacWhisper transcription of mar24-vol1.mp3).",
       "stocks": [
-        { "ticker": "MSFT", "name": "Microsoft Corp.",      "contract": "Dec '26 $415C", "expiry": "2026-12-18", "strike": 415.0, "opt_type": "calls", "alert": null, "_note": "Teaching example — $402.09 at class time, 3% appreciation target. Not a formal pick, used to explain strike price/expiry concepts." },
-        { "ticker": "TSLA", "name": "Tesla Inc.",           "contract": "Jun '26 $250C", "expiry": "2026-06-19", "strike": 250.0, "opt_type": "calls", "alert": null, "_note": "Watching for entry — stock at $176, RSI near oversold, option ~50% off peak ($7,600→$3,600). Troy said 'I think there's some more falling, but I'm making a move in the very near future.'" },
-        { "ticker": "CRM",  "name": "Salesforce Inc.",     "contract": "Apr '24 $300C", "expiry": "2024-04-19", "strike": 300.0, "opt_type": "calls", "alert": null, "_note": "Research demo stock — used to demonstrate Claude AI PDF summarization workflow. Argus buy rating target $290 (stock already at $300). CRM Q4 '24: 32% gap operating margin, generative AI not yet in guidance (upside catalyst)." },
-        { "ticker": "DKNG", "name": "DraftKings Inc.",     "contract": "Apr '24 $42C",  "expiry": "2024-04-19", "strike": 42.0,  "opt_type": "calls", "alert": null, "_note": "Affordable contract example (~$252/contract). Troy said 'this might be one I gotta look into' while reviewing the chain. Analyst high target $60, low $28." }
+        {
+          "ticker": "MSFT",
+          "name": "Microsoft Corp.",
+          "contract": "Dec '26 $415C",
+          "expiry": "2026-12-18",
+          "strike": 415.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Teaching example — $402.09 at class time, 3% appreciation target. Not a formal pick, used to explain strike price/expiry concepts."
+        },
+        {
+          "ticker": "TSLA",
+          "name": "Tesla Inc.",
+          "contract": "Jun '26 $250C",
+          "expiry": "2026-06-19",
+          "strike": 250.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Watching for entry — stock at $176, RSI near oversold, option ~50% off peak ($7,600→$3,600). Troy said 'I think there's some more falling, but I'm making a move in the very near future.'"
+        },
+        {
+          "ticker": "CRM",
+          "name": "Salesforce Inc.",
+          "contract": "Apr '24 $300C",
+          "expiry": "2024-04-19",
+          "strike": 300.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Research demo stock — used to demonstrate Claude AI PDF summarization workflow. Argus buy rating target $290 (stock already at $300). CRM Q4 '24: 32% gap operating margin, generative AI not yet in guidance (upside catalyst)."
+        },
+        {
+          "ticker": "DKNG",
+          "name": "DraftKings Inc.",
+          "contract": "Apr '24 $42C",
+          "expiry": "2024-04-19",
+          "strike": 42.0,
+          "opt_type": "calls",
+          "alert": null,
+          "_note": "Affordable contract example (~$252/contract). Troy said 'this might be one I gotta look into' while reviewing the chain. Analyst high target $60, low $28."
+        }
       ],
       "research_workflow": {
         "name": "Troy's Claude AI Research Method",
@@ -250,40 +773,289 @@
           "Check insider/institutional ownership in brokerage (Institutions = 80%+ is strong signal)"
         ],
         "prompt_template": "Can you summarize this PDF of [Company Name]?",
-        "tools": ["claude.ai", "estimize.com", "barchart.com", "etfdb.com", "E-Trade Analyst Research"]
+        "tools": [
+          "claude.ai",
+          "estimize.com",
+          "barchart.com",
+          "etfdb.com",
+          "E-Trade Analyst Research"
+        ]
       }
     }
   ],
   "watchlist_only": {
     "_note": "Stocks Troy has discussed / in his book but no specific class entry yet. Add alert price when Troy gives one.",
     "stocks": [
-      { "ticker": "TSM",  "name": "Taiwan Semiconductor", "reason": "Troy's semiconductor ecosystem thesis", "contract": "Jan '27 $460C", "expiry": "2027-01-15", "strike": 460.0, "opt_type": "calls", "alert": null },
-      { "ticker": "MRVL", "name": "Marvell Technology",   "reason": "AI networking — Troy's book",         "contract": "Jan '27 $325C", "expiry": "2027-01-15", "strike": 325.0, "opt_type": "calls", "alert": null },
-      { "ticker": "DELL", "name": "Dell Technologies",    "reason": "AI server play",                       "contract": "Jan '27 $430C", "expiry": "2027-01-15", "strike": 430.0, "opt_type": "calls", "alert": null },
-      { "ticker": "ORCL", "name": "Oracle Corporation",   "reason": "Cloud + AI infrastructure",            "contract": "Jan '27 $190C", "expiry": "2027-01-15", "strike": 190.0, "opt_type": "calls", "alert": null },
-      { "ticker": "VRT",  "name": "Vertiv Holdings",      "reason": "Data center cooling",                  "contract": "Jan '27 $335C", "expiry": "2027-01-15", "strike": 335.0, "opt_type": "calls", "alert": null },
-      { "ticker": "NOW",  "name": "ServiceNow",           "reason": "Enterprise AI software",               "contract": "Jan '27 $100C", "expiry": "2027-01-15", "strike": 100.0, "opt_type": "calls", "alert": null },
-      { "ticker": "HOOD", "name": "Robinhood Markets",    "reason": "Retail investing boom",                "contract": "Sep '26 $90C",  "expiry": "2026-09-18", "strike": 90.0,  "opt_type": "calls", "alert": null },
-      { "ticker": "UBER", "name": "Uber Technologies",    "reason": "Troy watching for entry",              "contract": "Jan '27 $75C",  "expiry": "2027-01-15", "strike": 75.0,  "opt_type": "calls", "alert": null },
-      { "ticker": "COHR", "name": "Coherent Corp.",       "reason": "NVDA $2B photonics investment",        "contract": "Jan '27 $395C", "expiry": "2027-01-15", "strike": 395.0, "opt_type": "calls", "alert": null },
-      { "ticker": "LITE", "name": "Lumentum Holdings",    "reason": "NVDA $2B photonics investment",        "contract": "Jan '27 $845C", "expiry": "2027-01-15", "strike": 845.0, "opt_type": "calls", "alert": null },
-      { "ticker": "GLW",  "name": "Corning Inc.",         "reason": "NVDA $3.2B fiber investment",          "contract": "Jan '27 $195C", "expiry": "2027-01-15", "strike": 195.0, "opt_type": "calls", "alert": null },
-      { "ticker": "IREN", "name": "IREN Limited",         "reason": "NVDA $2.1B AI data center investment", "contract": "Jan '27 $60C",  "expiry": "2027-01-15", "strike": 60.0,  "opt_type": "calls", "alert": null },
-      { "ticker": "CLS",  "name": "Celestica Inc.",       "reason": "AI server hardware — Jul '25 class",   "contract": "Jan '27 $90C",  "expiry": "2027-01-15", "strike": 90.0,  "opt_type": "calls", "alert": null },
-      { "ticker": "CEG",  "name": "Constellation Energy", "reason": "Nuclear power + AI data centers — Dec '25 class", "contract": "Jan '27 $260C", "expiry": "2027-01-15", "strike": 260.0, "opt_type": "calls", "alert": null },
-      { "ticker": "VST",  "name": "Vistra Energy",        "reason": "Nuclear PPA + AI power demand — Dec '25 class",   "contract": "Jan '27 $220C", "expiry": "2027-01-15", "strike": 220.0, "opt_type": "calls", "alert": null },
-      { "ticker": "AMZN", "name": "Amazon.com",           "reason": "Troy's stock of year 2025 — Dec '24 class",        "contract": "Jan '27 $220C", "expiry": "2027-01-15", "strike": 220.0, "opt_type": "calls", "alert": null },
-      { "ticker": "AVGO", "name": "Broadcom Inc.",        "reason": "AI networking + custom silicon — Jun '24 class",   "contract": "Jan '27 $160C", "expiry": "2027-01-15", "strike": 160.0, "opt_type": "calls", "alert": null },
-      { "ticker": "STX",  "name": "Seagate Technology",    "reason": "WDC's storage-sector peer — introduced together in Sep '24 class notes", "contract": "Jan '28 $650C", "expiry": "2028-01-21", "strike": 650.0, "opt_type": "calls", "alert": null },
-      { "ticker": "MCHP", "name": "Microchip Technology",  "reason": "Semiconductor peer to Troy's TSM/AMD/AVGO chip thesis — not yet given a class entry", "contract": "Jan '28 $55C",  "expiry": "2028-01-21", "strike": 55.0,  "opt_type": "calls", "alert": null },
-      { "ticker": "QCOM", "name": "Qualcomm Inc.",         "reason": "AI edge/mobile chip peer to Troy's semiconductor thesis — not yet given a class entry", "contract": "Jan '28 $145C", "expiry": "2028-01-21", "strike": 145.0, "opt_type": "calls", "alert": null },
-      { "ticker": "LRCX", "name": "Lam Research Corp.",    "reason": "Chip equipment/fab peer — same AI chip supply chain as TSM — not yet given a class entry", "contract": "Jan '28 $220C", "expiry": "2028-01-21", "strike": 220.0, "opt_type": "calls", "alert": null },
-      { "ticker": "AMAT", "name": "Applied Materials",     "reason": "Chip equipment peer — same AI chip supply chain as TSM — not yet given a class entry", "contract": "Jan '28 $340C", "expiry": "2028-01-21", "strike": 340.0, "opt_type": "calls", "alert": null },
-      { "ticker": "FN",   "name": "Fabrinet",              "reason": "Optical/photonics manufacturer — same fiber thesis as GLW/LITE/COHR — not yet given a class entry", "contract": "Jan '28 $300C", "expiry": "2028-01-21", "strike": 300.0, "opt_type": "calls", "alert": null },
-      { "ticker": "CIEN", "name": "Ciena Corp.",           "reason": "Optical networking peer — same fiber/networking thesis as ANET/GLW/LITE — not yet given a class entry", "contract": "Jan '28 $250C", "expiry": "2028-01-21", "strike": 250.0, "opt_type": "calls", "alert": null },
-      { "ticker": "NRG",  "name": "NRG Energy",            "reason": "AI data center power demand peer to CEG/VST nuclear thesis — not yet given a class entry", "contract": "Jan '28 $85C",  "expiry": "2028-01-21", "strike": 85.0,  "opt_type": "calls", "alert": null },
-      { "ticker": "TLN",  "name": "Talen Energy",          "reason": "Nuclear power + AI data center PPA peer to CEG/VST — not yet given a class entry", "contract": "Jan '28 $225C", "expiry": "2028-01-21", "strike": 225.0, "opt_type": "calls", "alert": null },
-      { "ticker": "GEV",  "name": "GE Vernova",            "reason": "Power generation equipment — AI data center power buildout peer to CEG/VST — not yet given a class entry", "contract": "Jan '28 $700C", "expiry": "2028-01-21", "strike": 700.0, "opt_type": "calls", "alert": null }
+      {
+        "ticker": "TSM",
+        "name": "Taiwan Semiconductor",
+        "reason": "Troy's semiconductor ecosystem thesis",
+        "contract": "Jan '27 $460C",
+        "expiry": "2027-01-15",
+        "strike": 460.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "MRVL",
+        "name": "Marvell Technology",
+        "reason": "AI networking — Troy's book",
+        "contract": "Jan '27 $325C",
+        "expiry": "2027-01-15",
+        "strike": 325.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "DELL",
+        "name": "Dell Technologies",
+        "reason": "AI server play",
+        "contract": "Jan '27 $430C",
+        "expiry": "2027-01-15",
+        "strike": 430.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "ORCL",
+        "name": "Oracle Corporation",
+        "reason": "Cloud + AI infrastructure",
+        "contract": "Jan '27 $190C",
+        "expiry": "2027-01-15",
+        "strike": 190.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "VRT",
+        "name": "Vertiv Holdings",
+        "reason": "Data center cooling",
+        "contract": "Jan '27 $335C",
+        "expiry": "2027-01-15",
+        "strike": 335.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "NOW",
+        "name": "ServiceNow",
+        "reason": "Enterprise AI software",
+        "contract": "Jan '27 $100C",
+        "expiry": "2027-01-15",
+        "strike": 100.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "HOOD",
+        "name": "Robinhood Markets",
+        "reason": "Retail investing boom",
+        "contract": "Sep '26 $90C",
+        "expiry": "2026-09-18",
+        "strike": 90.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "UBER",
+        "name": "Uber Technologies",
+        "reason": "Troy watching for entry",
+        "contract": "Jan '27 $75C",
+        "expiry": "2027-01-15",
+        "strike": 75.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "COHR",
+        "name": "Coherent Corp.",
+        "reason": "NVDA $2B photonics investment",
+        "contract": "Jan '27 $395C",
+        "expiry": "2027-01-15",
+        "strike": 395.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "LITE",
+        "name": "Lumentum Holdings",
+        "reason": "NVDA $2B photonics investment",
+        "contract": "Jan '27 $845C",
+        "expiry": "2027-01-15",
+        "strike": 845.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "GLW",
+        "name": "Corning Inc.",
+        "reason": "NVDA $3.2B fiber investment",
+        "contract": "Jan '27 $195C",
+        "expiry": "2027-01-15",
+        "strike": 195.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "IREN",
+        "name": "IREN Limited",
+        "reason": "NVDA $2.1B AI data center investment",
+        "contract": "Jan '27 $60C",
+        "expiry": "2027-01-15",
+        "strike": 60.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "CLS",
+        "name": "Celestica Inc.",
+        "reason": "AI server hardware — Jul '25 class",
+        "contract": "Jan '27 $90C",
+        "expiry": "2027-01-15",
+        "strike": 90.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "CEG",
+        "name": "Constellation Energy",
+        "reason": "Nuclear power + AI data centers — Dec '25 class",
+        "contract": "Jan '27 $260C",
+        "expiry": "2027-01-15",
+        "strike": 260.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "VST",
+        "name": "Vistra Energy",
+        "reason": "Nuclear PPA + AI power demand — Dec '25 class",
+        "contract": "Jan '27 $220C",
+        "expiry": "2027-01-15",
+        "strike": 220.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "AMZN",
+        "name": "Amazon.com",
+        "reason": "Troy's stock of year 2025 — Dec '24 class",
+        "contract": "Jan '27 $220C",
+        "expiry": "2027-01-15",
+        "strike": 220.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "AVGO",
+        "name": "Broadcom Inc.",
+        "reason": "AI networking + custom silicon — Jun '24 class",
+        "contract": "Jan '27 $160C",
+        "expiry": "2027-01-15",
+        "strike": 160.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "STX",
+        "name": "Seagate Technology",
+        "reason": "WDC's storage-sector peer — introduced together in Sep '24 class notes",
+        "contract": "Jan '28 $650C",
+        "expiry": "2028-01-21",
+        "strike": 650.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "MCHP",
+        "name": "Microchip Technology",
+        "reason": "Semiconductor peer to Troy's TSM/AMD/AVGO chip thesis — not yet given a class entry",
+        "contract": "Jan '28 $55C",
+        "expiry": "2028-01-21",
+        "strike": 55.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "QCOM",
+        "name": "Qualcomm Inc.",
+        "reason": "AI edge/mobile chip peer to Troy's semiconductor thesis — not yet given a class entry",
+        "contract": "Jan '28 $145C",
+        "expiry": "2028-01-21",
+        "strike": 145.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "LRCX",
+        "name": "Lam Research Corp.",
+        "reason": "Chip equipment/fab peer — same AI chip supply chain as TSM — not yet given a class entry",
+        "contract": "Jan '28 $220C",
+        "expiry": "2028-01-21",
+        "strike": 220.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "AMAT",
+        "name": "Applied Materials",
+        "reason": "Chip equipment peer — same AI chip supply chain as TSM — not yet given a class entry",
+        "contract": "Jan '28 $340C",
+        "expiry": "2028-01-21",
+        "strike": 340.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "FN",
+        "name": "Fabrinet",
+        "reason": "Optical/photonics manufacturer — same fiber thesis as GLW/LITE/COHR — not yet given a class entry",
+        "contract": "Jan '28 $300C",
+        "expiry": "2028-01-21",
+        "strike": 300.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "CIEN",
+        "name": "Ciena Corp.",
+        "reason": "Optical networking peer — same fiber/networking thesis as ANET/GLW/LITE — not yet given a class entry",
+        "contract": "Jan '28 $250C",
+        "expiry": "2028-01-21",
+        "strike": 250.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "NRG",
+        "name": "NRG Energy",
+        "reason": "AI data center power demand peer to CEG/VST nuclear thesis — not yet given a class entry",
+        "contract": "Jan '28 $85C",
+        "expiry": "2028-01-21",
+        "strike": 85.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "TLN",
+        "name": "Talen Energy",
+        "reason": "Nuclear power + AI data center PPA peer to CEG/VST — not yet given a class entry",
+        "contract": "Jan '28 $225C",
+        "expiry": "2028-01-21",
+        "strike": 225.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "GEV",
+        "name": "GE Vernova",
+        "reason": "Power generation equipment — AI data center power buildout peer to CEG/VST — not yet given a class entry",
+        "contract": "Jan '28 $700C",
+        "expiry": "2028-01-21",
+        "strike": 700.0,
+        "opt_type": "calls",
+        "alert": null
+      }
     ]
   },
   "how_to_add_new_class": {
@@ -297,7 +1069,15 @@
       "label": "Month 'YY Class",
       "notes": "Brief description of what was covered",
       "stocks": [
-        { "ticker": "TICK", "name": "Company Name", "contract": "Mon 'YY $XXXC", "expiry": "YYYY-MM-DD", "strike": 0.0, "opt_type": "calls", "alert": null }
+        {
+          "ticker": "TICK",
+          "name": "Company Name",
+          "contract": "Mon 'YY $XXXC",
+          "expiry": "YYYY-MM-DD",
+          "strike": 0.0,
+          "opt_type": "calls",
+          "alert": null
+        }
       ]
     }
   }
