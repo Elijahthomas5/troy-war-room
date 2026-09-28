@@ -61,6 +61,6 @@ jobs:
             for i in 1 2 3; do
               git push && break
               echo "Push rejected (attempt $i/3) — rebasing onto latest remote..."
-              git pull --rebase
+              git pull --rebase -X theirs
             done
           fi

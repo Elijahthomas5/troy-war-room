@@ -88,8 +88,8 @@
         {
           "ticker": "CDNS",
           "name": "Cadence Design Systems",
-          "contract": "Jun '26 $310C",
-          "expiry": "2026-06-20",
+          "contract": "Jan '27 $310C",
+          "expiry": "2027-01-15",
           "strike": 310.0,
           "opt_type": "calls",
           "alert": 23.01
@@ -193,8 +193,8 @@
         {
           "ticker": "SNPS",
           "name": "Synopsys Inc.",
-          "contract": "Jun '26 $440C",
-          "expiry": "2026-06-19",
+          "contract": "Jan '27 $440C",
+          "expiry": "2027-01-15",
           "strike": 440.0,
           "opt_type": "calls",
           "alert": 30.0
@@ -202,8 +202,8 @@
         {
           "ticker": "CDNS",
           "name": "Cadence Design Systems",
-          "contract": "Jun '26 $310C",
-          "expiry": "2026-06-20",
+          "contract": "Jan '27 $310C",
+          "expiry": "2027-01-15",
           "strike": 310.0,
           "opt_type": "calls",
           "alert": null
@@ -732,8 +732,8 @@
         {
           "ticker": "TSLA",
           "name": "Tesla Inc.",
-          "contract": "Jun '26 $250C",
-          "expiry": "2026-06-19",
+          "contract": "Jan '27 $250C",
+          "expiry": "2027-01-15",
           "strike": 250.0,
           "opt_type": "calls",
           "alert": null,
@@ -742,8 +742,8 @@
         {
           "ticker": "CRM",
           "name": "Salesforce Inc.",
-          "contract": "Apr '24 $300C",
-          "expiry": "2024-04-19",
+          "contract": "Jan '27 $300C",
+          "expiry": "2027-01-15",
           "strike": 300.0,
           "opt_type": "calls",
           "alert": null,
@@ -752,8 +752,8 @@
         {
           "ticker": "DKNG",
           "name": "DraftKings Inc.",
-          "contract": "Apr '24 $42C",
-          "expiry": "2024-04-19",
+          "contract": "Jan '27 $42C",
+          "expiry": "2027-01-15",
           "strike": 42.0,
           "opt_type": "calls",
           "alert": null,
@@ -850,8 +850,8 @@
         "ticker": "HOOD",
         "name": "Robinhood Markets",
         "reason": "Retail investing boom",
-        "contract": "Sep '26 $90C",
-        "expiry": "2026-09-18",
+        "contract": "Jan '27 $90C",
+        "expiry": "2027-01-15",
         "strike": 90.0,
         "opt_type": "calls",
         "alert": null
