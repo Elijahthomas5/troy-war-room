@@ -240,8 +240,11 @@
           "contract": "Jan '27 $160C",
           "expiry": "2027-01-15",
           "strike": 160.0,
+          "tracking_strike": 650.0,
+          "tracking_contract": "Jan '27 $650C",
           "opt_type": "calls",
-          "alert": null
+          "alert": null,
+          "_tracking_note": "Original class entry $160C when AMD was ~$160. Now ~$607 — $650C used for meaningful IV only; badge still shows historical contract."
         }
       ]
     },
@@ -257,8 +260,11 @@
           "contract": "Jan '27 $65C",
           "expiry": "2027-01-15",
           "strike": 65.0,
+          "tracking_strike": 500.0,
+          "tracking_contract": "Jan '27 $500C",
           "opt_type": "calls",
-          "alert": null
+          "alert": null,
+          "_tracking_note": "Original class entry $65C when WDC was ~$65. Now ~$453 — $500C used for meaningful IV."
         },
         {
           "ticker": "SNDK",
@@ -328,8 +334,11 @@
           "contract": "Jan '27 $90C",
           "expiry": "2027-01-15",
           "strike": 90.0,
+          "tracking_strike": 400.0,
+          "tracking_contract": "Jan '27 $400C",
           "opt_type": "calls",
-          "alert": null
+          "alert": null,
+          "_tracking_note": "Original class entry $90C when CLS was ~$90. Now ~$366 — $400C used for meaningful IV."
         }
       ]
     },
@@ -352,8 +361,11 @@
           "contract": "Jan '27 $120C",
           "expiry": "2027-01-15",
           "strike": 120.0,
+          "tracking_strike": 650.0,
+          "tracking_contract": "Jan '27 $650C",
           "opt_type": "calls",
-          "alert": null
+          "alert": null,
+          "_tracking_note": "Original class entry $120C (Nancy Pelosi deep-ITM teaching example) when SMH was ~$193. Now ~$607 — $650C used for meaningful IV."
         },
         {
           "ticker": "AMD",

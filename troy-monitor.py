@@ -212,9 +212,12 @@ def load_classes():
                 "class_label": label,
             }
             opt_contracts[t] = {
-                "contract":    stock["contract"],
-                "expiry":      stock["expiry"],
-                "strike":      stock["strike"],
+                # tracking_strike/contract let you override the historical class contract
+                # for IV monitoring when the original is now deep ITM (and gives garbage IV).
+                # The watch-card badge still shows the original class contract label.
+                "contract":    stock.get("tracking_contract", stock["contract"]),
+                "expiry":      stock.get("tracking_expiry",   stock["expiry"]),
+                "strike":      stock.get("tracking_strike",   stock["strike"]),
                 "opt_type":    stock.get("opt_type", "calls"),
                 "alert":       stock.get("alert"),
                 "owned":       stock.get("owned", False),   # True = you actually hold this position
@@ -233,9 +236,9 @@ def load_classes():
                 "class_label": None,
             }
             opt_contracts[t] = {
-                "contract":    stock["contract"],
-                "expiry":      stock["expiry"],
-                "strike":      stock["strike"],
+                "contract":    stock.get("tracking_contract", stock["contract"]),
+                "expiry":      stock.get("tracking_expiry",   stock["expiry"]),
+                "strike":      stock.get("tracking_strike",   stock["strike"]),
                 "opt_type":    stock.get("opt_type", "calls"),
                 "alert":       stock.get("alert"),
                 "owned":       stock.get("owned", False),
@@ -931,6 +934,30 @@ def _tradier_quote(symbols):
         return {}
 
 
+def _auto_atm_strike(class_strike, current_price):
+    """If the class's historical strike is deep ITM (stock has risen far above it),
+    return a near-ATM strike for a more meaningful IV reading.  Otherwise return
+    the original class strike unchanged.
+
+    Threshold: if class_strike < 70% of current_price the contract is deep ITM.
+    Near-ATM target: ~10% OTM, rounded to the nearest price-appropriate step.
+    """
+    if not current_price or not class_strike:
+        return class_strike
+    hist = float(class_strike)
+    cur  = float(current_price)
+    if hist >= cur * 0.70:          # still reasonably close — use as-is
+        return hist
+    # Deep ITM — compute a 10%-OTM strike rounded to a clean step
+    target = cur * 1.10
+    if   cur < 50:    step = 2.5
+    elif cur < 200:   step = 5
+    elif cur < 500:   step = 10
+    elif cur < 1000:  step = 25
+    else:             step = 50
+    return round(target / step) * step
+
+
 def _tradier_nearest_option(symbol, expiry, strike, opt_type="calls"):
     """Fall back: find nearest available contract from the chain when exact OCC 404s.
     Picks the closest expiry >= target, then the nearest strike on that chain."""
@@ -1611,7 +1638,13 @@ def main():
     full_entry_signals = []  # ALL 3 criteria: stock ATH% + option price in zone + IV < 35%
     for ticker, info in opt_contracts.items():
         print(f"    {ticker:<5}", end=" ")
-        result = fetch_option_price(ticker, info["expiry"], info["strike"], info["opt_type"])
+        # If the class contract is now deep ITM (stock ran far above the strike),
+        # dynamically target a near-ATM option so IV is meaningful.
+        cur_price   = all_data.get(ticker, {}).get("price")
+        iv_strike   = _auto_atm_strike(info["strike"], cur_price)
+        if iv_strike != float(info["strike"]) and cur_price:
+            print(f"[auto-ATM ${iv_strike:.0f}] ", end="")
+        result = fetch_option_price(ticker, info["expiry"], iv_strike, info["opt_type"])
         opt_data[ticker] = result
         mid    = result["mid"]
         iv_pct = result["iv"]
