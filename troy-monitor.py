@@ -984,7 +984,8 @@ def _tradier_nearest_option(symbol, expiry, strike, opt_type="calls"):
         greeks = best.get("greeks") or {}
         # mid_iv is live IV; smv_vol is Tradier's smoothed vol (more stable after hours)
         iv_raw = greeks.get("mid_iv") or greeks.get("smv_vol") or best.get("implied_volatility")
-        iv_pct = round(float(iv_raw) * 100, 1) if iv_raw else None
+        iv_pct_raw = round(float(iv_raw) * 100, 1) if iv_raw else None
+        iv_pct = iv_pct_raw if (iv_pct_raw is not None and iv_pct_raw >= 1.0) else None
         delta  = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
         theta  = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
         print(f"    (nearest: {chosen_exp} ${best.get('strike')})", end=" ")
@@ -1025,7 +1026,8 @@ def _tradier_option_price(symbol, expiry, strike, opt_type="calls"):
         mid    = round((bid + ask) / 2, 2)
         greeks = q.get("greeks") or {}
         iv_raw = greeks.get("mid_iv") or greeks.get("smv_vol") or q.get("implied_volatility")
-        iv_pct = round(float(iv_raw) * 100, 1) if iv_raw else None
+        iv_pct_raw = round(float(iv_raw) * 100, 1) if iv_raw else None
+        iv_pct = iv_pct_raw if (iv_pct_raw is not None and iv_pct_raw >= 1.0) else None
         delta  = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
         theta  = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
         return {"mid": mid, "iv": iv_pct, "delta": delta, "theta": theta}
@@ -1083,8 +1085,9 @@ def _tradier_option_chain(symbol, current_price):
                     if mid < 0.50:
                         continue
                     greeks  = opt.get("greeks") or {}
-                    iv_raw  = greeks.get("mid_iv") or greeks.get("smv_vol") or opt.get("implied_volatility")
-                    iv_pct  = round(float(iv_raw) * 100, 1) if iv_raw else None
+                    iv_raw     = greeks.get("mid_iv") or greeks.get("smv_vol") or opt.get("implied_volatility")
+                    iv_pct_raw = round(float(iv_raw) * 100, 1) if iv_raw else None
+                    iv_pct     = iv_pct_raw if (iv_pct_raw is not None and iv_pct_raw >= 1.0) else None
                     delta   = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
                     theta   = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
                     try:   vol = int(float(opt["volume"]))      if opt.get("volume")        not in (None,"") else None

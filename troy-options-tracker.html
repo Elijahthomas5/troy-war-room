@@ -2093,7 +2093,7 @@
 
       // ── IV badge ──
       const iv = IV_DATA[t];
-      if (iv !== undefined && iv !== null) {
+      if (iv !== undefined && iv !== null && iv > 0) {
         const ivCls  = iv < 35 ? 'iv-good' : (iv < 50 ? 'iv-warn' : 'iv-high');
         const ivNote = iv < 35 ? '✓ low risk' : (iv < 50 ? '⚠ moderate' : '⛔ high — avoid');
         html += `<div class="opt-compact" style="margin-top:3px">
