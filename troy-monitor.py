@@ -275,10 +275,12 @@ def inject_new_stock_card(html, ticker, info, opt_info):
         f'\n        </div>'
     )
 
-    # Insert just before the closing tags of watchlistGrid
-    marker = '      </div>\n    </div>\n\n    <!-- TROY\'S PORTFOLIO'
+    # Insert just before the closing tags of watchlistGrid.
+    # Marker targets the end of the watchlist section (before MBA Analytics),
+    # so new cards land INSIDE the watchlistGrid, not floating below it.
+    marker = '      </div>\n    </div>\n\n    <!-- MBA ANALYTICS'
     if marker in html:
-        html = html.replace(marker, new_card + '\n' + marker)
+        html = html.replace(marker, new_card + '\n' + marker, 1)
         return html, True
 
     # Fallback: append before first </div></div> after watchlistGrid
@@ -980,7 +982,8 @@ def _tradier_nearest_option(symbol, expiry, strike, opt_type="calls"):
         ask    = float(best.get("ask") or 0)
         mid    = round((bid + ask) / 2, 2)
         greeks = best.get("greeks") or {}
-        iv_raw = greeks.get("mid_iv") or best.get("implied_volatility")
+        # mid_iv is live IV; smv_vol is Tradier's smoothed vol (more stable after hours)
+        iv_raw = greeks.get("mid_iv") or greeks.get("smv_vol") or best.get("implied_volatility")
         iv_pct = round(float(iv_raw) * 100, 1) if iv_raw else None
         delta  = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
         theta  = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
@@ -1021,7 +1024,7 @@ def _tradier_option_price(symbol, expiry, strike, opt_type="calls"):
         ask    = float(q.get("ask") or 0)
         mid    = round((bid + ask) / 2, 2)
         greeks = q.get("greeks") or {}
-        iv_raw = greeks.get("mid_iv") or q.get("implied_volatility")
+        iv_raw = greeks.get("mid_iv") or greeks.get("smv_vol") or q.get("implied_volatility")
         iv_pct = round(float(iv_raw) * 100, 1) if iv_raw else None
         delta  = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
         theta  = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
@@ -1080,7 +1083,7 @@ def _tradier_option_chain(symbol, current_price):
                     if mid < 0.50:
                         continue
                     greeks  = opt.get("greeks") or {}
-                    iv_raw  = greeks.get("mid_iv") or opt.get("implied_volatility")
+                    iv_raw  = greeks.get("mid_iv") or greeks.get("smv_vol") or opt.get("implied_volatility")
                     iv_pct  = round(float(iv_raw) * 100, 1) if iv_raw else None
                     delta   = round(float(greeks["delta"]), 3) if greeks.get("delta") is not None else None
                     theta   = round(float(greeks["theta"]), 3) if greeks.get("theta") is not None else None
