@@ -310,16 +310,71 @@
     }
     .legend-item { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--muted); letter-spacing:0.3px; }
     .legend-swatch { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+    #chain-header-left { flex:1; min-width:0; }
+    #chain-search-wrap { position:relative; flex:0 0 180px; }
+    #chain-search-input {
+      width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+      border-radius:7px; padding:5px 10px; color:#e8eaf0; font-size:12px; outline:none;
+      box-sizing:border-box;
+    }
+    #chain-search-input:focus { border-color:rgba(201,162,39,0.5); }
+    #chain-search-results {
+      display:none; position:absolute; left:0; right:0; top:calc(100% + 4px);
+      background:#0d0f14; border:1px solid #2a3347; border-radius:8px;
+      max-height:180px; overflow-y:auto; z-index:20;
+    }
+    .csr-item {
+      padding:8px 12px; cursor:pointer; font-size:12px; color:#e8eaf0;
+      display:flex; gap:8px; align-items:center;
+    }
+    .csr-item:hover { background:rgba(255,255,255,0.06); }
+    .csr-sym { font-weight:800; color:var(--eyl-gold); min-width:44px; }
     #chain-close { background:rgba(255,255,255,0.07); border:none; color:#aaa; width:26px; height:26px; border-radius:50%; font-size:13px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
     #chain-close:hover { background:rgba(255,255,255,0.14); color:#fff; }
-    #chain-scroll { flex:1; overflow-y:auto; }
-    .chain-expiry-group { margin-bottom:0; }
-    .chain-expiry-label {
-      position:sticky; top:0; z-index:2;
-      font-size:9px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
-      color:#4a566e; background:#0c1018;
-      padding:8px 18px 6px; border-bottom:1px solid rgba(255,255,255,0.04);
+    /* Filter bar */
+    #chain-filter-bar {
+      flex-shrink:0; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:8px 18px; border-bottom:1px solid rgba(255,255,255,0.05);
+      background:#0c1018;
     }
+    #chain-filter-left { display:flex; gap:8px; align-items:center; }
+    #chain-filter-bar select {
+      background:#161b24; border:1px solid rgba(255,255,255,0.1); border-radius:6px;
+      color:#c8cde0; font-size:11px; padding:4px 22px 4px 8px; cursor:pointer;
+      outline:none; appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23667'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 7px center;
+    }
+    #chain-filter-bar select:focus { border-color:rgba(201,162,39,0.5); }
+    #chain-watchlist-chips { display:flex; gap:6px; flex-wrap:wrap; margin-left:4px; }
+    .chain-chip {
+      padding:3px 9px; border-radius:20px; font-size:10px; font-weight:700;
+      background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+      color:#8896aa; cursor:pointer; letter-spacing:0.3px; white-space:nowrap;
+    }
+    .chain-chip:hover { background:rgba(201,162,39,0.12); border-color:rgba(201,162,39,0.4); color:var(--eyl-gold); }
+    .chain-chip.active { background:rgba(201,162,39,0.15); border-color:var(--eyl-gold); color:var(--eyl-gold); }
+    #chain-scroll { flex:1; overflow-y:auto; }
+    /* Collapsible expiry groups */
+    .chain-expiry-group { margin-bottom:0; }
+    .chain-expiry-header {
+      position:sticky; top:0; z-index:2;
+      display:flex; align-items:center; justify-content:space-between;
+      background:#0e1320; border-bottom:1px solid rgba(255,255,255,0.06);
+      padding:10px 18px 9px; cursor:pointer; user-select:none;
+    }
+    .chain-expiry-header:hover { background:#111827; }
+    .chain-expiry-label {
+      font-size:12px; font-weight:600; color:#c8d0e0; letter-spacing:0.2px;
+    }
+    .chain-expiry-meta { font-size:10px; color:#4a566e; margin-left:10px; }
+    .chain-expiry-chevron {
+      font-size:10px; color:#4a566e; transition:transform 0.18s;
+    }
+    .chain-expiry-group.collapsed .chain-expiry-chevron { transform:rotate(-90deg); }
+    .chain-expiry-content { display:block; }
+    .chain-expiry-group.collapsed .chain-expiry-content { display:none; }
+    .chain-expiry-loading { padding:14px 18px; font-size:11px; color:#3a4560; }
     .chain-table-wrap { overflow-x:auto; }
     .chain-table { width:100%; border-collapse:collapse; min-width:560px; }
     .chain-table thead { position:sticky; top:28px; z-index:1; }
@@ -477,29 +532,50 @@
 <!-- CONTRACT CHAIN DRAWER -->
 <div id="chain-overlay" onclick="closeChainDrawer()"></div>
 <div id="chain-drawer">
+  <!-- Header row: title + search + close -->
   <div id="chain-header">
-    <div>
+    <div id="chain-header-left">
       <div id="chain-title">Option Chain</div>
       <div id="chain-subtitle"></div>
     </div>
+    <div id="chain-search-wrap">
+      <input id="chain-search-input" placeholder="Search ticker…" autocomplete="off"
+        oninput="chainSearchInput(this.value)"
+        onkeydown="if(event.key==='Enter')chainSearchGo(this.value.trim().toUpperCase())">
+      <div id="chain-search-results"></div>
+    </div>
     <button id="chain-close" onclick="closeChainDrawer()">&#x2715;</button>
   </div>
+  <!-- Filter / watchlist chip bar -->
+  <div id="chain-filter-bar">
+    <div id="chain-filter-left">
+      <select id="chain-opt-type" onchange="chainApplyFilters()">
+        <option value="calls">Calls</option>
+        <option value="puts">Puts</option>
+      </select>
+      <select id="chain-strikes-filter" onchange="chainApplyFilters()">
+        <option value="all">All Strikes</option>
+        <option value="near">Near ATM (±20%)</option>
+        <option value="itm">ITM only</option>
+        <option value="otm">OTM only</option>
+      </select>
+      <select id="chain-expiry-filter" onchange="chainApplyFilters()">
+        <option value="all">All Expirations</option>
+        <option value="weekly">Weekly (&lt;30 days)</option>
+        <option value="monthly">Monthly</option>
+        <option value="leaps">LEAPs (&gt;12 mo)</option>
+      </select>
+    </div>
+    <div id="chain-watchlist-chips"></div>
+  </div>
+  <!-- Legend -->
   <div id="chain-legend">
-    <span class="legend-item"><span class="legend-swatch" style="background:rgba(0,180,120,0.35)"></span>In the Money (ITM)</span>
-    <span class="legend-item"><span class="legend-swatch" style="background:rgba(245,200,66,0.4)"></span>At the Money (ATM)</span>
-    <span class="legend-item"><span class="legend-swatch" style="background:rgba(255,255,255,0.08)"></span>Out of Money (OTM)</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:rgba(0,180,120,0.35)"></span>ITM</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:rgba(245,200,66,0.4)"></span>ATM</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:rgba(255,255,255,0.08)"></span>OTM</span>
+    <span class="legend-item" style="margin-left:auto;color:#3a4560;font-size:9px" id="chain-stock-price-label"></span>
   </div>
   <div id="chain-scroll"><div id="chain-body"></div></div>
-</div>
-<div id="chain-drawer">
-  <div id="chain-header">
-    <div>
-      <div id="chain-title">Option Chain</div>
-      <div id="chain-subtitle">LEAP calls · expiry &gt;12 months · all strikes</div>
-    </div>
-    <button id="chain-close" onclick="closeChainDrawer()">✕</button>
-  </div>
-  <div id="chain-body"></div>
 </div>
 
 <!-- HEADER -->
@@ -2404,97 +2480,274 @@
   renderClassHistory();
 
   // ── OPTION CHAIN DRAWER ───────────────────────────────────────────────────
+  let _chainTicker    = null;   // current ticker loaded in drawer
+  let _chainStockPrice = null;  // live price for the active ticker
+
+  // Build the watchlist chips once on load
+  (function buildChainChips() {
+    const chips = document.getElementById('chain-watchlist-chips');
+    if (!chips) return;
+    const tickers = Object.keys(PRICES).length ? Object.keys(PRICES) : Object.keys(IV_DATA);
+    tickers.slice(0, 18).forEach(t => {
+      const c = document.createElement('span');
+      c.className = 'chain-chip';
+      c.textContent = t;
+      c.onclick = () => openChainDrawer(t);
+      chips.appendChild(c);
+    });
+  })();
+
   function openChainDrawer(ticker) {
-    const contracts  = CONTRACT_DATA[ticker];
+    _chainTicker = ticker;
     const priceData  = PRICES[ticker];
-    const eq         = priceData ? getBuyZoneInfo(ticker, priceData.price) : null;
-    const stockInZone = eq && eq.zone === 'buy';
-    const currentPrice = priceData?.price;
+    _chainStockPrice = priceData?.price || null;
+    const eq = priceData ? getBuyZoneInfo(ticker, priceData.price) : null;
 
     const cardEl   = document.querySelector(`.watch-card[data-ticker="${ticker}"]`);
-    const cardName = cardEl?.querySelector('.watch-name')?.textContent || '';
-    document.getElementById('chain-title').textContent = `${ticker}${cardName ? '  —  ' + cardName : ''}`;
+    const cardName = cardEl?.querySelector('.watch-name')?.textContent || ticker;
+    document.getElementById('chain-title').textContent = ticker + (cardName && cardName !== ticker ? '  —  ' + cardName : '');
+    const priceStr = _chainStockPrice ? `$${_chainStockPrice.toFixed(2)}` : '—';
     document.getElementById('chain-subtitle').textContent =
-      `LEAP calls  ·  expiry > 12 months  ·  ${contracts?.length || 0} contracts  ·  stock ${eq ? eq.pctOff.toFixed(1) + '% off ATH' : '—'}`;
+      `stock ${priceStr}` + (eq ? `  ·  ${eq.pctOff.toFixed(1)}% off ATH` : '');
+    document.getElementById('chain-stock-price-label').textContent =
+      _chainStockPrice ? `Current price: $${_chainStockPrice.toFixed(2)}` : '';
+
+    // Mark active chip
+    document.querySelectorAll('.chain-chip').forEach(c => {
+      c.classList.toggle('active', c.textContent === ticker);
+    });
+
+    // Update search box to show current ticker
+    const si = document.getElementById('chain-search-input');
+    if (si) { si.value = ticker; }
 
     document.getElementById('chain-overlay').classList.add('open');
     document.getElementById('chain-drawer').classList.add('open');
     document.body.style.overflow = 'hidden';
 
+    loadChainExpirations(ticker);
+  }
+
+  async function loadChainExpirations(ticker) {
     const body = document.getElementById('chain-body');
+    body.innerHTML = '<div class="chain-no-data">Loading expirations…</div>';
 
-    if (!contracts || contracts.length === 0) {
-      body.innerHTML = `<div class="chain-no-data">No chain data yet — run the monitor to populate</div>`;
-      return;
+    let key = localStorage.getItem('tradier_key');
+    if (!key) {
+      key = prompt('Enter your Tradier API token to load the options chain:');
+      if (!key) { body.innerHTML = '<div class="chain-no-data">Tradier token required.</div>'; return; }
+      key = key.trim();
+      localStorage.setItem('tradier_key', key);
     }
 
-    // Group by expiry
-    const byExpiry = {};
-    for (const c of contracts) {
-      (byExpiry[c.expiry] = byExpiry[c.expiry] || []).push(c);
+    try {
+      const resp = await tradierFetch(
+        `/v1/markets/options/expirations?symbol=${encodeURIComponent(ticker)}&includeAllRoots=true&strikes=false`, key
+      );
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const dates = data?.expirations?.date;
+      if (!dates || !dates.length) {
+        body.innerHTML = '<div class="chain-no-data">No options found for ' + ticker + '</div>';
+        return;
+      }
+
+      const expiryFilter = document.getElementById('chain-expiry-filter')?.value || 'all';
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      const filtered = dates.filter(d => {
+        const dt = new Date(d + 'T12:00:00');
+        const daysOut = Math.round((dt - today) / 86400000);
+        if (expiryFilter === 'weekly')  return daysOut < 30;
+        if (expiryFilter === 'monthly') return daysOut >= 30 && daysOut < 365;
+        if (expiryFilter === 'leaps')   return daysOut >= 365;
+        return true;
+      });
+
+      if (!filtered.length) {
+        body.innerHTML = '<div class="chain-no-data">No expirations match the current filter.</div>';
+        return;
+      }
+
+      body.innerHTML = filtered.map(expDate => {
+        const dt = new Date(expDate + 'T12:00:00');
+        const daysOut = Math.round((dt - today) / 86400000);
+        const dayName = dt.toLocaleDateString('en-US', { weekday:'short' });
+        const label   = dt.toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' });
+        const meta    = `(${dayName}: ${daysOut} day${daysOut===1?'':'s'})`;
+        // Start all expirations collapsed
+        return `<div class="chain-expiry-group collapsed" data-expiry="${expDate}">
+          <div class="chain-expiry-header" onclick="chainToggleExpiry(this.parentElement, '${ticker}', '${expDate}')">
+            <span>
+              <span class="chain-expiry-label">${label}</span>
+              <span class="chain-expiry-meta">${meta}</span>
+            </span>
+            <span class="chain-expiry-chevron">▼</span>
+          </div>
+          <div class="chain-expiry-content">
+            <div class="chain-expiry-loading">Click to load…</div>
+          </div>
+        </div>`;
+      }).join('');
+
+    } catch(e) {
+      body.innerHTML = `<div class="chain-no-data">Error: ${e.message}</div>`;
     }
+  }
 
-    let html = '';
-    for (const [expiry, rows] of Object.entries(byExpiry)) {
-      const d  = new Date(expiry + 'T12:00:00');
-      const mo = d.toLocaleDateString('en-US', { month: 'short' });
-      const yr = String(d.getFullYear()).slice(-2);
+  async function chainToggleExpiry(groupEl, ticker, expiry) {
+    const isCollapsed = groupEl.classList.contains('collapsed');
+    groupEl.classList.toggle('collapsed', !isCollapsed);
+    if (!isCollapsed) return; // was open → just close, no fetch
 
-      html += `<div class="chain-expiry-group">
-        <div class="chain-expiry-label">${mo} '${yr} &nbsp;·&nbsp; Calls</div>
-        <div class="chain-table-wrap"><table class="chain-table">
-          <thead><tr>
-            <th>STRIKE</th>
-            <th>BID</th><th>ASK</th><th>MID</th>
-            <th title="Implied Volatility">IV</th>
-            <th title="Delta — option moves $X per $1 stock move">&#916;</th>
-            <th title="Theta — daily time decay per contract">&theta;/day</th>
-            <th>VOL</th><th>OI</th>
-            <th>SIGNAL</th>
-          </tr></thead><tbody>`;
+    const content = groupEl.querySelector('.chain-expiry-content');
+    if (content.dataset.loaded) return; // already fetched
+    content.innerHTML = '<div class="chain-expiry-loading">Loading chain…</div>';
 
-      for (const c of rows) {
-        const rowCls  = c.moneyness === 'ITM' ? 'row-itm' : (c.moneyness === 'ATM' ? 'row-atm' : 'row-otm');
-        const ivCls   = c.iv == null ? 'muted-num' : (c.iv < 35 ? 'iv-good' : (c.iv < 50 ? 'iv-warn' : 'iv-high'));
-        const ivTxt   = c.iv != null ? c.iv.toFixed(1) + '%' : '—';
-        const deltaTxt = c.delta != null ? c.delta.toFixed(2) : '<span class="muted-num">—</span>';
-        const thetaTxt = c.theta != null
-          ? '<span style="color:var(--red)">-$' + Math.abs((c.theta * 100).toFixed(2)) + '</span>'
-          : '<span class="muted-num">—</span>';
-        const bidTxt  = c.bid  > 0 ? '$' + c.bid.toFixed(2)  : '<span class="muted-num">—</span>';
-        const askTxt  = c.ask  > 0 ? '$' + c.ask.toFixed(2)  : '<span class="muted-num">—</span>';
-        const midTxt  = '$' + c.price.toFixed(2);
-        const volTxt  = c.volume != null ? c.volume.toLocaleString() : '<span class="muted-num">—</span>';
-        const oiTxt   = c.oi    != null ? c.oi.toLocaleString()    : '<span class="muted-num">—</span>';
+    let key = localStorage.getItem('tradier_key');
+    if (!key) return;
 
-        const ivOk = c.iv != null && c.iv < 35;
-        const ivMid = c.iv != null && c.iv < 50;
-        let sig;
-        if      (stockInZone && ivOk)  sig = '<span class="sig-enter">&#x26A1; Enter</span>';
-        else if (stockInZone && ivMid) sig = '<span class="sig-watch">&#x1F440; Watch</span>';
-        else if (stockInZone)          sig = '<span class="sig-wait">IV too high</span>';
-        else                           sig = '<span class="sig-wait">wait</span>';
+    const optType = document.getElementById('chain-opt-type')?.value || 'calls';
+    const strikeFilter = document.getElementById('chain-strikes-filter')?.value || 'all';
 
-        html += `<tr class="${rowCls}">
-          <td>$${c.strike % 1 === 0 ? c.strike.toFixed(0) : c.strike}</td>
-          <td>${bidTxt}</td><td>${askTxt}</td><td>${midTxt}</td>
+    try {
+      const resp = await tradierFetch(
+        `/v1/markets/options/chains?symbol=${encodeURIComponent(ticker)}&expiration=${expiry}&greeks=true`, key
+      );
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      let opts = data?.options?.option;
+      if (!opts) { content.innerHTML = '<div class="chain-expiry-loading">No contracts.</div>'; return; }
+      if (!Array.isArray(opts)) opts = [opts];
+
+      // Filter by type
+      opts = opts.filter(o => (o.option_type||'').toLowerCase() === (optType === 'puts' ? 'put' : 'call'));
+
+      // Strike filter
+      const sp = _chainStockPrice;
+      if (sp && strikeFilter !== 'all') {
+        opts = opts.filter(o => {
+          const s = parseFloat(o.strike);
+          if (strikeFilter === 'near')  return s >= sp * 0.80 && s <= sp * 1.20;
+          if (strikeFilter === 'itm')   return optType === 'puts' ? s > sp : s < sp;
+          if (strikeFilter === 'otm')   return optType === 'puts' ? s < sp : s > sp;
+          return true;
+        });
+      }
+
+      if (!opts.length) { content.innerHTML = '<div class="chain-expiry-loading">No contracts match filters.</div>'; return; }
+
+      opts.sort((a,b) => parseFloat(a.strike) - parseFloat(b.strike));
+
+      const stockInZone = sp ? (() => { try { return getBuyZoneInfo(ticker, sp)?.zone === 'buy'; } catch(e){ return false; } })() : false;
+
+      const rows = opts.map(o => {
+        const strike = parseFloat(o.strike);
+        const bid    = parseFloat(o.bid||0);
+        const ask    = parseFloat(o.ask||0);
+        const last   = parseFloat(o.last||0);
+        const vol    = parseInt(o.volume||0);
+        const oi     = parseInt(o.open_interest||0);
+        const chg    = parseFloat(o.change||0);
+        const chgPct = parseFloat(o.change_percentage||0);
+        const iv     = o.greeks?.smv_vol ? parseFloat(o.greeks.smv_vol)*100 : (o.greeks?.mid_iv ? parseFloat(o.greeks.mid_iv)*100 : null);
+        const delta  = o.greeks?.delta != null ? parseFloat(o.greeks.delta) : null;
+        const theta  = o.greeks?.theta != null ? parseFloat(o.greeks.theta) : null;
+
+        let rowCls = 'row-otm';
+        if (sp) {
+          const diff = Math.abs(strike - sp) / sp;
+          if (diff < 0.005) rowCls = 'row-atm';
+          else if (optType === 'puts' ? strike > sp : strike < sp) rowCls = 'row-itm';
+        }
+
+        const ivCls  = iv == null || iv < 1 ? 'muted-num' : (iv < 35 ? 'iv-good' : (iv < 50 ? 'iv-warn' : 'iv-high'));
+        const ivTxt  = iv != null && iv >= 1 ? iv.toFixed(1)+'%' : '<span class="muted-num">—</span>';
+        const chgCls = chg > 0 ? 'color:#00d4a0' : (chg < 0 ? 'color:var(--red)' : 'color:#3a4560');
+        const chgPctCls = chgPct > 0 ? 'color:#00d4a0' : (chgPct < 0 ? 'color:var(--red)' : 'color:#3a4560');
+
+        const ivOk = iv != null && iv >= 1 && iv < 35;
+        let sig = stockInZone && ivOk ? '<span class="sig-enter">⚡ Enter</span>'
+                : stockInZone ? '<span class="sig-watch">👀</span>'
+                : '<span class="sig-wait">—</span>';
+
+        return `<tr class="${rowCls}">
+          <td>$${strike % 1 === 0 ? strike.toFixed(0) : strike}</td>
+          <td style="color:#e8476a">${bid > 0 ? '$'+bid.toFixed(2) : '<span class="muted-num">—</span>'}</td>
+          <td style="color:#00d4a0">${ask > 0 ? '$'+ask.toFixed(2) : '<span class="muted-num">—</span>'}</td>
+          <td>${last > 0 ? '$'+last.toFixed(2) : '<span class="muted-num">—</span>'}</td>
+          <td style="${chgCls}">${chg !== 0 ? (chg>0?'+':'')+chg.toFixed(2) : '<span class="muted-num">—</span>'}</td>
+          <td style="${chgPctCls}">${chgPct !== 0 ? (chgPct>0?'+':'')+chgPct.toFixed(1)+'%' : '<span class="muted-num">—</span>'}</td>
+          <td class="muted-num">${vol > 0 ? vol.toLocaleString() : '—'}</td>
+          <td class="muted-num">${oi  > 0 ? oi.toLocaleString()  : '—'}</td>
           <td class="${ivCls}">${ivTxt}</td>
-          <td>${deltaTxt}</td>
-          <td>${thetaTxt}</td>
-          <td class="muted-num">${volTxt}</td>
-          <td class="muted-num">${oiTxt}</td>
+          <td>${delta != null ? delta.toFixed(2) : '<span class="muted-num">—</span>'}</td>
+          <td>${theta != null ? '<span style="color:var(--red)">-$'+Math.abs(theta*100).toFixed(2)+'</span>' : '<span class="muted-num">—</span>'}</td>
           <td>${sig}</td>
         </tr>`;
-      }
-      html += `</tbody></table></div></div>`;
+      }).join('');
+
+      content.innerHTML = `<div class="chain-table-wrap"><table class="chain-table">
+        <thead><tr>
+          <th>Strike ↑</th>
+          <th style="color:#e8476a">Bid<br><span style="font-size:8px;font-weight:400">Bearish</span></th>
+          <th style="color:#00d4a0">Ask<br><span style="font-size:8px;font-weight:400">Bullish</span></th>
+          <th>Last</th><th>Change</th><th>Chg%</th>
+          <th>Volume</th><th>OI</th>
+          <th title="Implied Volatility">IV</th>
+          <th title="Delta">Δ</th>
+          <th title="Theta decay/day">θ/day</th>
+          <th>Signal</th>
+        </tr></thead><tbody>${rows}</tbody>
+      </table></div>`;
+      content.dataset.loaded = '1';
+
+    } catch(e) {
+      content.innerHTML = `<div class="chain-expiry-loading">Error: ${e.message}</div>`;
     }
-    body.innerHTML = html;
+  }
+
+  function chainApplyFilters() {
+    // Re-render expirations with new filter; clear loaded chains
+    if (_chainTicker) loadChainExpirations(_chainTicker);
+  }
+
+  // Chain search box autocomplete
+  let _chainSearchTimer = null;
+  function chainSearchInput(val) {
+    clearTimeout(_chainSearchTimer);
+    const res = document.getElementById('chain-search-results');
+    if (!val || val.length < 1) { res.style.display = 'none'; return; }
+    _chainSearchTimer = setTimeout(async () => {
+      const key = localStorage.getItem('tradier_key');
+      if (!key) { chainSearchGo(val.trim().toUpperCase()); return; }
+      try {
+        const resp = await tradierFetch(`/v1/markets/search?q=${encodeURIComponent(val)}&indexes=false`, key);
+        const data = await resp.json();
+        const hits = (data?.securities?.security || []).slice(0, 6);
+        if (!hits.length) { res.style.display = 'none'; return; }
+        res.innerHTML = hits.map(h =>
+          `<div class="csr-item" onclick="chainSearchGo('${h.symbol}')">
+            <span class="csr-sym">${h.symbol}</span>
+            <span style="color:#6a7a96;font-size:11px">${(h.description||'').substring(0,40)}</span>
+          </div>`
+        ).join('');
+        res.style.display = 'block';
+      } catch(e) { res.style.display = 'none'; }
+    }, 280);
+  }
+
+  function chainSearchGo(sym) {
+    if (!sym) return;
+    document.getElementById('chain-search-results').style.display = 'none';
+    openChainDrawer(sym);
   }
 
   function closeChainDrawer() {
     document.getElementById('chain-overlay').classList.remove('open');
     document.getElementById('chain-drawer').classList.remove('open');
     document.body.style.overflow = '';
+    document.getElementById('chain-search-results').style.display = 'none';
   }
 
   // Wire up click on every watch-card
