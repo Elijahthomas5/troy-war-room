@@ -5,7 +5,7 @@
       "id": "2026-09-18",
       "date": "Sep 18, 2026",
       "label": "Sep '26 EYL Class — Semiconductor Testing & Memory (referenced on Market Mondays 9/22, exact contracts UNDISCLOSED)",
-      "notes": "Troy referenced these verbally on the Sep 22, 2026 Market Mondays episode while recapping Thursday 9/18's EYL class: 'The call on ASML posted a 41% gain in just two days from Friday through Monday' / 'The Pterodine [Teradyne] call is up 38%' / 'We added a double leverage MU call that's up 47%.' Community CONFIRMATION: EYL community members confirmed the MU 'MUU call' as a Sep 18 class pick. Community also noted that many members ROLLED MU to Jan 2029 after the short-term Oct earnings catalyst played out. Underlying moves Fri 9/18 close -> Mon 9/21 close (verified via stockanalysis.com): ASML $1,679.92 -> $1,711.32 (+1.9%), TER $371.47 -> $381.54 (+2.7%), MU $1,015.80 -> $1,043.96 (+2.8%). Those stock moves vs the 38-47% option gains imply roughly 14-22x leverage -- consistent with a short-dated (weeks, not Troy's usual 12mo+ LEAP), near-the-money call. Strike/expiry below are Claude's ESTIMATE (nearest round strike to the 9/18 close, next standard monthly expiry). ⚠️ WARNING: The estimated Oct 16 2026 expiry is 5 DAYS AWAY (as of Oct 11 2026) — these contracts are in expiry week. Community members who held MU rolled to Jan '29. Visit EYL class video to confirm actual contracts.",
+      "notes": "Eli does not have EYL University access, so these were NOT sourced from the live class. Troy referenced them verbally on the Sep 22, 2026 Market Mondays episode while recapping Thursday 9/18's EYL class: 'The call on ASML posted a 41% gain in just two days from Friday through Monday' / 'The Pterodine [Teradyne] call is up 38%' / 'We added a double leverage MU call that's up 47%.' Underlying moves Fri 9/18 close -> Mon 9/21 close (verified via stockanalysis.com): ASML $1,679.92 -> $1,711.32 (+1.9%), TER $371.47 -> $381.54 (+2.7%), MU $1,015.80 -> $1,043.96 (+2.8%). Those stock moves vs the 38-47% option gains imply roughly 14-22x leverage -- consistent with a short-dated (weeks, not Troy's usual 12mo+ LEAP), near-the-money call, NOT the long-dated LEAP style used elsewhere in this file. Strike/expiry below are Claude's ESTIMATE (nearest round strike to the 9/18 close, next standard monthly expiry) so the tracker has something to monitor -- NOT the actual EYL-disclosed contract. Replace with the real contract the moment Eli can get it (EYL post, community screenshot, etc.).",
       "stocks": [
         {
           "ticker": "ASML",
@@ -43,47 +43,6 @@
       ]
     },
     {
-      "id": "2026-07-23",
-      "date": "Jul 23, 2026",
-      "label": "Jul '26 Class — Storage Trio: WDC, SNDK, AMKR [PARTIAL — picks confirmed, contracts EST.]",
-      "notes": "Confirmed via EYL community posts. Stephanie Del Rosario (July 27): 'The new trades Troy shared in the last Options class, including WDCX and SNDG. We'll compare them with their underlying charts to better understand the technical setup.' WDCX = WDC (Western Digital) updated call contract; SNDG = SNDK (SanDisk) updated call contract — notation likely from Schwab/ThinkorSwim option symbol format. Both WDC and SNDK were Nov '25 class picks with Jan '27 $65C entries now deeply ITM; this class gave updated near-ATM contracts. AMKR (Amkor Technology) confirmed: Karen B. (July 24) asked 'Can someone post the AMKR option trade that Troy posted' — AMKR also appeared in the May '26 class, suggesting either a new contract or reinforcement. Contract details (strikes, expiries) below are ESTIMATED. Access EYL class video at eyluniversity.com for actual contracts.",
-      "stocks": [
-        {
-          "ticker": "WDC",
-          "name": "Western Digital",
-          "contract": "Jan '28 $500C (EST.)",
-          "expiry": "2028-01-21",
-          "strike": 500.0,
-          "opt_type": "calls",
-          "alert": null,
-          "owned": false,
-          "_note": "CONFIRMED as Jul '26 class pick — 'WDCX' notation confirmed by Stephanie July 27. Updates the Nov '25 Jan '27 $65C which is now deeply ITM. Strike/expiry ESTIMATED based on WDC ~$450-500 range in July 2026. 'WDCX' in Schwab may indicate a Dec '26 or Jan '28 expiry. Check EYL video."
-        },
-        {
-          "ticker": "SNDK",
-          "name": "SanDisk Corporation",
-          "contract": "Jan '28 $200C (EST.)",
-          "expiry": "2028-01-21",
-          "strike": 200.0,
-          "opt_type": "calls",
-          "alert": null,
-          "owned": false,
-          "_note": "CONFIRMED as Jul '26 class pick — 'SNDG' notation confirmed by Stephanie July 27. Updates the Nov '25 Jan '27 $65C. Strike/expiry ESTIMATED. 'SNDG' in Schwab notation likely indicates a specific expiry (Dec '26 = 'G' in OCC monthly code). SNDK price in July 2026 needed to verify strike."
-        },
-        {
-          "ticker": "AMKR",
-          "name": "Amkor Technology",
-          "contract": "Jan '27 $90C (EST.)",
-          "expiry": "2027-01-15",
-          "strike": 90.0,
-          "opt_type": "calls",
-          "alert": null,
-          "owned": false,
-          "_note": "CONFIRMED as Jul '26 class pick — Karen B. July 24: 'Can someone post the AMKR option trade that Troy posted.' AMKR was also a May '26 class pick at Jan '27 $90C. May be the same contract (reinforcement) or an updated strike if AMKR moved up. Check EYL video for actual contract."
-        }
-      ]
-    },
-    {
       "id": "eli-positions-2026",
       "date": "Jun 30, 2026",
       "label": "Eli's Live Positions",
@@ -99,36 +58,6 @@
           "alert": 60.21,
           "owned": true,
           "_note": "Filled Jun 30 2026 at $60.21. Stop-loss triggers at 30% below entry (~$42.15). Take-profit target at 100%+ (~$120+). OpenAI IPO expected 2027 — within expiry window."
-        }
-      ]
-    },
-    {
-      "id": "2026-06-25",
-      "date": "Jun 25, 2026",
-      "label": "Jun '26 Class — MU + AVGO Memory & Broadcom [PARTIAL — picks confirmed, contracts EST.]",
-      "notes": "Confirmed via EYL community posts. MU (Micron) $880C confirmed: Cedric S. (July 16, 2026) asked 'why Troy M. MUU $880 call is not showing in the option chain?' — Troy liked this community post, implying confirmation of the MU $880 call as a Jun '26 class pick. MU stock was approximately $880 at the June 25 class time, making this a near-ATM call. AVGO (Broadcom) confirmed as Jun '26 class theme: Stephanie Del Rosario (June 26): 'Troy and Daouda reiterated last night that it [AVGO] continues to be a consistent theme.' Contract expiries below are ESTIMATED — Troy's typical LEAP style (Jan '27 or Jan '28) assumed. NOTE: The Sep '18 class later gave a separate short-term MU Oct '26 call — these are TWO different MU contracts. Access EYL class video at eyluniversity.com for actual contracts.",
-      "stocks": [
-        {
-          "ticker": "MU",
-          "name": "Micron Technology, Inc.",
-          "contract": "Jan '28 $880C (EST.)",
-          "expiry": "2028-01-21",
-          "strike": 880.0,
-          "opt_type": "calls",
-          "alert": null,
-          "owned": false,
-          "_note": "Strike $880 CONFIRMED from community (Cedric S. July 16: 'MUU $880 call' — Troy liked the post). Expiry ESTIMATED as Jan '28 LEAP; actual expiry unknown. MU stock was ~$880 at the Jun 25 class, making this near-ATM at entry. Community member Cedric's July 16 question about it 'not showing' may indicate deep-ITM after MU ran to $1,015+ by September."
-        },
-        {
-          "ticker": "AVGO",
-          "name": "Broadcom Inc.",
-          "contract": "Jan '27 $330C (EST.)",
-          "expiry": "2027-01-15",
-          "strike": 330.0,
-          "opt_type": "calls",
-          "alert": null,
-          "owned": false,
-          "_note": "AVGO confirmed as Jun '26 class theme (Stephanie June 26: 'Troy and Daouda reiterated last night that it continues to be a consistent theme'). Contract is ESTIMATED — AVGO was approximately $307-340 in June 2026 based on Ian Dunlap's Sep 29 stock picks showing AVGO load at $307.42. Check EYL video for actual strike/expiry."
         }
       ]
     },
