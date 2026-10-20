@@ -1145,6 +1145,96 @@
         "strike": 700.0,
         "opt_type": "calls",
         "alert": null
+      },
+      {
+        "ticker": "ETN",
+        "name": "Eaton Corporation",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — moves power grid-to-rack",
+        "contract": "Jan '28 $430C",
+        "expiry": "2028-01-21",
+        "strike": 430.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "BE",
+        "name": "Bloom Energy",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — on-site fuel cells, energy layer leader",
+        "contract": "Jan '28 $280C",
+        "expiry": "2028-01-21",
+        "strike": 280.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "OKLO",
+        "name": "Oklo Inc.",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — nuclear, energy layer leader",
+        "contract": "Jan '28 $40C",
+        "expiry": "2028-01-21",
+        "strike": 40.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "GOOGL",
+        "name": "Alphabet Inc.",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — TPU w/ Broadcom, #3 cloud, DeepMind",
+        "contract": "Jan '28 $345C",
+        "expiry": "2028-01-21",
+        "strike": 345.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "META",
+        "name": "Meta Platforms",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — Muse models, hyperscaler capex",
+        "contract": "Jan '28 $700C",
+        "expiry": "2028-01-21",
+        "strike": 700.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "PLTR",
+        "name": "Palantir Technologies",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — application layer leader",
+        "contract": "Jan '28 $175C",
+        "expiry": "2028-01-21",
+        "strike": 175.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "INTC",
+        "name": "Intel Corporation",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — US foundry + NVDA $5B stake",
+        "contract": "Jan '28 $115C",
+        "expiry": "2028-01-21",
+        "strike": 115.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "CRWV",
+        "name": "CoreWeave",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — neocloud infrastructure",
+        "contract": "Jan '28 $65C",
+        "expiry": "2028-01-21",
+        "strike": 65.0,
+        "opt_type": "calls",
+        "alert": null
+      },
+      {
+        "ticker": "NBIS",
+        "name": "Nebius Group",
+        "reason": "GRFR 'Future of the AI Trade' masterclass (Oct 2026) — neocloud infrastructure",
+        "contract": "Jan '28 $175C",
+        "expiry": "2028-01-21",
+        "strike": 175.0,
+        "opt_type": "calls",
+        "alert": null
       }
     ]
   },
