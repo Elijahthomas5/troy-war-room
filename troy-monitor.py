@@ -738,6 +738,44 @@ def _yfinance_history_quote(sym):
         return None
 
 
+def _fetch_ath(sym):
+    """Fetch all-time high for a ticker via yfinance 10-year history.
+    Returns float ATH or None on failure. Used once per ticker to seed
+    the ATH cache in state; thereafter the ratchet keeps it current."""
+    if yf is None:
+        return None
+    try:
+        hist = yf.download(sym, period="10y", progress=False, auto_adjust=True)
+        if hist.empty:
+            return None
+        ath = float(hist["High"].max())
+        return round(ath, 2)
+    except Exception as e:
+        print(f"  ⚠  ATH history fetch failed ({sym}): {e}")
+        return None
+
+
+def _update_ath_cache(state, all_data):
+    """Ratchet ATH per ticker: seed from 10y history on first encounter,
+    then advance whenever the current price exceeds the stored ATH.
+    Mutates state['ath_prices'] in place; caller must save_state()."""
+    ath_cache = state.setdefault("ath_prices", {})
+    for sym, d in all_data.items():
+        price = d.get("price", 0) or 0
+        high52 = d.get("high52", 0) or 0
+        stored = ath_cache.get(sym, 0) or 0
+        if stored == 0:
+            # First time: try historical fetch, fall back to 52w high
+            fetched = _fetch_ath(sym)
+            if fetched:
+                print(f"    ATH seeded {sym}: ${fetched:.2f}")
+            ath_cache[sym] = max(fetched or 0, high52, price)
+        else:
+            # Ratchet: ATH can only go up
+            ath_cache[sym] = max(stored, high52, price)
+        ath_cache[sym] = round(ath_cache[sym], 2)
+
+
 def _yfinance_quote(symbols):
     """Bulk-ish stock quote via yfinance. Returns {sym: {...}} dict.
     Tries fast_info first (cheap, one request); if Yahoo's fast_info/quote
@@ -1286,13 +1324,20 @@ def update_html(all_data, opt_data, watchlist, opt_contracts, chain_data=None, s
             print("  ⚠  Could not find PRICES block anchor in troy-options-tracker.html "
                   "-- stock prices were NOT written this run. Check the file structure.")
 
-        # ── 3. Build HIGHS_52W block ─────────────────────────────
-        hlines = ["  const HIGHS_52W = {"]
+        # ── 3. Build ATH_PRICES block (all-time highs, ratcheted via state) ──
+        state = load_state()
+        _update_ath_cache(state, all_data)
+        save_state(state)
+        ath_cache = state.get("ath_prices", {})
+        hlines = ["  const ATH_PRICES = {"]
         for t in all_tickers:
-            if t in all_data:
-                hlines.append(f"    {t.ljust(4)}: {all_data[t]['high52']:.2f},")
+            ath = ath_cache.get(t) or (all_data[t]['high52'] if t in all_data else None)
+            if ath:
+                hlines.append(f"    {t.ljust(4)}: {ath:.2f},")
         hlines.append("  };")
         new_highs = "\n".join(hlines)
+        html = re.sub(r"  const ATH_PRICES = \{[^}]*\};", new_highs, html, flags=re.DOTALL)
+        # Also handle old HIGHS_52W name in case HTML hasn't been updated yet
         html = re.sub(r"  const HIGHS_52W = \{[^}]*\};", new_highs, html, flags=re.DOTALL)
 
         # ── 4. Build OPT_PRICES block ────────────────────────────
