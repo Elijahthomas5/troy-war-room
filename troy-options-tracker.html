@@ -2286,11 +2286,24 @@
         const pctStr = bz.pctOff.toFixed(1);
         const cls = bz.zone === 'buy' ? 'zone-buy' : bz.zone === 'watch' ? 'zone-watch' : bz.zone === 'near' ? 'zone-near' : 'zone-below';
         html += `<div class="pct-big ${cls}">${pctStr}%</div>`;
-        const rpConf = getRPConfluence(t, price);
-        const rpPill = rpConf ? ` <span style="font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;background:${rpConf.level==='fire'?'rgba(249,115,22,0.18)':rpConf.level==='swing'?'rgba(72,187,120,0.15)':'rgba(66,153,225,0.15)'};color:${rpConf.level==='fire'?'#f97316':rpConf.level==='swing'?'#48bb78':'#4299e1'};vertical-align:middle">🐼 ${rpConf.badge.split(' ').slice(1).join(' ')}</span>` : '';
-        html += `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="zone-pill ${zonePillClass(bz.zone)}">${zoneLabel(bz.zone)}</span>${rpPill}</div>`;
+        html += `<div><span class="zone-pill ${zonePillClass(bz.zone)}">${zoneLabel(bz.zone)}</span></div>`;
         if (bz.zone === 'buy') {
           html += `<div class="zone-range">zone: $${bz.buyHi} – $${bz.buyLo}</div>`;
+        }
+        // Red Panda levels — one compact line, numbers only
+        const rpZ = RP_ZONES[t];
+        if (rpZ) {
+          const [ld, sw, qk] = rpZ.prices;
+          const rpFmt = v => v != null ? '$' + Math.round(v).toLocaleString() : '—';
+          const rpCol = v => (v != null && price <= v * 1.08) ? 'color:#48bb78;font-weight:700' : 'color:#4a5570';
+          html += `<div style="font-size:9px;margin-top:3px;letter-spacing:0.2px">
+            <span style="color:#4a5570">🐼</span>
+            <span style="${rpCol(ld)}">${rpFmt(ld)}</span>
+            <span style="color:#2e3a52"> · </span>
+            <span style="${rpCol(sw)}">${rpFmt(sw)}</span>
+            <span style="color:#2e3a52"> · </span>
+            <span style="${rpCol(qk)}">${rpFmt(qk)}</span>
+          </div>`;
         }
       }
 
