@@ -2000,6 +2000,23 @@
     NBIS: 299.86,
   };
 
+  // ── RED PANDA ZONES (overlapping tickers) ────────────────────────────────
+  // Format: [loadTheBoat, swingTrade, quickEntry] — null if not provided
+  // Source: red-panda-zones.json (updated Aug 25, 2026)
+  const RP_ZONES = {"AAPL": {"name": "Apple", "prices": [2026.0, null, null]}, "AMAT": {"name": "Applied Materials", "prices": [349.48, 458.66, 477.26]}, "AMD": {"name": "AMD", "prices": [242.93, 334.81, 464.79]}, "AMZN": {"name": "Amazon", "prices": [187.33, 233.04, 244.47]}, "ANET": {"name": "Arista Networks", "prices": [74.78, 128.62, 137.2]}, "ARM": {"name": "Arm Holdings", "prices": [133.69, 269.82, 350.23]}, "ASML": {"name": "ASML Holding", "prices": [1038.84, 1653.27, null]}, "AVGO": {"name": "Broadcom", "prices": [212.64, 339.84, 347.21]}, "CDNS": {"name": "Cadence Design", "prices": [229.83, 357.87, 381.48]}, "COHR": {"name": "Coherent Corp", "prices": [155.85, 225.05, 233.05]}, "ETN": {"name": "Eaton Corp", "prices": [270.08, 373.92, 394.0]}, "GEV": {"name": "GE Vernova", "prices": [676.63, 918.97, 975.59]}, "GLW": {"name": "Corning", "prices": [90.18, 128.39, 145.66]}, "GOOGL": {"name": "Alphabet (Google)", "prices": [229.2, 305.75, 345.76]}, "HOOD": {"name": "Robinhood", "prices": [53.47, 85.83, 93.74]}, "IREN": {"name": "Iren Ltd", "prices": [22.11, 31.96, null]}, "LLY": {"name": "Eli Lilly", "prices": [644.06, 870.69, 1025.94]}, "META": {"name": "Meta Platforms", "prices": [433.7, 568.59, 575.29]}, "MRVL": {"name": "Marvell Technology", "prices": [106.89, 238.0, 251.82]}, "MSFT": {"name": "Microsoft", "prices": [319.38, 385.04, 396.62]}, "MU": {"name": "Micron Technology", "prices": [392.58, 816.03, 945.49]}, "NBIS": {"name": "Nebius Group", "prices": [68.06, 139.65, 185.17]}, "NFLX": {"name": "Netflix", "prices": [49.65, 75.86, 79.72]}, "NVDA": {"name": "NVIDIA", "prices": [122.86, 195.55, 210.22]}, "PLTR": {"name": "Palantir", "prices": [82.64, 124.99, 127.01]}, "SMH": {"name": "Semiconductor ETF", "prices": [294.95, 470.83, 504.15]}, "SNDK": {"name": "Sandisk", "prices": [610.53, 1363.41, 1652.52]}, "SNPS": {"name": "Synopsys", "prices": [377.95, 391.06, 479.04]}, "STX": {"name": "Seagate Technology", "prices": [538.72, 643.39, null]}, "TSLA": {"name": "Tesla", "prices": [260.39, 371.21, 404.37]}, "TSM": {"name": "Taiwan Semiconductor", "prices": [302.81, 377.47, 380.88]}, "UBER": {"name": "Uber", "prices": [59.69, 60.36, null]}, "V": {"name": "Visa", "prices": [281.51, 296.5, 309.0]}, "VRT": {"name": "Vertiv Holdings", "prices": [153.81, 246.17, 259.67]}, "WDC": {"name": "Western Digital", "prices": [290.69, 441.02, 458.31]}};
+
+  function getRPConfluence(ticker, price) {
+    const rp = RP_ZONES[ticker];
+    if (!rp) return null;
+    const bz = getBuyZoneInfo(ticker, price);
+    const inAction = bz && (bz.zone === 'buy' || bz.zone === 'watch');
+    const [load, swing, quick] = rp.prices;
+    if (inAction && load  && price <= load  * 1.05) return { level: 'fire',  badge: '🔥 Both Fire' };
+    if (inAction && swing && price <= swing * 1.05) return { level: 'swing', badge: '✅ Both Swing' };
+    if (inAction && quick && price <= quick * 1.05) return { level: 'entry', badge: '👀 Both Entry' };
+    return null;
+  }
+
   function getOptionInfo(ticker) {
     const opt = OPT_PRICES[ticker];
     if (!opt) return { noContract: true };
@@ -2338,6 +2355,35 @@
         }
         grkHtml += `</div>`;
         html += grkHtml;
+      }
+
+      // ── Red Panda confluence mini-row ──
+      const rp = RP_ZONES[t];
+      if (rp) {
+        const conf = getRPConfluence(t, price);
+        const [load, swing, quick] = rp.prices;
+        const fmtP = v => v != null ? '$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
+        const lvlColor = (v) => {
+          if (v == null) return 'color:#3a4060';
+          if (price <= v * 1.05) return 'color:#48bb78;font-weight:700';
+          if (price <= v * 1.20) return 'color:#ecc94b';
+          return 'color:#8892a4';
+        };
+        const confBadge = conf
+          ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:${conf.level==='fire'?'rgba(249,115,22,0.15)':conf.level==='swing'?'rgba(72,187,120,0.12)':'rgba(66,153,225,0.12)'};color:${conf.level==='fire'?'#f97316':conf.level==='swing'?'#48bb78':'#4299e1'};border:1px solid ${conf.level==='fire'?'rgba(249,115,22,0.3)':conf.level==='swing'?'rgba(72,187,120,0.3)':'rgba(66,153,225,0.3)'}">${conf.badge}</span>`
+          : '';
+        html += `<hr style="border:none;border-top:1px solid #2a2f3e;margin:4px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#8892a4">🐼 Red Panda</span>
+          ${confBadge}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:9px;${lvlColor(load)}">🔥 ${fmtP(load)}</span>
+          <span style="color:#3a4060;font-size:9px">·</span>
+          <span style="font-size:9px;${lvlColor(swing)}">📈 ${fmtP(swing)}</span>
+          <span style="color:#3a4060;font-size:9px">·</span>
+          <span style="font-size:9px;${lvlColor(quick)}">⚡ ${fmtP(quick)}</span>
+        </div>`;
       }
 
       bzEl.innerHTML = html;

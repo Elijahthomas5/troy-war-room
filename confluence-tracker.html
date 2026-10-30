@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔗 Confluence — Troy × Red Panda</title>
+<style>
+:root {
+  --bg:      #0d0f14;
+  --surface: #161922;
+  --card:    #1e2230;
+  --border:  #2a2f3e;
+  --text:    #e2e8f0;
+  --muted:   #8892a4;
+  --green:   #48bb78;
+  --yellow:  #ecc94b;
+  --orange:  #ed8936;
+  --red:     #e53e3e;
+  --blue:    #4299e1;
+  --purple:  #9f7aea;
+  --troy:    #cc0000;
+  --rp:      #d97706;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; }
+
+/* HEADER */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex; align-items: center; gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-logos { display: flex; align-items: center; gap: 6px; font-size: 20px; }
+.header-sep { color: var(--muted); font-size: 14px; }
+.header-title { font-size: 15px; font-weight: 700; }
+.header-sub   { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.updated-time { font-size: 10px; color: var(--muted); }
+
+/* CONTROLS */
+.controls {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 20px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  cursor: pointer; transition: all .15s;
+}
+.filter-btn:hover { color: var(--text); }
+.filter-btn.active { background: var(--card); color: var(--text); border-color: #4a5060; }
+.filter-btn.f-fire  { color: #f97316; border-color: #f9731640; }
+.filter-btn.f-fire.active { background: #f9731618; }
+.filter-btn.f-swing { color: var(--green); border-color: #48bb7840; }
+.filter-btn.f-swing.active { background: #48bb7818; }
+.filter-btn.f-watch { color: var(--blue); border-color: #4299e140; }
+.filter-btn.f-watch.active { background: #4299e118; }
+.search-box {
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  font-size: 12px; padding: 6px 12px; border-radius: 20px; outline: none; width: 160px;
+}
+.search-box:focus { border-color: var(--blue); }
+.stats { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+.stat-badge { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.stat-dot { width: 7px; height: 7px; border-radius: 50%; }
+.stat-num { font-weight: 700; color: var(--text); }
+
+/* GRID */
+.grid-wrap { padding: 16px 20px; }
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color .15s;
+}
+.card:hover { border-color: #3a4060; }
+.card.highlight-fire   { border-color: rgba(249,115,22,0.5); }
+.card.highlight-swing  { border-color: rgba(72,187,120,0.4); }
+.card.highlight-entry  { border-color: rgba(66,153,225,0.4); }
+
+/* CARD HEADER */
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.ticker-wrap { display: flex; flex-direction: column; gap: 2px; }
+.ticker { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
+.company { font-size: 10px; color: var(--muted); }
+.price-wrap { text-align: right; }
+.price-big { font-size: 20px; font-weight: 800; }
+.price-change { font-size: 10px; margin-top: 1px; }
+.chg-up   { color: var(--green); }
+.chg-down { color: var(--red); }
+
+/* CONFLUENCE BADGE */
+.conf-badge {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 700;
+  width: fit-content;
+}
+.conf-fire  { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+.conf-swing { background: rgba(72,187,120,0.12); color: var(--green); border: 1px solid rgba(72,187,120,0.3); }
+.conf-entry { background: rgba(66,153,225,0.12); color: var(--blue); border: 1px solid rgba(66,153,225,0.3); }
+.conf-none  { background: transparent; color: var(--muted); border: 1px solid var(--border); font-size: 10px; }
+
+/* DIVIDER */
+.divider { border: none; border-top: 1px solid var(--border); }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted); margin-bottom: 5px;
+  display: flex; align-items: center; gap: 5px;
+}
+.section-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* TROY ZONE */
+.troy-zone-row { display: flex; align-items: center; justify-content: space-between; }
+.troy-zone-badge {
+  padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 700;
+}
+.z-near  { background: rgba(72,187,120,0.15);  color: var(--green); }
+.z-watch { background: rgba(66,153,225,0.15);  color: var(--blue); }
+.z-buy   { background: rgba(237,137,54,0.18);  color: var(--orange); }
+.z-past  { background: rgba(229,62,62,0.12);   color: #fc8181; }
+
+.troy-ath-info { font-size: 10px; color: var(--muted); }
+.troy-pct { font-size: 15px; font-weight: 800; }
+.troy-pct.z-buy  { color: var(--orange); }
+.troy-pct.z-watch{ color: var(--blue); }
+.troy-pct.z-near { color: var(--green); }
+.troy-pct.z-past { color: #fc8181; }
+
+/* BUY ZONE BAR */
+.zone-bar-wrap { margin-top: 4px; }
+.zone-bar-track {
+  height: 5px; border-radius: 3px;
+  background: linear-gradient(to right, #e53e3e22, #ed893622, #ecc94b22, #48bb7822);
+  position: relative; overflow: visible;
+}
+.zone-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(to right, #e53e3e, #ed8936);
+  max-width: 100%;
+}
+.zone-marker {
+  position: absolute; top: -3px;
+  width: 2px; height: 11px; border-radius: 1px;
+}
+.zone-buy-lo  { background: #ed8936; }
+.zone-buy-hi  { background: #ecc94b; }
+.zone-label-row {
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--muted); margin-top: 2px;
+}
+
+/* RED PANDA LEVELS */
+.rp-levels { display: flex; flex-direction: column; gap: 5px; }
+.rp-level-row {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rp-level-name { font-size: 10px; color: var(--muted); width: 80px; flex-shrink: 0; }
+.rp-level-price { font-size: 11px; font-weight: 700; width: 72px; text-align: right; flex-shrink: 0; }
+.rp-level-bar-wrap { flex: 1; margin: 0 8px; }
+.rp-level-bar-track {
+  height: 4px; border-radius: 2px; background: var(--border); position: relative;
+}
+.rp-level-bar-fill { height: 100%; border-radius: 2px; max-width: 100%; }
+.rp-indicator {
+  font-size: 9px; font-weight: 700; width: 70px; text-align: right; flex-shrink: 0;
+}
+.ind-above { color: var(--muted); }
+.ind-near  { color: var(--yellow); }
+.ind-at    { color: var(--green); }
+.ind-below { color: #fc8181; }
+
+/* LEVEL COLORS */
+.lvl-load  { color: #f97316; }
+.lvl-swing { color: var(--yellow); }
+.lvl-entry { color: var(--green); }
+
+.bar-load  { background: #f97316; }
+.bar-swing { background: var(--yellow); }
+.bar-entry { background: var(--green); }
+
+/* EMPTY */
+.empty-msg { color: var(--muted); font-size: 13px; text-align: center; padding: 60px 20px; }
+
+/* SORT */
+.sort-wrap { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.sort-select {
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  font-size: 11px; padding: 4px 8px; border-radius: 6px; outline: none;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logos">
+    <span>📈</span>
+    <span class="header-sep">×</span>
+    <span>🐼</span>
+  </div>
+  <div>
+    <div class="header-title">Confluence Tracker — Troy × Red Panda</div>
+    <div class="header-sub">35 overlapping tickers · Troy ATH zones vs. Red Panda price levels</div>
+  </div>
+  <div class="header-right">
+    <span class="updated-time" id="updated-ts"></span>
+  </div>
+</div>
+
+<div class="controls">
+  <input class="search-box" id="search" placeholder="🔍 Search ticker…" oninput="renderCards()">
+  <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">All (35)</button>
+  <button class="filter-btn f-fire"  id="fb-fire"  onclick="setFilter('fire')">🔥 Both Fire</button>
+  <button class="filter-btn f-swing" id="fb-swing" onclick="setFilter('swing')">✅ Both Swing</button>
+  <button class="filter-btn f-watch" id="fb-watch" onclick="setFilter('watch')">👀 Both Entry</button>
+  <div class="sort-wrap">
+    Sort:
+    <select class="sort-select" id="sort-sel" onchange="renderCards()">
+      <option value="conf">Confluence first</option>
+      <option value="troy_pct">Troy % off ATH</option>
+      <option value="ticker">Ticker A–Z</option>
+    </select>
+  </div>
+  <div class="stats">
+    <div class="stat-badge"><div class="stat-dot" style="background:#f97316"></div>Fire: <span class="stat-num" id="cnt-fire">0</span></div>
+    <div class="stat-badge"><div class="stat-dot" style="background:var(--green)"></div>Swing: <span class="stat-num" id="cnt-swing">0</span></div>
+    <div class="stat-badge"><div class="stat-dot" style="background:var(--blue)"></div>Entry: <span class="stat-num" id="cnt-entry">0</span></div>
+  </div>
+</div>
+
+<div class="grid-wrap">
+  <div class="cards-grid" id="cards-grid"></div>
+  <div class="empty-msg" id="empty-msg" style="display:none">No tickers match your filter.</div>
+</div>
+
+<script>
+// ── DATA (updated by troy-monitor.py) ────────────────────────────────────────
+const PRICES = {"AAPL": {"price": 339.5, "change": -1.0}, "AMAT": {"price": 404.98, "change": -1.97}, "AMD": {"price": 534.74, "change": -0.62}, "AMZN": {"price": 262.63, "change": 0.07}, "ANET": {"price": 181.19, "change": -0.96}, "ARM": {"price": 221.06, "change": -3.07}, "ASML": {"price": 1630.84, "change": -0.99}, "AVGO": {"price": 334.37, "change": -0.07}, "CDNS": {"price": 319.87, "change": -1.84}, "COHR": {"price": 231.8, "change": -0.09}, "ETN": {"price": 381.98, "change": -2.43}, "GEV": {"price": 890.33, "change": -1.99}, "GLW": {"price": 132.42, "change": -0.24}, "GOOGL": {"price": 340.27, "change": -1.14}, "HOOD": {"price": 98.21, "change": 1.75}, "IREN": {"price": 26.62, "change": -4.0}, "LLY": {"price": 1283.66, "change": 3.49}, "META": {"price": 693.94, "change": -1.63}, "MRVL": {"price": 240.42, "change": 1.4}, "MSFT": {"price": 531.87, "change": -0.31}, "MU": {"price": 896.07, "change": -0.98}, "NBIS": {"price": 171.45, "change": 0.71}, "NFLX": {"price": 68.69, "change": -1.66}, "NVDA": {"price": 216.47, "change": -0.29}, "PLTR": {"price": 192.6, "change": -0.8}, "SMH": {"price": 546.36, "change": -0.38}, "SNDK": {"price": 1365.38, "change": -0.42}, "SNPS": {"price": 447.62, "change": -1.53}, "STX": {"price": 675.13, "change": 2.17}, "TSLA": {"price": 373.71, "change": 1.54}, "TSM": {"price": 425.08, "change": 1.16}, "UBER": {"price": 68.94, "change": -1.46}, "V": {"price": 406.57, "change": 0.91}, "VRT": {"price": 203.56, "change": -1.22}, "WDC": {"price": 364.32, "change": 3.44}};
+const ATH_PRICES = {"AAPL": 348.15, "AMAT": 739.67, "AMD": 658.52, "AMZN": 287.2, "ANET": 217.41, "ARM": 452.7, "ASML": 1999.96, "AVGO": 495.0, "CDNS": 416.69, "COHR": 440.0, "ETN": 478.0, "GEV": 1195.94, "GLW": 271.78, "GOOGL": 408.61, "HOOD": 150.47, "IREN": 76.87, "LLY": 1292.65, "META": 779.82, "MRVL": 329.88, "MSFT": 553.72, "MU": 1255.0, "NBIS": 299.86, "NFLX": 124.86, "NVDA": 243.37, "PLTR": 212.94, "SMH": 671.83, "SNDK": 2354.39, "SNPS": 539.48, "STX": 1145.0, "TSLA": 498.83, "TSM": 487.47, "UBER": 100.35, "V": 404.74, "VRT": 379.94, "WDC": 799.87};
+const RP_ZONES = {"AAPL": {"name": "Apple", "prices": [2026.0, null, null]}, "AMAT": {"name": "Applied Materials", "prices": [349.48, 458.66, 477.26]}, "AMD": {"name": "AMD", "prices": [242.93, 334.81, 464.79]}, "AMZN": {"name": "Amazon", "prices": [187.33, 233.04, 244.47]}, "ANET": {"name": "Arista Networks", "prices": [74.78, 128.62, 137.2]}, "ARM": {"name": "Arm Holdings", "prices": [133.69, 269.82, 350.23]}, "ASML": {"name": "ASML Holding", "prices": [1038.84, 1653.27, null]}, "AVGO": {"name": "Broadcom", "prices": [212.64, 339.84, 347.21]}, "CDNS": {"name": "Cadence Design", "prices": [229.83, 357.87, 381.48]}, "COHR": {"name": "Coherent Corp", "prices": [155.85, 225.05, 233.05]}, "ETN": {"name": "Eaton Corp", "prices": [270.08, 373.92, 394.0]}, "GEV": {"name": "GE Vernova", "prices": [676.63, 918.97, 975.59]}, "GLW": {"name": "Corning", "prices": [90.18, 128.39, 145.66]}, "GOOGL": {"name": "Alphabet (Google)", "prices": [229.2, 305.75, 345.76]}, "HOOD": {"name": "Robinhood", "prices": [53.47, 85.83, 93.74]}, "IREN": {"name": "Iren Ltd", "prices": [22.11, 31.96, null]}, "LLY": {"name": "Eli Lilly", "prices": [644.06, 870.69, 1025.94]}, "META": {"name": "Meta Platforms", "prices": [433.7, 568.59, 575.29]}, "MRVL": {"name": "Marvell Technology", "prices": [106.89, 238.0, 251.82]}, "MSFT": {"name": "Microsoft", "prices": [319.38, 385.04, 396.62]}, "MU": {"name": "Micron Technology", "prices": [392.58, 816.03, 945.49]}, "NBIS": {"name": "Nebius Group", "prices": [68.06, 139.65, 185.17]}, "NFLX": {"name": "Netflix", "prices": [49.65, 75.86, 79.72]}, "NVDA": {"name": "NVIDIA", "prices": [122.86, 195.55, 210.22]}, "PLTR": {"name": "Palantir", "prices": [82.64, 124.99, 127.01]}, "SMH": {"name": "Semiconductor ETF", "prices": [294.95, 470.83, 504.15]}, "SNDK": {"name": "Sandisk", "prices": [610.53, 1363.41, 1652.52]}, "SNPS": {"name": "Synopsys", "prices": [377.95, 391.06, 479.04]}, "STX": {"name": "Seagate Technology", "prices": [538.72, 643.39, null]}, "TSLA": {"name": "Tesla", "prices": [260.39, 371.21, 404.37]}, "TSM": {"name": "Taiwan Semiconductor", "prices": [302.81, 377.47, 380.88]}, "UBER": {"name": "Uber", "prices": [59.69, 60.36, null]}, "V": {"name": "Visa", "prices": [281.51, 296.5, 309.0]}, "VRT": {"name": "Vertiv Holdings", "prices": [153.81, 246.17, 259.67]}, "WDC": {"name": "Western Digital", "prices": [290.69, 441.02, 458.31]}};
+const PRICES_AS_OF = 'Oct 20, 2026 ~4:01 PM ET';
+
+const TICKERS = Object.keys(RP_ZONES);
+
+// ── CONFLUENCE LOGIC ──────────────────────────────────────────────────────────
+function getTroyZone(ticker, price) {
+  const ath = ATH_PRICES[ticker];
+  if (!ath || !price) return null;
+  const pctOff = (ath - price) / ath * 100;
+  let zone, cls;
+  if (pctOff < 10)       { zone = 'NEAR ATH';    cls = 'z-near'; }
+  else if (pctOff < 20)  { zone = 'WATCH';        cls = 'z-watch'; }
+  else if (pctOff <= 30) { zone = 'BUY ZONE 🟠';  cls = 'z-buy'; }
+  else                   { zone = 'PAST ZONE ❌';  cls = 'z-past'; }
+  return { pctOff, zone, cls, ath, buyHi: ath * 0.80, buyLo: ath * 0.70 };
+}
+
+function getConfluence(ticker, price) {
+  const troy = getTroyZone(ticker, price);
+  if (!troy) return { level: 'none', label: '—', cls: 'conf-none' };
+  const rp = RP_ZONES[ticker].prices; // [load, swing, quick]
+  const [load, swing, quick] = rp;
+  const inTroyAction = troy.cls === 'z-buy' || troy.cls === 'z-watch';
+
+  if (inTroyAction && load && price <= load * 1.05)
+    return { level: 'fire',  label: '🔥 BOTH FIRE — Load the Boat zone',  cls: 'conf-fire' };
+  if (inTroyAction && swing && price <= swing * 1.05)
+    return { level: 'swing', label: '✅ CONFLUENT — Both Swing zones',      cls: 'conf-swing' };
+  if (inTroyAction && quick && price <= quick * 1.05)
+    return { level: 'entry', label: '👀 CONFLUENT — Both Entry zones',      cls: 'conf-entry' };
+  return { level: 'none', label: 'No confluence yet', cls: 'conf-none' };
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+let activeFilter = 'all';
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fb-' + f)?.classList.add('active');
+  renderCards();
+}
+
+function fmt(n) { return n == null ? '—' : '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function rpLevelRow(label, price, currentPrice, barClass, labelClass) {
+  if (price == null) return `
+    <div class="rp-level-row">
+      <span class="rp-level-name ${labelClass}">${label}</span>
+      <div class="rp-level-bar-wrap"><div class="rp-level-bar-track"></div></div>
+      <span class="rp-level-price" style="color:var(--muted)">—</span>
+      <span class="rp-indicator ind-above">N/A</span>
+    </div>`;
+  const diff = (currentPrice - price) / price * 100;
+  let indCls, indLabel;
+  if (diff < -5)       { indCls = 'ind-below'; indLabel = `${diff.toFixed(1)}% below`; }
+  else if (diff < 5)   { indCls = 'ind-at';    indLabel = `≈ AT LEVEL`; }
+  else if (diff < 15)  { indCls = 'ind-near';  indLabel = `+${diff.toFixed(1)}% above`; }
+  else                 { indCls = 'ind-above';  indLabel = `+${diff.toFixed(1)}% above`; }
+  // bar fill: 0% when at level, 100% when price is 2x above level
+  const fillPct = Math.min(100, Math.max(0, diff / 100 * 100));
+  return `
+    <div class="rp-level-row">
+      <span class="rp-level-name ${labelClass}">${label}</span>
+      <div class="rp-level-bar-wrap">
+        <div class="rp-level-bar-track">
+          <div class="rp-level-bar-fill ${barClass}" style="width:${fillPct}%"></div>
+        </div>
+      </div>
+      <span class="rp-level-price ${labelClass}">${fmt(price)}</span>
+      <span class="rp-indicator ${indCls}">${indLabel}</span>
+    </div>`;
+}
+
+function renderCards() {
+  const search = document.getElementById('search').value.trim().toUpperCase();
+  const sortBy = document.getElementById('sort-sel').value;
+
+  // Build scored list
+  const confOrder = { fire: 0, swing: 1, entry: 2, none: 3 };
+  let items = TICKERS.map(t => {
+    const pd = PRICES[t];
+    if (!pd) return null;
+    const price = pd.price;
+    const troy = getTroyZone(t, price);
+    const conf = getConfluence(t, price);
+    return { t, price, change: pd.change, troy, conf };
+  }).filter(Boolean);
+
+  // Filter
+  items = items.filter(item => {
+    if (search && !item.t.includes(search) && !RP_ZONES[item.t].name.toUpperCase().includes(search)) return false;
+    if (activeFilter === 'fire'  && item.conf.level !== 'fire')  return false;
+    if (activeFilter === 'swing' && item.conf.level !== 'swing') return false;
+    if (activeFilter === 'watch' && item.conf.level !== 'entry') return false;
+    return true;
+  });
+
+  // Sort
+  if (sortBy === 'conf') {
+    items.sort((a, b) => confOrder[a.conf.level] - confOrder[b.conf.level] || (a.troy?.pctOff||0) - (b.troy?.pctOff||0));
+  } else if (sortBy === 'troy_pct') {
+    items.sort((a, b) => (a.troy?.pctOff||0) - (b.troy?.pctOff||0));
+  } else {
+    items.sort((a, b) => a.t.localeCompare(b.t));
+  }
+
+  // Count
+  const fireCnt  = TICKERS.filter(t => { const p=PRICES[t]?.price; return p && getConfluence(t,p).level==='fire';  }).length;
+  const swingCnt = TICKERS.filter(t => { const p=PRICES[t]?.price; return p && getConfluence(t,p).level==='swing'; }).length;
+  const entryCnt = TICKERS.filter(t => { const p=PRICES[t]?.price; return p && getConfluence(t,p).level==='entry'; }).length;
+  document.getElementById('cnt-fire').textContent  = fireCnt;
+  document.getElementById('cnt-swing').textContent = swingCnt;
+  document.getElementById('cnt-entry').textContent = entryCnt;
+
+  const grid = document.getElementById('cards-grid');
+  const empty = document.getElementById('empty-msg');
+
+  if (items.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = items.map(({ t, price, change, troy, conf }) => {
+    const rp = RP_ZONES[t];
+    const [load, swing, quick] = rp.prices;
+    const chgCls = change >= 0 ? 'chg-up' : 'chg-down';
+    const chgSign = change >= 0 ? '+' : '';
+    const cardHighlight = conf.level === 'fire' ? 'highlight-fire' : conf.level === 'swing' ? 'highlight-swing' : conf.level === 'entry' ? 'highlight-entry' : '';
+
+    // Troy buy zone bar (show how far price is from ATH, mark 20% and 30% zones)
+    const barFill = troy ? Math.min(100, troy.pctOff) : 0;
+    const buyHiPct = 20; // 20% off = right edge of buy zone
+    const buyLoPct = 30; // 30% off = left edge of buy zone
+
+    return `
+<div class="card ${cardHighlight}">
+  <div class="card-header">
+    <div class="ticker-wrap">
+      <span class="ticker">${t}</span>
+      <span class="company">${rp.name}</span>
+    </div>
+    <div class="price-wrap">
+      <div class="price-big">$${price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <div class="price-change ${chgCls}">${chgSign}${change}% today</div>
+    </div>
+  </div>
+
+  <div class="conf-badge ${conf.cls}">${conf.label}</div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">
+      <div class="section-dot" style="background:var(--troy)"></div>
+      Troy — ATH Zone (20–30% off ATH)
+    </div>
+    <div class="troy-zone-row">
+      <div>
+        <div class="troy-pct ${troy?.cls || ''}">${troy ? troy.pctOff.toFixed(1) + '% off ATH' : '—'}</div>
+        <div class="troy-ath-info">ATH: ${troy ? fmt(troy.ath) : '—'} &nbsp;·&nbsp; Buy zone: ${troy ? fmt(troy.buyHi) + ' – ' + fmt(troy.buyLo) : '—'}</div>
+      </div>
+      <span class="troy-zone-badge ${troy?.cls || ''}">${troy?.zone || '—'}</span>
+    </div>
+    ${troy ? `
+    <div class="zone-bar-wrap">
+      <div class="zone-bar-track">
+        <div class="zone-bar-fill" style="width:${Math.min(100,troy.pctOff)}%"></div>
+        <div class="zone-marker zone-buy-hi" style="left:${buyHiPct}%"></div>
+        <div class="zone-marker zone-buy-lo" style="left:${buyLoPct}%"></div>
+      </div>
+      <div class="zone-label-row"><span>0% (ATH)</span><span>← Buy Zone →</span><span>30%+ off</span></div>
+    </div>` : ''}
+  </div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">
+      <div class="section-dot" style="background:var(--rp)"></div>
+      Red Panda — Price Levels
+    </div>
+    <div class="rp-levels">
+      ${rpLevelRow('🔥 Load Boat', load,  price, 'bar-load',  'lvl-load')}
+      ${rpLevelRow('📈 Swing',     swing, price, 'bar-swing', 'lvl-swing')}
+      ${rpLevelRow('⚡ Quick Entry',quick, price, 'bar-entry', 'lvl-entry')}
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+// Init
+document.getElementById('updated-ts').textContent = 'Prices as of ' + PRICES_AS_OF;
+renderCards();
+</script>
+</body>
+</html>
