@@ -2286,7 +2286,9 @@
         const pctStr = bz.pctOff.toFixed(1);
         const cls = bz.zone === 'buy' ? 'zone-buy' : bz.zone === 'watch' ? 'zone-watch' : bz.zone === 'near' ? 'zone-near' : 'zone-below';
         html += `<div class="pct-big ${cls}">${pctStr}%</div>`;
-        html += `<div><span class="zone-pill ${zonePillClass(bz.zone)}">${zoneLabel(bz.zone)}</span></div>`;
+        const rpConf = getRPConfluence(t, price);
+        const rpPill = rpConf ? ` <span style="font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;background:${rpConf.level==='fire'?'rgba(249,115,22,0.18)':rpConf.level==='swing'?'rgba(72,187,120,0.15)':'rgba(66,153,225,0.15)'};color:${rpConf.level==='fire'?'#f97316':rpConf.level==='swing'?'#48bb78':'#4299e1'};vertical-align:middle">🐼 ${rpConf.badge.split(' ').slice(1).join(' ')}</span>` : '';
+        html += `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="zone-pill ${zonePillClass(bz.zone)}">${zoneLabel(bz.zone)}</span>${rpPill}</div>`;
         if (bz.zone === 'buy') {
           html += `<div class="zone-range">zone: $${bz.buyHi} – $${bz.buyLo}</div>`;
         }
@@ -2355,35 +2357,6 @@
         }
         grkHtml += `</div>`;
         html += grkHtml;
-      }
-
-      // ── Red Panda confluence mini-row ──
-      const rp = RP_ZONES[t];
-      if (rp) {
-        const conf = getRPConfluence(t, price);
-        const [load, swing, quick] = rp.prices;
-        const fmtP = v => v != null ? '$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
-        const lvlColor = (v) => {
-          if (v == null) return 'color:#3a4060';
-          if (price <= v * 1.05) return 'color:#48bb78;font-weight:700';
-          if (price <= v * 1.20) return 'color:#ecc94b';
-          return 'color:#8892a4';
-        };
-        const confBadge = conf
-          ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:${conf.level==='fire'?'rgba(249,115,22,0.15)':conf.level==='swing'?'rgba(72,187,120,0.12)':'rgba(66,153,225,0.12)'};color:${conf.level==='fire'?'#f97316':conf.level==='swing'?'#48bb78':'#4299e1'};border:1px solid ${conf.level==='fire'?'rgba(249,115,22,0.3)':conf.level==='swing'?'rgba(72,187,120,0.3)':'rgba(66,153,225,0.3)'}">${conf.badge}</span>`
-          : '';
-        html += `<hr style="border:none;border-top:1px solid #2a2f3e;margin:4px 0">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
-          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#8892a4">🐼 Red Panda</span>
-          ${confBadge}
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:9px;${lvlColor(load)}">🔥 ${fmtP(load)}</span>
-          <span style="color:#3a4060;font-size:9px">·</span>
-          <span style="font-size:9px;${lvlColor(swing)}">📈 ${fmtP(swing)}</span>
-          <span style="color:#3a4060;font-size:9px">·</span>
-          <span style="font-size:9px;${lvlColor(quick)}">⚡ ${fmtP(quick)}</span>
-        </div>`;
       }
 
       bzEl.innerHTML = html;
