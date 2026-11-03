@@ -2,6 +2,13 @@
   "_readme": "Troy's EYL University Option Classes — source of truth for all picks. Add a new class entry whenever Troy covers new names. troy-monitor.py reads this file and auto-injects new tickers into the dashboard.",
   "classes": [
     {
+      "id": "2026-10-29",
+      "date": "Oct 29, 2026",
+      "label": "Oct '26 EYL Class — Review/Discussion Session",
+      "notes": "EYL University video auto-detected on 2026-11-03. Transcript analyzed (175K chars / ~1h39m). Class appears to be a review/Q&A session discussing existing positions (NVDA Jan'29, MU, AMCORE, MSFT, ORACLE) rather than introducing new picks. No new pick contracts extracted. Watch the video to confirm: https://eyluniversity.com/programs/stock-options-master-class-with-troy-millings-102926-60d912",
+      "stocks": []
+    },
+    {
       "id": "2026-09-17",
       "date": "Sep 17, 2026",
       "label": "Sep '26 EYL Class — Semiconductor Testing & Memory (referenced on Market Mondays 9/22, exact contracts UNDISCLOSED)",

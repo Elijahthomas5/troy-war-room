@@ -27,6 +27,7 @@ NTFY_TOPIC    = "troy-eyl-eli"
 NTFY_URL      = f"https://ntfy.sh/{NTFY_TOPIC}"
 
 EYL_LOGIN     = "https://eyluniversity.com/login"
+EYL_CATALOG   = "https://eyluniversity.com/catalog"
 EYL_BOARD     = "https://eyluniversity.com/community/channels/the-investors-group"
 EYL_GENERAL   = "https://eyluniversity.com/community/channels/general"
 
@@ -68,6 +69,30 @@ ALERT_RE = re.compile(
 MONTH_MAP = {m: i+1 for i, m in enumerate(
     ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 )}
+
+# Full month name → abbreviation (for speech transcript parsing)
+MONTH_NAME_MAP = {
+    'january': 'Jan', 'february': 'Feb', 'march': 'Mar', 'april': 'Apr',
+    'may': 'May', 'june': 'Jun', 'july': 'Jul', 'august': 'Aug',
+    'september': 'Sep', 'october': 'Oct', 'november': 'Nov', 'december': 'Dec',
+}
+
+# Speech-pattern contract regex: "315 call for June of 2027", "out to January 2029 at 150 strike"
+SPEECH_CONTRACT_RE = re.compile(
+    r'(?:'
+    # "315 call for/out to June of 2027"
+    r'(?P<strike3>[\d,]+)\s+(?:dollar\s+)?(?:calls?|puts?)'
+    r'\s+(?:for|out\s+to|expir\w*|through)'
+    r'\s*(?P<month2>january|february|march|april|may|june|july|august|september|october|november|december)'
+    r'\s*(?:of\s*)?(?P<yr2>\d{4})'
+    r'|'
+    # "out to January 2029 ... 150 strike/call"
+    r'out\s+to\s+(?P<month3>january|february|march|april|may|june|july|august|september|october|november|december)'
+    r'\s*(?:of\s*)?(?P<yr3>\d{4})'
+    r'(?:[^.]{0,150}?(?P<strike4>[\d,]+)\s*(?:strike|calls?|puts?))?'
+    r')',
+    re.IGNORECASE,
+)
 
 
 # ─── STATE ───────────────────────────────────────────────────────────────────
@@ -247,6 +272,243 @@ def update_classes_json(new_picks, class_date_str, class_label, notes="Auto-dete
     return added
 
 
+# ─── VIDEO PIPELINE ──────────────────────────────────────────────────────────
+
+def vtt_to_text(vtt_content):
+    """Convert WebVTT caption file to plain text (strip timestamps/cue numbers)."""
+    lines = vtt_content.split('\n')
+    speech = []
+    for line in lines:
+        line = line.strip()
+        if not line or line == 'WEBVTT':
+            continue
+        if re.match(r'^\d+$', line):          # cue number
+            continue
+        if re.match(r'\d+:\d+:\d+', line):    # timestamp
+            continue
+        if line.startswith('NOTE'):
+            continue
+        speech.append(line)
+    return ' '.join(speech)
+
+
+def parse_vtt_for_picks(vtt_text):
+    """
+    Parse auto-generated speech captions for option contract picks.
+    Handles natural-language patterns Troy uses in class: '315 call for June 2027',
+    'out to January 2029 at the 150 strike', etc.
+    Returns list of pick dicts (same schema as parse_contracts_from_text).
+    """
+    import calendar as cal_mod
+    plain = vtt_to_text(vtt_text)
+    picks = []
+
+    # Run existing written-format parser first
+    picks.extend(parse_contracts_from_text(plain))
+
+    # Speech-pattern parser
+    for m in SPEECH_CONTRACT_RE.finditer(plain):
+        strike_raw  = m.group("strike3") or m.group("strike4")
+        month_name  = (m.group("month2") or m.group("month3") or "").lower()
+        yr_str      = m.group("yr2") or m.group("yr3")
+
+        if not (month_name and yr_str):
+            continue
+
+        month_abbr = MONTH_NAME_MAP.get(month_name, 'Jan')
+        yr         = int(yr_str)
+        month_num  = MONTH_MAP[month_abbr]
+
+        cal = cal_mod.monthcalendar(yr, month_num)
+        fridays    = [w[4] for w in cal if w[4] != 0]
+        expiry_day = fridays[2] if len(fridays) >= 3 else fridays[-1]
+        expiry     = f"{yr}-{month_num:02d}-{expiry_day:02d}"
+
+        strike = float(strike_raw.replace(',', '')) if strike_raw else None
+        contract_label = (f"{month_abbr} '{str(yr)[2:]} ${int(strike)}C"
+                          if strike else f"{month_abbr} '{str(yr)[2:]} ???C")
+
+        # Find nearest ticker in the 200 chars before this match
+        pre_text     = plain[max(0, m.start()-200):m.start()]
+        ticker_match = None
+        for t in KNOWN_TICKERS:
+            if re.search(rf'\b{re.escape(t)}\b', pre_text, re.IGNORECASE):
+                ticker_match = t
+                break
+
+        if ticker_match and strike:
+            picks.append({
+                "ticker":   ticker_match,
+                "contract": contract_label,
+                "strike":   strike,
+                "expiry":   expiry,
+                "alert":    None,
+            })
+
+    # Deduplicate by (ticker, contract)
+    seen, deduped = set(), []
+    for p in picks:
+        key = (p.get('ticker'), p.get('contract'))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(p)
+    return deduped
+
+
+def scan_new_class_videos(page, seen_slugs):
+    """
+    Scan EYL catalog for new Troy Millings Stock Options class videos.
+    Returns list of {slug, href, title, date_str} dicts not yet in seen_slugs.
+    """
+    page.goto(EYL_CATALOG, wait_until="networkidle", timeout=30000)
+    page.wait_for_timeout(2000)
+
+    links = page.evaluate("""
+        () => Array.from(document.querySelectorAll('a'))
+            .map(a => ({href: a.href, text: (a.textContent || '').trim()}))
+            .filter(l => l.text.toLowerCase().includes('stock options master class')
+                      && l.href.includes('/programs/'))
+    """)
+
+    new_items = []
+    for link in links:
+        href = link['href'].split('?')[0]
+        slug = href.split('/programs/')[-1]
+        if slug and slug not in seen_slugs:
+            dm = re.search(r'(\d{1,2})/(\d{1,2})/(\d{2,4})', link['text'])
+            if dm:
+                month, day, yr = dm.groups()
+                yr_full  = 2000 + int(yr) if len(yr) == 2 else int(yr)
+                date_str = f"{yr_full}-{int(month):02d}-{int(day):02d}"
+            else:
+                date_str = None
+            new_items.append({'slug': slug, 'href': href,
+                               'title': link['text'], 'date_str': date_str})
+    return new_items
+
+
+def run_video_pipeline(page):
+    """
+    Scan EYL University catalog for new class recordings, download their
+    auto-generated captions (WebVTT from UScreen CDN), parse for picks,
+    and update troy-classes.json.  Called with an already-logged-in page.
+    """
+    print("\n🎬 EYL Video Pipeline — checking for new class recordings...")
+
+    state      = load_state()
+    seen_slugs = set(state.get("seen_video_slugs", []))
+
+    try:
+        new_videos = scan_new_class_videos(page, seen_slugs)
+    except Exception as e:
+        print(f"  ⚠  Failed to scan catalog: {e}")
+        return []
+
+    if not new_videos:
+        print("  ✓ No new class videos found")
+        return []
+
+    print(f"  Found {len(new_videos)} new video(s)")
+    all_picks_by_date = {}
+
+    for item in new_videos:
+        print(f"\n  📺 Processing: {item['title']}")
+        try:
+            page.goto(item['href'], wait_until="networkidle", timeout=45000)
+            page.wait_for_timeout(3000)
+
+            # Extract VTT URL from the <track> element UScreen injects
+            vtt_url = page.evaluate("""
+                () => {
+                    const t = document.querySelector('track[kind="metadata"]')
+                           || document.querySelector('track');
+                    return t ? t.src : null;
+                }
+            """)
+
+            seen_slugs.add(item['slug'])   # mark seen regardless of outcome
+
+            if not vtt_url:
+                print(f"  ⚠  No captions found")
+                continue
+
+            print(f"  📄 Fetching captions...")
+            # Fetch via page context (benefits from session auth if CDN requires it)
+            safe_url = vtt_url.replace("'", "\\'")
+            vtt_text = page.evaluate(f"""
+                async () => {{
+                    const r = await fetch('{safe_url}');
+                    if (!r.ok) return null;
+                    return await r.text();
+                }}
+            """)
+
+            if not vtt_text:
+                print(f"  ⚠  Failed to download captions")
+                continue
+
+            print(f"  ✓ Captions: {len(vtt_text):,} chars")
+
+            picks = parse_vtt_for_picks(vtt_text)
+            if picks:
+                print(f"  🎯 Picks detected: {[p['ticker'] for p in picks]}")
+            else:
+                print(f"  ℹ  No clear new picks in transcript (review/discussion class)")
+
+            cd = item['date_str'] or date.today().isoformat()
+            if cd not in all_picks_by_date:
+                all_picks_by_date[cd] = {'title': item['title'], 'picks': []}
+            all_picks_by_date[cd]['picks'].extend(picks)
+
+        except Exception as e:
+            print(f"  ⚠  Error: {e}")
+            seen_slugs.discard(item['slug'])   # allow retry next run
+
+    # Persist seen slugs
+    state["seen_video_slugs"] = list(seen_slugs)
+    save_state(state)
+
+    # Update classes.json for each newly discovered class date
+    total_added = []
+    for class_date, info in all_picks_by_date.items():
+        label = datetime.strptime(class_date, '%Y-%m-%d').strftime('%b %d, %Y')
+        added = update_classes_json(
+            info['picks'],
+            class_date_str=class_date,
+            class_label=label,
+            notes=f"Auto-detected from EYL video captions: {info['title']}",
+        )
+        total_added.extend(added)
+
+        # Even if no picks, ensure a class entry exists so it's visible
+        if not added:
+            _ensure_class_entry(class_date, label, info['title'])
+
+    return total_added
+
+
+def _ensure_class_entry(class_date_str, label, title):
+    """Create a stub class entry in troy-classes.json if one doesn't exist yet."""
+    if not os.path.exists(CLASSES_PATH):
+        return
+    with open(CLASSES_PATH) as f:
+        data = json.load(f)
+    classes = data.get("classes", [])
+    if any(c["id"] == class_date_str for c in classes):
+        return   # already exists
+    classes.insert(0, {
+        "id":     class_date_str,
+        "date":   label,
+        "label":  f"{datetime.strptime(class_date_str, '%Y-%m-%d').strftime('%b %Y')} Class",
+        "notes":  f"Auto-logged from EYL video: {title}. No new picks extracted — review/discussion session.",
+        "stocks": [],
+    })
+    data["classes"] = classes
+    with open(CLASSES_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+    print(f"  📋 Created stub class entry for {label}")
+
+
 # ─── MAIN SCRAPER ────────────────────────────────────────────────────────────
 def run():
     if not EYL_EMAIL or not EYL_PASSWORD:
@@ -307,7 +569,10 @@ def run():
             browser.close()
             sys.exit(0)
 
-        # ── Scrape channels ──────────────────────────────────────
+        # ── Video pipeline (new class recordings) ────────────────
+        video_added = run_video_pipeline(page)
+
+        # ── Scrape community channels ─────────────────────────────
         channels_to_check = [
             (EYL_BOARD,   "investors-group"),
             (EYL_GENERAL, "general"),
@@ -407,45 +672,48 @@ def run():
 
         browser.close()
 
-    # ── Process findings ─────────────────────────────────────────
-    if not all_new_picks:
-        print("\n  ✓ No new Troy class posts detected")
-        state["last_post_ids"] = last_seen[-200:]   # keep last 200
-        save_state(state)
-        return
-
-    # Deduplicate picks by ticker (keep the one with most info)
-    by_ticker = {}
-    for p in all_new_picks:
-        t = p["ticker"]
-        if t not in by_ticker or (p.get("alert") and not by_ticker[t].get("alert")):
-            by_ticker[t] = p
-
-    today          = date.today().isoformat()
-    today_label    = date.today().strftime("%b %d, %Y")
-    newly_added    = update_classes_json(
-        list(by_ticker.values()),
-        class_date_str=today,
-        class_label=today_label,
-        notes=f"Auto-detected from EYL community board on {today_label}.",
-    )
-
+    # ── Process community board findings ─────────────────────────
     state["last_post_ids"] = last_seen[-200:]
     save_state(state)
 
-    if newly_added:
-        body = (
-            f"Auto-detected {len(newly_added)} new pick(s) from Troy's EYL posts:\n"
-            f"{', '.join(newly_added)}\n\n"
-            "troy-classes.json updated. Dashboard will refresh on next price run.\n"
-            "⚠️ Verify the contract details in troy-classes.json — auto-parsing may miss specifics."
+    if all_new_picks:
+        # Deduplicate picks by ticker (keep the one with most info)
+        by_ticker = {}
+        for p in all_new_picks:
+            t = p["ticker"]
+            if t not in by_ticker or (p.get("alert") and not by_ticker[t].get("alert")):
+                by_ticker[t] = p
+
+        today       = date.today().isoformat()
+        today_label = date.today().strftime("%b %d, %Y")
+        newly_added = update_classes_json(
+            list(by_ticker.values()),
+            class_date_str=today,
+            class_label=today_label,
+            notes=f"Auto-detected from EYL community board on {today_label}.",
         )
-        send_push("🆕 New Troy Picks Auto-Added", body, priority="high",
-                  tags=("school", "chart_with_upwards_trend"))
-        print(f"\n  ✅ Added to classes.json: {newly_added}")
-        print("  Push notification sent.")
+
+        if newly_added:
+            body = (
+                f"Auto-detected {len(newly_added)} new pick(s) from Troy's EYL posts:\n"
+                f"{', '.join(newly_added)}\n\n"
+                "troy-classes.json updated. Dashboard will refresh on next price run.\n"
+                "⚠️ Verify the contract details in troy-classes.json — auto-parsing may miss specifics."
+            )
+            send_push("🆕 New Troy Picks (Community Board)", body, priority="high",
+                      tags=("school", "chart_with_upwards_trend"))
+            print(f"\n  ✅ Added from community board: {newly_added}")
+        else:
+            print("\n  ℹ  Community posts found but no new tickers to add")
     else:
-        print("\n  ℹ  Posts found but no new tickers to add (already tracked)")
+        print("\n  ✓ No new Troy community posts detected")
+
+    # ── Summary ───────────────────────────────────────────────────
+    if video_added:
+        send_push("🎬 New Class Video Processed",
+                  f"EYL video pipeline added {len(video_added)} pick(s): {', '.join(video_added)}\n"
+                  "Check troy-classes.json and verify contract details.",
+                  priority="high", tags=("movie_camera", "chart_with_upwards_trend"))
 
     print("\n✅ EYL watcher done.\n")
 
